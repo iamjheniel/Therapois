@@ -1,0 +1,26 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://staging.therapios.de",
+      "localStorage": [
+        {
+          "name": "dismissed_announcement_ids",
+          "value": "[]"
+        },
+        {
+          "name": "hidden_column_admin:dashboard",
+          "value": "[]"
+        },
+        {
+          "name": "auth-state",
+          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NjI1MDU3MTQsImV4cCI6MTc5NDA0MTcxNCwianRpIjoiMjViNmIxZDBlZTkxYzQwMmQwMzFlMzc3ZWExMjQzMjgiLCJyb2xlcyI6WyJST0xFX1NVUEVSX0FETUlOIiwiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoic2EuamhlbkBnbWFpbC5jb20ifQ.NJu864V5cKihQJrvVyEjRYPILp0ZwX_9QM2F8-kRMK48qHhtG0vwLEl6hDYgD45kt3mKGnNnehFfd_D9tiA5nJ56RXXBs85XPlmlbT1iVV1A_cmcNgoJzcM2atcrilBI_5vl4t_q86Rt9jsO_ePPsTxIhETGDdOcBmrtgd83_guC9tJRdJEdjjrdwQswDQo-4x7TbZJvXd2gYcdoXtW84bvdYNnxXqP00zYGvcUldLfZ7-GexRDFcAbLgvOcS7u2UbI8qugLhIlo0gR3YDBo3iVha2eUUFeHGwZLzgbyatCj3s2yVm9iSN0g0vyrZUjr9yZ74LE9w4Km-ebXbqaEJw\",\"user\":{\"id\":154,\"username\":\"sa.jhen@gmail.com\",\"roles\":[\"ROLE_SUPER_ADMIN\",\"ROLE_USER\"],\"firstName\":\"SA \",\"lastName\":\"Jhen\",\"fullName\":\"SA  Jhen\",\"weak_credentials\":false,\"followupOrderingEnabled\":false},\"fetching\":false}"
+        },
+        {
+          "name": "therapios\\REACT_QUERY_OFFLINE_CACHE",
+          "value": "{\"buster\":\"v1\",\"timestamp\":1762505712951,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+        }
+      ]
+    }
+  ]
+}

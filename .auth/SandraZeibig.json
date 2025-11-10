@@ -1,0 +1,26 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://staging.therapios.de",
+      "localStorage": [
+        {
+          "name": "dismissed_announcement_ids",
+          "value": "[]"
+        },
+        {
+          "name": "hidden_column_prescriptions",
+          "value": "[]"
+        },
+        {
+          "name": "auth-state",
+          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NjI0MDAxNzgsImV4cCI6MTc5MzkzNjE3OCwianRpIjoiZGU1YzdkNGViZmZhNmU0MzViOGI5ODUzMGM1NWYxMGEiLCJyb2xlcyI6WyJST0xFX1RIRVJBUElTVCIsIlJPTEVfVVNFUiJdLCJ1c2VybmFtZSI6InNhbmRyYS56ZWliaWcuNjZAdGhlcmFwaW9zLmNvbSJ9.C6n2Nym60--D-ZZkL2y2T05GzTdjImc4wxvnlIzq24xFnekW0pOzHKMbmNHy2CJPc5gidpZHY7RH7UFhuUA06gyPlX4N7BJavotNZoDdIFw3w0fiFwtj4LNfSWLveznLQUwIb9-YpPugBaNiruM3agSIoMQEHwQvmWMPCrWgYBRel8H3TiqkSDmDxD5vlBhRDkROcPUf98bSarBaf3ZOkcu9PwThTAdV3hs4MVEp-YjppN9lFNRk0EAc8mpGDmO-zthDpnGtpeRAQUpjTwklXqTRmSicTWFP0VDF3h8BLBjtGVE7Hez_Muq2A9ILVt7w0AAcuFjfwHAaZkr-PcZl2w\",\"user\":{\"id\":6,\"username\":\"sandra.zeibig.66@therapios.com\",\"roles\":[\"ROLE_THERAPIST\",\"ROLE_USER\"],\"firstName\":\"Sandra\",\"lastName\":\"Zeibig\",\"fullName\":\"Sandra Zeibig\",\"weak_credentials\":false,\"followupOrderingEnabled\":false},\"fetching\":false}"
+        },
+        {
+          "name": "therapios\\REACT_QUERY_OFFLINE_CACHE",
+          "value": "{\"buster\":\"v1\",\"timestamp\":1762400179734,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+        }
+      ]
+    }
+  ]
+}
