@@ -28,3 +28,6 @@ jobs:
 
       - name: Run tests
         run: npx playwright test --reporter=line
+        env:
+          BASE_URL: https://staging.therapios.de/
+          
