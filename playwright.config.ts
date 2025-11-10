@@ -37,7 +37,7 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    headless: false
+    headless: true
   },
 
   /* Configure projects for major browsers */
@@ -48,32 +48,32 @@ export default defineConfig({
     },
      {
       name: 'SandraZeibig',
-      use: { storageState: path.join(__dirname, '.auth/SandraZeibig.json') },
+      use: { storageState: path.join(__dirname, '.auth/SandraZeibig.json'), headless: true  },
     },
     {
       name: 'AdminJhen',
-      use: { storageState: path.join(__dirname, '.auth/AdminJhen.json') },
+      use: { storageState: path.join(__dirname, '.auth/AdminJhen.json'), headless: true  },
     },
     {
       name: 'SAJhen',
-      use: { storageState: path.join(__dirname, '.auth/SuperAdmin.json') },
+      use: { storageState: path.join(__dirname, '.auth/SuperAdmin.json'), headless: true  },
     },
     {
       name: 'chromium',
       dependencies: ['setup'],
-      use: { ...devices['Desktop Chrome'], permissions: ['clipboard-read'] },
+      use: { ...devices['Desktop Chrome'], permissions: ['clipboard-read'], headless: true  },
     },
 
     {
       name: 'firefox',
       dependencies: ['setup'],
-      use: { ...devices['Desktop Firefox'] },
+      use: { ...devices['Desktop Firefox'], headless: true  },
     },
 
     {
       name: 'webkit',
       dependencies: ['setup'],
-      use: { ...devices['Desktop Safari'] },
+      use: { ...devices['Desktop Safari'], headless: true  },
     },
     /* Test against mobile viewports. */
     // {
