@@ -1,105 +1,77 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
-  timeout: 120_000, // each test
-  expect: { timeout: 10_000 }, // individual expect() waits
-  testDir: './tests',
-  /* Run tests in files in parallel */
-  fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'https://staging.therapios.de/',
+  // 🕐 Increase total test timeout slightly for CI stability
+  timeout: 90_000, // per test
+  expect: { timeout: 10_000 },
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on',
-    actionTimeout: 0,
-    ignoreHTTPSErrors: true,
+  testDir: './tests',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+
+  // ✅ Retry flaky tests automatically on CI
+  retries: process.env.CI ? 2 : 0,
+
+  // ✅ Run more workers in CI (1 is too slow)
+  // Playwright handles parallel isolation well
+  workers: process.env.CI ? 4 : undefined,
+
+  // ✅ Use concise + HTML reporter combo
+  reporter: process.env.CI
+    ? [['dot'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
+    : 'html',
+
+  use: {
+    baseURL: 'https://staging.therapios.de/',
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure', // Only collect heavy traces on retries
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    headless: true
+    headless: true,
+    actionTimeout: 15_000, // Avoid hanging forever
+    navigationTimeout: 30_000,
+    ignoreHTTPSErrors: true,
   },
 
-  /* Configure projects for major browsers */
   projects: [
-     {
+    // 👇 Separate “setup” role — generates storageState
+    {
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
     },
-     {
+
+    // 👇 Role-based authenticated users
+    {
       name: 'SandraZeibig',
-      use: { storageState: path.join(__dirname, '.auth/SandraZeibig.json'), headless: true  },
+      use: { storageState: path.join(__dirname, '.auth/SandraZeibig.json') },
     },
     {
       name: 'AdminJhen',
-      use: { storageState: path.join(__dirname, '.auth/AdminJhen.json'), headless: true  },
+      use: { storageState: path.join(__dirname, '.auth/AdminJhen.json') },
     },
     {
       name: 'SAJhen',
-      use: { storageState: path.join(__dirname, '.auth/SuperAdmin.json'), headless: true  },
+      use: { storageState: path.join(__dirname, '.auth/SuperAdmin.json') },
     },
+
+    // 👇 Browser configurations (desktop)
     {
       name: 'chromium',
       dependencies: ['setup'],
-      use: { ...devices['Desktop Chrome'], permissions: ['clipboard-read'], headless: true  },
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['clipboard-read'],
+      },
     },
-
     {
       name: 'firefox',
       dependencies: ['setup'],
-      use: { ...devices['Desktop Firefox'], headless: true  },
+      use: { ...devices['Desktop Firefox'] },
     },
-
     {
       name: 'webkit',
       dependencies: ['setup'],
-      use: { ...devices['Desktop Safari'], headless: true  },
+      use: { ...devices['Desktop Safari'] },
     },
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });
