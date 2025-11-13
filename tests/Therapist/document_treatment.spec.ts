@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.use({ storageState: undefined });
+//test.use({ storageState: undefined });
 
 test.describe('Document Treatment', () => {
 
@@ -8,7 +8,7 @@ test.describe('Document Treatment', () => {
     await page.goto('https://staging.therapios.de/therapist/'); // already logged in due to storageState
   });
 
-    test('Document single patient regular treatment', { tag: '@singleregular' }, async ({ page }) => {
+    test('Document single patient regular treatment', { tag: ['@Therapist','@singleregular'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(3).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
@@ -19,7 +19,7 @@ test.describe('Document Treatment', () => {
     await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated');
   });
 
-    test('Document single patient BV treatment', { tag: '@bvtreatment' }, async ({ page }) => {
+    test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(1).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
@@ -34,7 +34,7 @@ test.describe('Document Treatment', () => {
     await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated');
   });
 
-    test('Document single patient doppel beh treatment', { tag: '@doppelbeh' }, async ({ page }) => {
+    test('Document single patient doppel beh treatment', { tag: ['@Therapist','@doppelbeh'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(2).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
@@ -45,7 +45,7 @@ test.describe('Document Treatment', () => {
     await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated');
   });
 
-    test('Document multiple patients regular treatment', { tag: '@multipleregular' }, async ({ page }) => {
+    test('Document multiple patients regular treatment', { tag: ['@Therapist','@multipleregular'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(4).click({ force: true });
     await page.getByRole('checkbox').nth(5).click({ force: true });
     await page.getByRole('checkbox').nth(6).click({ force: true });
@@ -61,14 +61,14 @@ test.describe('Document Treatment', () => {
     await expect(page.getByTestId('surface')).toContainText('3 patients marked as Treated');
   });
 
-    test('Validate required filleds', { tag: '@validationerror' }, async ({ page }) => {
+    test('Validate required filleds', { tag: ['@Therapist','@validationerror'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(4).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await expect(page.locator('[id="3"]')).toContainText('Bitte alle erforderlichen Felder ausfüllen');
   });
 
-    test('Document reject treatment', { tag: '@rejecttreatment' }, async ({ page }) => {
+    test('Document reject treatment', { tag: ['@Therapist','@rejecttreatment'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(7).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
@@ -80,7 +80,7 @@ test.describe('Document Treatment', () => {
     await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated, 1 rejection documented');
   });
 
-    test('Document planned treatment', { tag: '@plannedtreatment' }, async ({ page }) => {
+    test('Document planned treatment', { tag: ['@Therapist','@plannedtreatment'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(7).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');

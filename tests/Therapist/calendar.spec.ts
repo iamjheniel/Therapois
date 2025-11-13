@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.use({ storageState: undefined });
+//test.use({ storageState: undefined });
 
 test.describe('Calendar', () => {
 
@@ -8,14 +8,14 @@ test.describe('Calendar', () => {
     await page.goto('https://staging.therapios.de/therapist/'); // already logged in due to storageState
   });
 
-  test('Calendar document treatment', { tag : '@calendar' }, async ({ page }) => {
+  test('Calendar document treatment', { tag : ['@Therapist', '@calendar'] }, async ({ page }) => {
     await page.getByText('Kalender').click();
     await page.getByTestId('button').click();
     await expect(page.locator('#root')).toContainText('Offene VOs');
     await expect(page.locator('#root')).toContainText('Andreas Bloch');
   });
 
-  test('Calendar edit document treatment', { tag : '@editcalendar' }, async ({ page }) => {
+  test('Calendar edit document treatment', { tag : ['@Therapist', '@editcalendar'] }, async ({ page }) => {
     await page.getByText('Kalender').click();
     await page.getByText('Andreas Bloch#113/BV (15 mins').click();
     await page.getByTestId('text-input-outlined').click();
