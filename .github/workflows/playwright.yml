@@ -1,27 +1,102 @@
 name: Playwright Tests
+
 on:
+  # 🔁 Automatically run on code updates
   push:
-    branches: [ main, master ]
+    branches: [main, staging]
   pull_request:
-    branches: [ main, master ]
+
+  # ▶️ Manual trigger with dropdown input
+  workflow_dispatch:
+    inputs:
+      role:
+        description: 'Select which role to test'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - admin
+          - superadmin
+          - therapist
+
+  # ⏰ (Optional) Scheduled daily run at 7AM UTC
+  # schedule:
+  #   - cron: '0 7 * * *'
+
 jobs:
-  test:
-    timeout-minutes: 60
+  # ✅ STEP 1: Create login sessions for each role
+  setup:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - name: 🧩 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧱 Install browsers
+        run: npx playwright install --with-deps
+
+      - name: 🔐 Generate .auth storage states
+        run: npx playwright test --project=setup
+
+  # ✅ STEP 2: Run Admin Tests
+  admin:
+    if: ${{ github.event.inputs.role == 'admin' || github.event.inputs.role == 'all' || github.event_name != 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - run: npx playwright install
+      - name: 🚀 Run Admin tests
+        run: npx playwright test --project=AdminJhen --grep @Admin
+
+  # ✅ STEP 3: Run SuperAdmin Tests
+  superadmin:
+    if: ${{ github.event.inputs.role == 'superadmin' || github.event.inputs.role == 'all' || github.event_name != 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - run: npx playwright install
+      - name: 🚀 Run SuperAdmin tests
+        run: npx playwright test --project=SAJhen --grep @SuperAdmin
+
+  # ✅ STEP 4: Run Therapist Tests
+  therapist:
+    if: ${{ github.event.inputs.role == 'therapist' || github.event.inputs.role == 'all' || github.event_name != 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - run: npx playwright install
+      - name: 🚀 Run Therapist tests
+        run: npx playwright test --project=SandraZeibig --grep @Therapist
+
+  # ✅ STEP 5: Collect Playwright report (only if any tests ran)
+  report:
+    runs-on: ubuntu-latest
+    needs: [admin, superadmin, therapist]
+    if: always()
+    steps:
+      - uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
