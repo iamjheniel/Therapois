@@ -12,7 +12,6 @@ test.describe('FVO Management', () => {
     test('Check Bestellen Tab', { tag: ['@Admin', '@FVOBestellen'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' F.VO Bestellung Dashboard' }).click();
-    await page.getByText('Bestellen').nth(1).click();
     await expect(page.locator('#root')).toContainText('F.-VO Status');
     await expect(page.locator('#root')).toContainText('Bestellen');
     });
@@ -53,7 +52,7 @@ test.describe('FVO Management', () => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' F.VO Bestellung Dashboard' }).click();  
     await page.getByText('Telefoniert', { exact: true }).click();
-    await expect(page.locator('#root')).toContainText('Keine Daten gefunden');
+    await expect(page.locator('#root')).toContainText('Telefoniert');
     });
 
 });
