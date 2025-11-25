@@ -46,9 +46,9 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document multiple patients regular treatment', { tag: ['@Therapist','@multipleregular'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(4).click({ force: true });
-    await page.getByRole('checkbox').nth(5).click({ force: true });
-    await page.getByRole('checkbox').nth(6).click({ force: true });
+    await page.getByRole('checkbox').nth(8).click({ force: true });
+    await page.getByRole('checkbox').nth(9).click({ force: true });
+    await page.getByRole('checkbox').nth(10).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (3)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (3)󰅖');
     await page.locator('[id="3"]').getByTestId('text-input-outlined').click();
@@ -69,19 +69,17 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document reject treatment', { tag: ['@Therapist','@rejecttreatment'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(7).click({ force: true });
+    await page.locator('div:nth-child(13) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:nth-child(3) > div > .css-g5y9jx.r-1otgn73').click();
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
-    await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
-    await page.getByTestId('surface').getByTestId('text-input-outlined').fill('reject treatment automation');
-    await page.getByRole('radio').first().click();
-    await page.locator('.css-g5y9jx.r-1awozwy.r-18u37iz.r-1h0z5md > .css-g5y9jx.r-1otgn73').click();
+    await page.getByTestId('surface').getByTestId('text-input-outlined').fill('reject');
+    await page.locator('.css-g5y9jx.r-14lw9ot > div > div:nth-child(2) > .css-g5y9jx.r-1awozwy.r-18u37iz > div > .css-g5y9jx.r-1otgn73').click();
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated, 1 rejection documented');
   });
 
     test('Document planned treatment', { tag: ['@Therapist','@plannedtreatment'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(7).click({ force: true });
+    await page.getByRole('checkbox').nth(13).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();

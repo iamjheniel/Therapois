@@ -8,7 +8,7 @@ test.describe('Therapist Upload Prescription', () => {
 
   test('Therapist Upload VO', { tag: ['@Therapist','@uploadvo'] }, async ({ page }) => {
     await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept hochladen' }).click();
+    await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');
     await page.getByRole('button', { name: '󰩎 Rezept hochladen' }).click();
     await page.getByRole('button', { name: 'Continue' }).click();
@@ -22,7 +22,7 @@ test.describe('Therapist Upload Prescription', () => {
 
   test('Therapist Upload VO View and Add Note', { tag: ['@Therapist', '@AddNoteTherapist'] }, async ({ page }) => {
     await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept hochladen' }).click();
+    await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');
     await page.getByTestId('button').nth(1).click({force: true});
     await expect(page.getByTestId('modal-surface')).toContainText('Prescription Image Details');

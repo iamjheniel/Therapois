@@ -7,17 +7,19 @@ test.describe('Therapist Doku Check', () => {
   });
 
     test('Check Doku feature', { tag: ['@Therapist','@checkdoku'] }, async ({ page }) => {
+    await expect(page.locator('#root')).toContainText('Dashboard');
     await page.getByTestId('icon-button').nth(1).click({ force: true });
-    await page.getByText('').first().click();
-    await expect(page.getByTestId('surface')).toContainText('Documentation (Treatment History)');
+    await page.locator('div').filter({ hasText: /^$/ }).nth(1).click({ force: true });
+    await expect(page.getByTestId('modal-surface')).toContainText('Dokumentation (Behandlungsverlauf)');
 
   });
 
     test('Check Logs feature', { tag: ['@Therapist','@checklogs'] }, async ({ page }) => {
-    await page.getByTestId('icon-button').nth(1).click({ force: true });   
-    await page.locator('div').filter({ hasText: /^$/ }).nth(4).click({ force: true });
+    await expect(page.locator('#root')).toContainText('Dashboard');
+    await page.getByTestId('icon-button').nth(1).click({force: true });
+    await page.locator('div').filter({ hasText: /^$/ }).nth(4).click({force: true });
     await expect(page.getByTestId('modal-surface')).toContainText('Prescription Logs - Franz Abitz');
-    await page.getByText('Close').click();
+    await page.locator('div').filter({ hasText: /^Close$/ }).nth(1).click();
   });
 
 });
