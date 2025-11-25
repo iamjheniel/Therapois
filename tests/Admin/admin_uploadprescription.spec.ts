@@ -33,7 +33,7 @@ test.describe('Admin Upload Prescription', () => {
     test('Admin Upload Prescription Update Status', { tag: ['@Admin', '@updateStatusUploadVO'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Rezept' }).click();
-    await page.getByTestId('button').nth(1).click();
+    await page.getByTestId('button').nth(1).click({force: true});
     await page.locator('img').nth(1).click();
     await page.getByTestId('Nicht lesbar').getByText('Nicht lesbar').click();
     await page.getByRole('button', { name: 'Save Changes' }).click();
