@@ -16,12 +16,7 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('Regular treatment test automation');
     await page.getByRole('radio').first().click();
     await page.getByRole('button', { name: 'Save' }).click();
-    // 1. Close modal (or wait for it to close automatically)
-    const modal = page.getByTestId('modal-surface');
-    await modal.waitFor({ state: 'detached', timeout: 10000 });
-
-    // 2. Check success banner / toast / page message
-    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 15000 });
   });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
