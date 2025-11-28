@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Admin Copayment', () => {
+test.describe('Super Admin Copayment', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
   });
 
-    test('Admin Copayment View and Add Note', { tag: ['@Admin', '@CopaymentAddNoteAdmin'] }, async ({ page }) => {
+    test('Super Admin Copayment View and Add Note', { tag: ['@SuperAdmin', '@CopaymentAddNoteAdmin'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Zuzahlungsbefreiung' }).click();
     await page.getByTestId('button').nth(1).click({force: true, timeout:60000});
@@ -18,7 +18,7 @@ test.describe('Admin Copayment', () => {
     await page.getByRole('button', { name: '󰅖' }).click();
    
     });
-    test('Admin Copayment Search', { tag: ['@Admin', '@CopaymentSearch'] }, async ({ page }) => {
+    test('Super Admin Copayment Search', { tag: ['@SuperAdmin', '@CopaymentSearch'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Zuzahlungsbefreiung' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).click();
@@ -37,7 +37,7 @@ test.describe('Admin Copayment', () => {
     await page.getByRole('button', { name: '' }).click();
     });
 
-    test('Admin Copayment Update Status', { tag: ['@Admin', '@CopaymentUpdateStatus'] }, async ({ page }) => {
+    test('Super Admin Copayment Update Status', { tag: ['@SuperAdmin', '@CopaymentUpdateStatus'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Zuzahlungsbefreiung' }).click();
     await page.getByTestId('button').nth(1).click({force: true});

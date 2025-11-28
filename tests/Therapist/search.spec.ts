@@ -19,11 +19,11 @@ test.describe('Search Functionality', () => {
 
   test('should show results for a valid search vo number', { tag: ['@Therapist','@searchvo'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').click();
-    await page.getByTestId('text-input-outlined').fill('3569-4');
+    await page.getByTestId('text-input-outlined').fill('2155');
     await page.getByTestId('text-input-outlined').press('Enter');
     
     await expect(page.locator('#root')).toContainText('Ingrid Elsner');
-    await expect(page.locator('#root')).toContainText('3569-4');
+    await expect(page.locator('#root')).toContainText('2155-11');
   });
 
   test('should show “no patient found" message for unknown name', { tag: ['@Therapist','@searchunknownname'] }, async ({ page }) => {

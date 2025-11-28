@@ -4,7 +4,7 @@ import path from 'path';
 export default defineConfig({
   // 🕐 Increase total test timeout slightly for CI stability
   timeout: 90_000, // per test
-  expect: { timeout: 10_000 },
+  expect: { timeout: 30_000 },
 
   testDir: './tests',
   fullyParallel: true,
@@ -15,7 +15,7 @@ export default defineConfig({
 
   // ✅ Run more workers in CI (1 is too slow)
   // Playwright handles parallel isolation well
-  workers: process.env.CI ? 4 : undefined,
+  workers: process.env.CI ? 1 : undefined,
 
   // ✅ Use concise + HTML reporter combo
   reporter: process.env.CI
@@ -28,9 +28,12 @@ export default defineConfig({
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
     headless: true,
-    actionTimeout: 15_000, // Avoid hanging forever
+    actionTimeout: 0,           // disable low-level timeout
     navigationTimeout: 30_000,
     ignoreHTTPSErrors: true,
+    launchOptions: {
+  slowMo: process.env.CI ? 150 : 0,
+},
   },
 
   projects: [

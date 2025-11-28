@@ -69,7 +69,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document reject treatment', { tag: ['@Therapist','@rejecttreatment'] }, async ({ page }) => {
-    await page.locator('div:nth-child(13) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:nth-child(3) > div > .css-g5y9jx.r-1otgn73').click();
+    await page.getByRole('checkbox').nth(12).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('reject');
