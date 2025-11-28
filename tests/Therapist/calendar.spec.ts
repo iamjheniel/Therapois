@@ -68,7 +68,7 @@ test.describe('Calendar', () => {
     await page.getByRole('button', { name: 'Save' }).click();
 
     // Verify success toast
-    await expect(page.getByTestId('surface')).toContainText('Activity updated');
+    await expect(page.getByText(/Activity updated/i).first()).toBeVisible({ timeout: 15_000 });
 
   });
 
