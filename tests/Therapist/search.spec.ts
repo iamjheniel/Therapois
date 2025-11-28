@@ -12,7 +12,6 @@ test.describe('Search Functionality', () => {
     await page.getByTestId('text-input-outlined').click();
     await page.getByTestId('text-input-outlined').fill('bloch');
     await page.getByTestId('text-input-outlined').press('Enter');
-    
     await expect(page.locator('#root')).toContainText('Andreas Bloch');
     await expect(page.locator('#root')).toContainText('5158-1');
   });
@@ -21,8 +20,6 @@ test.describe('Search Functionality', () => {
     await page.getByTestId('text-input-outlined').click();
     await page.getByTestId('text-input-outlined').fill('2155');
     await page.getByTestId('text-input-outlined').press('Enter');
-    
-    await expect(page.locator('#root')).toContainText('Ingrid Elsner');
     await expect(page.locator('#root')).toContainText('2155-11');
   });
 

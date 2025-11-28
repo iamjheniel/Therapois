@@ -16,7 +16,12 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('Regular treatment test automation');
     await page.getByRole('radio').first().click();
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated');
+    // wait for modal to appear
+    const modal = page.getByTestId('modal-surface');
+    await modal.waitFor({ state: 'visible', timeout: 10000 });
+
+    // assert success message inside modal only
+    await expect(modal).toContainText("1 patients marked as Treated");
   });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
@@ -31,7 +36,12 @@ test.describe('Document Treatment', () => {
     await page.getByText('Search and select Heilmittel').click();
     await page.locator('div').filter({ hasText: /^BGM-BV$/ }).nth(3).click();
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated');
+    // wait for modal to appear
+    const modal = page.getByTestId('modal-surface');
+    await modal.waitFor({ state: 'visible', timeout: 10000 });
+
+    // assert success message inside modal only
+    await expect(modal).toContainText("1 patients marked as Treated");
   });
 
     test('Document single patient doppel beh treatment', { tag: ['@Therapist','@doppelbeh'] }, async ({ page }) => {
@@ -42,7 +52,12 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('Doppel beh treatment test automation');
     await page.getByRole('radio').first().click();
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated');
+    // wait for modal to appear
+    const modal = page.getByTestId('modal-surface');
+    await modal.waitFor({ state: 'visible', timeout: 10000 });
+
+    // assert success message inside modal only
+    await expect(modal).toContainText("1 patients marked as Treated");
   });
 
     test('Document multiple patients regular treatment', { tag: ['@Therapist','@multipleregular'] }, async ({ page }) => {
@@ -58,7 +73,12 @@ test.describe('Document Treatment', () => {
     await page.locator('[id="7"]').getByTestId('text-input-outlined').click();
     await page.locator('[id="7"]').getByTestId('text-input-outlined').fill('multiple regular treatment automation');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByTestId('surface')).toContainText('3 patients marked as Treated');
+    // wait for modal to appear
+    const modal = page.getByTestId('modal-surface');
+    await modal.waitFor({ state: 'visible', timeout: 10000 });
+
+    // assert success message inside modal only
+    await expect(modal).toContainText('3 patients marked as Treated');
   });
 
     test('Validate required filleds', { tag: ['@Therapist','@validationerror'] }, async ({ page }) => {
@@ -75,7 +95,12 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('reject');
     await page.locator('.css-g5y9jx.r-14lw9ot > div > div:nth-child(2) > .css-g5y9jx.r-1awozwy.r-18u37iz > div > .css-g5y9jx.r-1otgn73').click();
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated, 1 rejection documented');
+    // wait for modal to appear
+    const modal = page.getByTestId('modal-surface');
+    await modal.waitFor({ state: 'visible', timeout: 10000 });
+
+    // assert success message inside modal only
+    await expect(modal).toContainText('1 patients marked as Treated, 1 rejection documented');
   });
 
     test('Document planned treatment', { tag: ['@Therapist','@plannedtreatment'] }, async ({ page }) => {
@@ -86,7 +111,12 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('planned treatment automation');
     await page.getByRole('radio').nth(1).click();
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByTestId('surface')).toContainText('1 patients marked as Treated');
+    // wait for modal to appear
+    const modal = page.getByTestId('modal-surface');
+    await modal.waitFor({ state: 'visible', timeout: 10000 });
+
+    // assert success message inside modal only
+    await expect(modal).toContainText("1 patients marked as Treated");
   });
 
 });
