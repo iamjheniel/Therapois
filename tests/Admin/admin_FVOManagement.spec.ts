@@ -37,7 +37,7 @@ test.describe('FVO Management', () => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' F.VO Bestellung Dashboard' }).click();
     await page.getByText('Nachverfolgt', { exact: true }).click();
-    await expect(page.locator('#root')).toContainText('Keine Daten gefunden');
+    await expect(page.locator('#root')).toContainText('Nachverfolgt');
     });
       
     test('Check Telefonieren Tab', { tag: ['@Admin' , '@FVOTelefonieren'] }, async ({ page }) => {

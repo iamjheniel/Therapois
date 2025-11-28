@@ -20,7 +20,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(1).click({ force: true });
+    await page.getByRole('checkbox').nth(4).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
@@ -35,7 +35,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document single patient doppel beh treatment', { tag: ['@Therapist','@doppelbeh'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(2).click({ force: true });
+    await page.getByRole('checkbox').nth(6).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
@@ -62,7 +62,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Validate required filleds', { tag: ['@Therapist','@validationerror'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(4).click({ force: true });
+    await page.getByRole('checkbox').nth(3).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await expect(page.locator('[id="3"]')).toContainText('Bitte alle erforderlichen Felder ausfüllen');
@@ -79,7 +79,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document planned treatment', { tag: ['@Therapist','@plannedtreatment'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(13).click({ force: true });
+    await page.getByRole('checkbox').nth(14).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
