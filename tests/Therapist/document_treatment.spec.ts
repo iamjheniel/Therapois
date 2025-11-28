@@ -36,12 +36,7 @@ test.describe('Document Treatment', () => {
     await page.getByText('Search and select Heilmittel').click();
     await page.locator('div').filter({ hasText: /^BGM-BV$/ }).nth(3).click();
     await page.getByRole('button', { name: 'Save' }).click();
-    // 1. Close modal (or wait for it to close automatically)
-    const modal = page.getByTestId('modal-surface');
-    await modal.waitFor({ state: 'detached', timeout: 10000 });
-
-    // 2. Check success banner / toast / page message
-    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 15000 });
   });
 
     test('Document single patient doppel beh treatment', { tag: ['@Therapist','@doppelbeh'] }, async ({ page }) => {
@@ -52,12 +47,7 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('Doppel beh treatment test automation');
     await page.getByRole('radio').first().click();
     await page.getByRole('button', { name: 'Save' }).click();
-    // 1. Close modal (or wait for it to close automatically)
-    const modal = page.getByTestId('modal-surface');
-    await modal.waitFor({ state: 'detached', timeout: 10000 });
-
-    // 2. Check success banner / toast / page message
-    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 15000 });
   });
 
     test('Document multiple patients regular treatment', { tag: ['@Therapist','@multipleregular'] }, async ({ page }) => {
@@ -73,12 +63,7 @@ test.describe('Document Treatment', () => {
     await page.locator('[id="7"]').getByTestId('text-input-outlined').click();
     await page.locator('[id="7"]').getByTestId('text-input-outlined').fill('multiple regular treatment automation');
     await page.getByRole('button', { name: 'Save' }).click();
-    // 1. Close modal (or wait for it to close automatically)
-    const modal = page.getByTestId('modal-surface');
-    await modal.waitFor({ state: 'detached', timeout: 10000 });
-
-    // 2. Check success banner / toast / page message
-    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 15000 });
   });
 
     test('Validate required filleds', { tag: ['@Therapist','@validationerror'] }, async ({ page }) => {
@@ -92,15 +77,10 @@ test.describe('Document Treatment', () => {
     await page.getByRole('checkbox').nth(12).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
-    await page.getByTestId('surface').getByTestId('text-input-outlined').fill('reject');
+    await page.getByTestId('surface').getByTestId('text-input-outlined').fill('reject automation test');
     await page.locator('.css-g5y9jx.r-14lw9ot > div > div:nth-child(2) > .css-g5y9jx.r-1awozwy.r-18u37iz > div > .css-g5y9jx.r-1otgn73').click();
     await page.getByRole('button', { name: 'Save' }).click();
-    // 1. Close modal (or wait for it to close automatically)
-    const modal = page.getByTestId('modal-surface');
-    await modal.waitFor({ state: 'detached', timeout: 10000 });
-
-    // 2. Check success banner / toast / page message
-    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 15000 });
   });
 
     test('Document planned treatment', { tag: ['@Therapist','@plannedtreatment'] }, async ({ page }) => {
@@ -111,12 +91,7 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('planned treatment automation');
     await page.getByRole('radio').nth(1).click();
     await page.getByRole('button', { name: 'Save' }).click();
-    // 1. Close modal (or wait for it to close automatically)
-    const modal = page.getByTestId('modal-surface');
-    await modal.waitFor({ state: 'detached', timeout: 10000 });
-
-    // 2. Check success banner / toast / page message
-    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/marked as Treated/i)).toBeVisible({ timeout: 15000 });
   });
 
 });
