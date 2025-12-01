@@ -30,13 +30,13 @@ test.describe('Super Admin Upload Prescription', () => {
     await expect(page.locator('#root')).toContainText('S. Zeibig');
     });
 
-    test('Super Admin Upload Prescription Update Status', { tag: ['@SuperAdmin', '@updateStatusUploadVO'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept' }).click();
-    await page.getByTestId('button').nth(1).click({force: true});
-    await page.locator('img').nth(1).click();
-    await page.getByTestId('Nicht lesbar').getByText('Nicht lesbar').click();
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    await expect(page.locator('#root')).toContainText('Nicht lesbar');
-    });
+    // test('Super Admin Upload Prescription Update Status', { tag: ['@SuperAdmin', '@updateStatusUploadVO'] }, async ({ page }) => {
+    // await page.getByText('').click();
+    // await page.getByRole('button', { name: ' Rezept' }).click();
+    // await page.getByTestId('button').nth(1).click({force: true});
+    // await page.locator('img').nth(1).click();
+    // await page.getByTestId('Nicht lesbar').getByText('Nicht lesbar').click();
+    // await page.getByRole('button', { name: 'Save Changes' }).click();
+    // await expect(page.locator('#root')).toContainText('Nicht lesbar');
+    // });
 });

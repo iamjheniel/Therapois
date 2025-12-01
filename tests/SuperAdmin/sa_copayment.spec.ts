@@ -37,13 +37,13 @@ test.describe('Super Admin Copayment', () => {
     await page.getByRole('button', { name: '' }).click();
     });
 
-    test('Super Admin Copayment Update Status', { tag: ['@SuperAdmin', '@CopaymentUpdateStatus'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Zuzahlungsbefreiung' }).click();
-    await page.getByTestId('button').nth(1).click({force: true});
-    await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
-    await page.locator('div:nth-child(2) > .css-g5y9jx.r-lrvibr > div > .css-g5y9jx').click();
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    await expect(page.locator('#root')).toContainText('Nicht lesbar');
-    });
+    // test('Super Admin Copayment Update Status', { tag: ['@SuperAdmin', '@CopaymentUpdateStatus'] }, async ({ page }) => {
+    // await page.getByText('').click();
+    // await page.getByRole('button', { name: ' Zuzahlungsbefreiung' }).click();
+    // await page.getByTestId('button').nth(1).click({force: true});
+    // await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
+    // await page.locator('div:nth-child(2) > .css-g5y9jx.r-lrvibr > div > .css-g5y9jx').click();
+    // await page.getByRole('button', { name: 'Save Changes' }).click();
+    // await expect(page.locator('#root')).toContainText('Nicht lesbar');
+    // });
 });

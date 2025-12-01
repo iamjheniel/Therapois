@@ -16,11 +16,12 @@ test.describe('Therapist Upload Prescription', () => {
     const filePath = path.join(__dirname, 'sampleprescription.png');
 
     const [fileChooser] = await Promise.all([
-      page.waitForEvent("filechooser"),
-      page.getByText("Wählen Sie ein Bild zum").click(),
+    page.waitForEvent("filechooser"),
+    page.getByText("Wählen Sie ein Bild zum").click(),
     ]);
 
     await fileChooser.setFiles(filePath);
+
     await page.getByRole('button', { name: 'Submit' }).click();
     await expect(page.locator('#root')).toContainText('In Prüfung');
     });
