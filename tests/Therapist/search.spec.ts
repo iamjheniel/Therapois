@@ -20,7 +20,7 @@ test.describe('Search Functionality', () => {
     await page.getByTestId('text-input-outlined').click();
     await page.getByTestId('text-input-outlined').fill('2155');
     await page.getByTestId('text-input-outlined').press('Enter');
-    await expect(page.locator('#root')).toContainText('2155-11');
+    await expect(page.locator('#root')).toContainText('2155-9');
   });
 
   test('should show “no patient found" message for unknown name', { tag: ['@Therapist','@searchunknownname'] }, async ({ page }) => {

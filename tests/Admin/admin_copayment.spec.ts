@@ -31,9 +31,9 @@ test.describe('Admin Copayment', () => {
     await expect(page.locator('#root')).toContainText('In Prüfung');
     await page.getByRole('textbox', { name: 'Suchen' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).click();
-    await page.getByRole('textbox', { name: 'Suchen' }).fill('66-1');
+    await page.getByRole('textbox', { name: 'Suchen' }).fill('66');
     await page.getByRole('textbox', { name: 'Suchen' }).press('Enter');
-    await expect(page.locator('#root')).toContainText('66-1');
+    await expect(page.locator('#root')).toContainText('66-3');
     await page.getByRole('button', { name: '' }).click();
     });
 

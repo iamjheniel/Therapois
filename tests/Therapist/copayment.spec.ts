@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import path from 'path';
 
 test.describe('Therapist Upload Prescription', () => {
 
@@ -11,10 +12,15 @@ test.describe('Therapist Upload Prescription', () => {
     await page.getByRole('button', { name: ' Zuzahlungsbefreiung' }).click();
     await expect(page.locator('#root')).toContainText('Zuzahlungsbefreiung Upload');
     await page.getByTestId( 'button-text' ).click({force:true});
-    const [fileChooser] = await Promise.all([
-    page.waitForEvent("filechooser"),
-    page.getByText("󰭾Wählen Sie ein Bild zum").click(),]);
-    await fileChooser.setFiles("/Users/jhenielguardiana/Documents/Therapois/tests/Therapist/sampleprescription.png");
+     const filePath = path.join(__dirname, "sampleprescription.png");
+     console.log("FILE PATH:", filePath);  // debug
+ 
+     const [fileChooser] = await Promise.all([
+       page.waitForEvent("filechooser"),
+       page.getByText("Wählen Sie ein Bild zum").click(),
+     ]);
+ 
+    await fileChooser.setFiles(filePath);
     await page.getByRole('button', { name: 'Submit' }).click();
     await expect(page.getByTestId('surface')).toContainText('Copayment uploaded successfully');
     });
