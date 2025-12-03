@@ -1,0 +1,31 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('Admin TBoard', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
+  });
+
+    test('Admin TBoard Document Treatment', { tag: ['@Admin', '@AdminDoku'] }, async ({ page }) => {
+    await page.getByText('').click();
+    await page.getByRole('button', { name: ' T Board' }).click();
+    await page.waitForTimeout(10000);
+    await page.getByText('Therapist: (Select)').click();
+    await page.getByText('Sandra Zeibig').click();
+    await page.getByRole('checkbox').nth(2).click({force:true});
+    await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
+    await page.getByTestId('surface').getByTestId('text-input-outlined').click();
+    await page.getByTestId('surface').getByTestId('text-input-outlined').fill('test admin');
+    await page.getByRole('radio').first().click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    // Wait for backend + UI to stabilize
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+    await expect(page.getByTestId('surface')).toContainText(
+    '1 patients marked as Treated',
+    { timeout: 15000 });
+    //check checkbox in completeed VOs
+    await page.getByText('Abgeschlossene VOs').click();
+    await expect(page.locator('#root')).toContainText('󰄱');
+    });
+});

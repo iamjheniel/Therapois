@@ -108,5 +108,26 @@ test.describe('Document Treatment', () => {
     await page.waitForTimeout(500);
     await expect(page.getByText(/marked as Treated/i).first()).toBeVisible({ timeout: 20000 });
   });
+  
+  test('Document activity', { tag: ['@Therapist','@activity'] }, async ({ page }) => {
+  await page.getByRole('checkbox').nth(11).click({ force: true });
+  await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
+  await page.getByRole('button', { name: ' Aktivität' }).click();
+  await page.locator('div').filter({ hasText: /^Pause$/ }).nth(1).click();
+  await page.getByText('Other').click();
+  await page.getByRole('textbox', { name: 'Enter custom activity' }).click();
+  await page.getByRole('textbox', { name: 'Enter custom activity' }).fill('dance');
+  await page.getByRole('textbox', { name: 'In minutes' }).click();
+  await page.getByRole('textbox', { name: 'In minutes' }).fill('20');
+  await page.getByRole('textbox', { name: 'Doku eingeben' }).click();
+  await page.getByRole('textbox', { name: 'Doku eingeben' }).fill('automation test');
+  await page.getByRole('button', { name: 'Save' }).click();
+  // Wait for backend + UI to stabilize
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId('surface')).toContainText(
+  '1 patients marked as Treated',
+  { timeout: 15000 });
+  });
 
 });

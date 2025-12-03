@@ -40,5 +40,12 @@ test.describe('Search Functionality', () => {
     await expect(page.locator('#root')).toContainText('No patients found');
 
   });
-
+  test('should filter search results by location', { tag: ['@Therapist','@searchlocation'] }, async ({ page }) => {
+  await page.waitForTimeout(10000);
+  await page.getByText('ECH').click({force: true});
+  await page.getByText('FSE Pflegeeinrichtung Treptow').click();
+  await expect(page.locator('#root')).toContainText('Benjamin Larisch');
+  await page.getByTestId('icon-button').click({force: true});
+  await expect(page.locator('#root')).toContainText('FSE Pflegeeinrichtung Treptow / Johannisthal');
+  });
 });

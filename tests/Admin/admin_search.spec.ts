@@ -8,7 +8,7 @@ test.describe('Admin Search', () => {
     await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
   });
 
-    test('Admin Search Active VO Functionality', { tag: '@AdminSearchActiveVo' }, async ({ page }) => {
+    test('Admin Search Active VO Functionality', { tag: ['@Admin', '@AdminSearchActiveVo'] }, async ({ page }) => {
     await page.getByText('VO Status').first().click();
     await page.getByText('Aktiv').click();
     await page.getByText('Therapeut: (Auswählen)').click();
@@ -18,14 +18,14 @@ test.describe('Admin Search', () => {
     await expect(page.locator('#root')).toContainText('S. Zeibig');
     });
 
-    test('Admin Search Abgebrochen VO Functionality', { tag: '@AdminSearchAbgebrochenVo' }, async ({ page }) => {
+    test('Admin Search Abgebrochen VO Functionality', { tag: ['@Admin','@AdminSearchAbgebrochenVo']}, async ({ page }) => {
     await page.getByText('VO Status').first().click();
     await page.getByText('Abgebrochen').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Abgebrochen');
     });
 
-    test('Admin Search Fertig behandelt VO Functionality', { tag: '@AdminSearchFertigbehandeltVo' }, async ({ page }) => {
+    test('Admin Search Fertig behandelt VO Functionality', { tag: ['@Admin','@AdminSearchFertigbehandeltVo' ]}, async ({ page }) => {
     await page.getByText('VO Status').first().click();
     await page.getByTestId('Fertig Behandelt').getByText('Fertig Behandelt').click();
     await expect(page.locator('#root')).toContainText('VO Status');
@@ -35,11 +35,20 @@ test.describe('Admin Search', () => {
   
     });
 
-    test('Admin Search Abgelaufen VO Functionality', { tag: '@AdminSearchAbgelaufenVo' }, async ({ page }) => {
+    test('Admin Search Abgelaufen VO Functionality', { tag: ['@Admin', '@AdminSearchAbgelaufenVo'] }, async ({ page }) => {
     await page.getByText('VO Status').first().click();
     await page.getByText('Abgelaufen').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Abgelaufen');
     });
 
+    test('Admin Search Doctor and Facility', { tag: ['@Admin', '@AdminSearchDoctor'] }, async ({ page }) => {
+    await page.getByText('Arzt: (Auswählen)').click();
+    await page.getByText('Juri Sloboda').click();
+    await expect(page.locator('#root')).toContainText('J. Sloboda');
+    await page.getByText('').click();
+    await page.getByText('ER: (Auswählen)').click();
+    await page.getByText('Alpenland Marzahn').click();
+    await expect(page.locator('#root')).toContainText('Alpenland Marzahn');
+    });
 });
