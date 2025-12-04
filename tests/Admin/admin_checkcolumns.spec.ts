@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Admin Dashboard Check all columns', () => {
+test.describe('Admin Dashboard', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
@@ -12,6 +12,7 @@ test.describe('Admin Dashboard Check all columns', () => {
     await expect(page.locator('#root')).toContainText('VO Nr.');
     await expect(page.locator('#root')).toContainText('Geburtsdatum');
     await expect(page.locator('#root')).toContainText('Heilmittel');
+    await expect(page.locator('#root')).toContainText('ICD');
     await expect(page.locator('#root')).toContainText('Einrichtung');
     await expect(page.locator('#root')).toContainText('Therapeut');
     await expect(page.locator('#root')).toContainText('Ausst. Datum');
