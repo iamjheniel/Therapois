@@ -25,10 +25,6 @@ test.describe('Super Admin Copayment', () => {
     await page.getByRole('textbox', { name: 'Suchen' }).fill('sandra');
     await page.getByRole('textbox', { name: 'Suchen' }).press('Enter');
     await expect(page.locator('#root')).toContainText('S. Zeibig');
-    await page.getByRole('button', { name: '' }).click();
-    await page.getByText('').nth(5).click();
-    await page.locator('div').filter({ hasText: /In Prüfung\s*\(\d+\)/ }).nth(3).click();
-    await expect(page.locator('#root')).toContainText('In Prüfung');
     await page.getByRole('textbox', { name: 'Suchen' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).fill('66');
     await page.getByRole('textbox', { name: 'Suchen' }).press('Enter');

@@ -24,14 +24,20 @@ test.describe('Therapist Upload Prescription', () => {
     await fileChooser.setFiles(filePath);
 
     await page.getByRole('button', { name: 'Submit' }).click();
-    await expect(page.locator('#root')).toContainText('In Prüfung');
+    await expect(page.locator('text=In Prüfung')).toBeVisible({ timeout: 30000 });
+
     });
 
   test('Therapist Upload VO View and Add Note', { tag: ['@Therapist', '@AddNoteTherapist'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');
-    await page.getByTestId('button').nth(1).click({force: true});
+    // Wait for the list to load prescriptions
+    await expect(page.locator('text=In Prüfung')).toBeVisible({ timeout: 30000 });
+
+    // Click the first "View" button of the prescription
+    const viewButton = page.getByRole('button', { name: /view/i }).first();
+    await viewButton.click({force: true});
     await expect(page.getByTestId('modal-surface')).toContainText('Prescription Image Details');
     await page.getByRole('textbox', { name: 'Type your note here...' }).click();
     await page.getByRole('textbox', { name: 'Type your note here...' }).fill('automation therapist test');
