@@ -24,7 +24,7 @@ test.describe('Therapist Upload Prescription', () => {
     await fileChooser.setFiles(filePath);
 
     await page.getByRole('button', { name: 'Submit' }).click();
-    await expect(page.locator('text=In Prüfung')).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('div:has-text("In Prüfung")').first()).toBeVisible({ timeout: 30000 });
 
     });
 
@@ -33,7 +33,7 @@ test.describe('Therapist Upload Prescription', () => {
     await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');
     // Wait for the list to load prescriptions
-    await expect(page.locator('text=In Prüfung')).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('div:has-text("In Prüfung")').first()).toBeVisible({ timeout: 30000 });
 
     // Click the first "View" button of the prescription
     const viewButton = page.getByRole('button', { name: /view/i }).first();

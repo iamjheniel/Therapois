@@ -27,7 +27,7 @@ test.describe('Super Admin Upload Prescription', () => {
     await page.getByRole('textbox', { name: 'Suchen' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).fill('sandra');
     await page.getByRole('textbox', { name: 'Suchen' }).press('Enter');
-    await expect(page.locator('#root')).toContainText('S. Zeibig');
+    await expect(page.locator('#root')).toContainText('Sa. Zeibig');
     });
 
     // test('Super Admin Upload Prescription Update Status', { tag: ['@SuperAdmin', '@updateStatusUploadVO'] }, async ({ page }) => {

@@ -8,7 +8,7 @@ test.describe('Therapist Doku Check', () => {
 
     test('Check Doku feature', { tag: ['@Therapist','@checkdoku'] }, async ({ page }) => {
     await expect(page.locator('#root')).toContainText('Dashboard');
-    await page.getByTestId('icon-button').nth(1).click({ force: true });
+    await page.getByText('5󰄱Franz Abitz').click({force:true});
     await page.locator('div').filter({ hasText: /^$/ }).nth(1).click({ force: true });
     await expect(page.getByTestId('modal-surface')).toContainText('Dokumentation (Behandlungsverlauf)');
 
@@ -16,7 +16,7 @@ test.describe('Therapist Doku Check', () => {
 
     test('Check Logs feature', { tag: ['@Therapist','@checklogs'] }, async ({ page }) => {
     await expect(page.locator('#root')).toContainText('Dashboard');
-    await page.getByTestId('icon-button').nth(1).click({force: true });
+    await page.getByText('5󰄱Franz Abitz').click({force:true});
     await page.locator('div').filter({ hasText: /^$/ }).nth(4).click({force: true });
     await expect(page.getByTestId('modal-surface')).toContainText(/Prescription logs/i);
     await page.locator('div').filter({ hasText: /^Close$/ }).nth(1).click();

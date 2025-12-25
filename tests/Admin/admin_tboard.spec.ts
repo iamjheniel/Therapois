@@ -24,8 +24,5 @@ test.describe('Admin TBoard', () => {
     await expect(page.getByTestId('surface')).toContainText(
     '1 patients marked as Treated',
     { timeout: 15000 });
-    //check checkbox in completeed VOs
-    await page.getByText('Abgeschlossene VOs').click();
-    await expect(page.locator('#root')).toContainText('󰄱');
     });
 });

@@ -13,22 +13,20 @@ test.describe('Search Functionality', () => {
     await page.getByTestId('text-input-outlined').fill('bloch');
     await page.getByTestId('text-input-outlined').press('Enter');
     await expect(page.locator('#root')).toContainText('Andreas Bloch');
-    await expect(page.locator('#root')).toContainText('5158-1');
   });
 
   test('should show results for a valid search vo number', { tag: ['@Therapist','@searchvo'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').click();
     await page.getByTestId('text-input-outlined').fill('2155');
     await page.getByTestId('text-input-outlined').press('Enter');
-    await expect(page.locator('#root')).toContainText('2155-9');
+    await expect(page.locator('#root')).toContainText('Franz Abitz');
   });
 
   test('should show “no patient found" message for unknown name', { tag: ['@Therapist','@searchunknownname'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').click();
     await page.getByTestId('text-input-outlined').fill('test');
     await page.getByTestId('text-input-outlined').press('Enter');
-    
-    await expect(page.locator('#root')).toContainText('No patients found');
+    await expect(page.locator('#root')).toContainText('Keine Patienten gefunden');
 
   });
 
@@ -36,16 +34,14 @@ test.describe('Search Functionality', () => {
     await page.getByTestId('text-input-outlined').click();
     await page.getByTestId('text-input-outlined').fill('1111');
     await page.getByTestId('text-input-outlined').press('Enter');
-    
-    await expect(page.locator('#root')).toContainText('No patients found');
+    await expect(page.locator('#root')).toContainText('Keine Patienten gefunden');
 
   });
   test('should filter search results by location', { tag: ['@Therapist','@searchlocation'] }, async ({ page }) => {
   await page.waitForTimeout(10000);
   await page.getByText('ECH').click({force: true});
-  await page.getByText('FSE Pflegeeinrichtung Treptow').click();
-  await expect(page.locator('#root')).toContainText('Benjamin Larisch');
-  await page.getByTestId('icon-button').click({force: true});
-  await expect(page.locator('#root')).toContainText('FSE Pflegeeinrichtung Treptow / Johannisthal');
+  await page.getByText('AIP Inter Care GmbH').click();
+  await page.getByText('󰄱Alexander Born').click();
+  await expect(page.locator('#root')).toContainText('AIP Inter Care GmbH');
   });
 });

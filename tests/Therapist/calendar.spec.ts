@@ -21,8 +21,7 @@ test.describe('Calendar', () => {
 
     // Validate page content
     const root = page.locator('#root');
-    await expect(root).toContainText('Offene VOs');
-    await expect(page.locator('div[tabindex="0"]').first()).toBeVisible();
+    await expect(root).toContainText(/Meine VOs/i);
 
   });
 

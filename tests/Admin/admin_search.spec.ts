@@ -15,7 +15,7 @@ test.describe('Admin Search', () => {
     await page.getByText('Sandra Zeibig').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Aktiv');
-    await expect(page.locator('#root')).toContainText('S. Zeibig');
+    await expect(page.locator('#root')).toContainText('Sa. Zeibig');
     });
 
     test('Admin Search Abgebrochen VO Functionality', { tag: ['@Admin','@AdminSearchAbgebrochenVo']}, async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Admin Search', () => {
     test('Admin Search Doctor and Facility', { tag: ['@Admin', '@AdminSearchDoctor'] }, async ({ page }) => {
     await page.getByText('Arzt: (Auswählen)').click();
     await page.getByText('Juri Sloboda').click();
-    await expect(page.locator('#root')).toContainText('J. Sloboda');
+    await expect(page.locator('#root')).toContainText('Ju. Sloboda');
     await page.getByText('').click();
     await page.getByText('ER: (Auswählen)').click();
     await page.getByText('Alpenland Marzahn').click();
