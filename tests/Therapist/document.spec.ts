@@ -30,7 +30,7 @@ test.describe('Therapist Upload Documents', () => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Dokument' }).click();
     await page.getByRole('button', { name: '󰩎 Dokument hochladen' }).click();
-    await page.getByTestId('modal-surface').getByText('Patient Info').click();
+    await page.getByTestId('modal-surface').getByText('Patienteninformationsbogen').click();
      const filePath = path.join(__dirname, "sampleprescription.png");
      console.log("FILE PATH:", filePath);  // debug
  
@@ -42,14 +42,14 @@ test.describe('Therapist Upload Documents', () => {
     await fileChooser.setFiles(filePath);
     await page.getByRole('button', { name: 'Submit' }).click();
     await expect(page.getByTestId('surface')).toContainText('Dokument erfolgreich hochgeladen');
-    await expect(page.locator('#root')).toContainText('Patient Info');
+    await expect(page.locator('#root')).toContainText('Patienteninformationsbogen');
     });
   
-  test('Therapist Gebührenvereinbarung', { tag: ['@Therapist','@uploadGebührenvereinbarung'] }, async ({ page }) => {
+  test('Therapist Honorarvereinbarung', { tag: ['@Therapist','@uploadHonorarvereinbarung'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Dokument' }).click();
     await page.getByRole('button', { name: '󰩎 Dokument hochladen' }).click();
-    await page.getByTestId('modal-surface').getByText('Gebührenvereinbarung', { exact: true }).click();
+    await page.getByTestId('modal-surface').getByText('Honorarvereinbarung').click();
      const filePath = path.join(__dirname, "sampleprescription.png");
      console.log("FILE PATH:", filePath);  // debug
  
@@ -61,14 +61,14 @@ test.describe('Therapist Upload Documents', () => {
     await fileChooser.setFiles(filePath);
     await page.getByRole('button', { name: 'Submit' }).click();
     await expect(page.getByTestId('surface')).toContainText('Dokument erfolgreich hochgeladen');
-    await expect(page.locator('#root')).toContainText('Gebührenvereinbarung');
+    await expect(page.locator('#root')).toContainText('Honorarvereinbarung');
     });
 
   test('Therapist Sonstiges', { tag: ['@Therapist','@uploadsontiges'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Dokument' }).click();
     await page.getByRole('button', { name: '󰩎 Dokument hochladen' }).click();
-    await page.getByText('SonstigesAndere Dokumente').click();
+    await page.getByText('Andere', { exact: true }).click();
      const filePath = path.join(__dirname, "sampleprescription.png");
      console.log("FILE PATH:", filePath);  // debug
  
@@ -80,14 +80,13 @@ test.describe('Therapist Upload Documents', () => {
     await fileChooser.setFiles(filePath);
     await page.getByRole('button', { name: 'Submit' }).click();
     await expect(page.getByTestId('surface')).toContainText('Dokument erfolgreich hochgeladen');
-    await expect(page.locator('#root')).toContainText('Sonstiges');
+    await expect(page.locator('#root')).toContainText('Andere');
     });
 
   test('Therapist Copayment View and Add Note', { tag: ['@Therapist', '@AddNoteTherapistCopayment'] }, async ({ page }) => {
     await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click({force:true});
-    await page.getByRole('button', { name: 'View' }).first().click();
-    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').click();
+    await page.getByRole('button', { name: ' Dokument' }).click();
+    await page.getByRole('button', { name: 'View' }).nth(1).click({force:true});
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('test automation');
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     await expect(page.getByTestId('modal-surface')).toContainText('test automation');

@@ -34,7 +34,7 @@ test.describe('Admin Dashboard', () => {
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Letzte Notiz');
     await expect(page.locator('#root')).toContainText('Protokolle');
-    await expect(page.getByText('Ordering Status')).toBeVisible();
+    await expect(page.getByText('Bestell Status')).toBeVisible();
     await expect(page.locator('#root')).toContainText('Doku');
     await page.getByText('VO Status').first().click();
     await page.getByText('Aktiv').click();

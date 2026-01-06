@@ -10,16 +10,16 @@ test.describe('Search Functionality', () => {
 
   test('should show results for a valid search name', { tag: ['@Therapist','@searchname'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').click();
-    await page.getByTestId('text-input-outlined').fill('bloch');
+    await page.getByTestId('text-input-outlined').fill('gerth');
     await page.getByTestId('text-input-outlined').press('Enter');
-    await expect(page.locator('#root')).toContainText('Andreas Bloch');
+    await expect(page.locator('#root')).toContainText('Martina Gerth');
   });
 
   test('should show results for a valid search vo number', { tag: ['@Therapist','@searchvo'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').click();
-    await page.getByTestId('text-input-outlined').fill('2155');
+    await page.getByTestId('text-input-outlined').fill('2171');
     await page.getByTestId('text-input-outlined').press('Enter');
-    await expect(page.locator('#root')).toContainText('Franz Abitz');
+    await expect(page.locator('#root')).toContainText('Kerstin Allenstein');
   });
 
   test('should show “no patient found" message for unknown name', { tag: ['@Therapist','@searchunknownname'] }, async ({ page }) => {
@@ -41,7 +41,7 @@ test.describe('Search Functionality', () => {
   await page.waitForTimeout(10000);
   await page.getByText('ECH').click({force: true});
   await page.getByText('AIP Inter Care GmbH').click();
-  await page.getByText('󰄱Alexander Born').click();
+  await page.getByText('Karsten Freitag').click();
   await expect(page.locator('#root')).toContainText('AIP Inter Care GmbH');
   });
 });

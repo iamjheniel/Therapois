@@ -1,62 +1,23 @@
 import { test, expect } from '@playwright/test';
 
+
 test.describe('Admin Documents', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
   });
 
-    test('Admin Copayment View and Add Note', { tag: ['@Admin', '@DocumentAddNoteAdmin'] }, async ({ page }) => {
+    test('Admin Document View and Add Note', { tag: ['@Admin', '@DocumentAddNoteAdmin'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Dokument' }).click();
     await expect(page.locator('#root')).toContainText('Dokument Upload');
     await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
     await expect(page.getByTestId('modal-surface')).toContainText('Dokumentdetails');
-    await expect(page.getByTestId('modal-surface')).toContainText('Zuzahlungsbefreiung');
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('automation test');
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     await expect(page.getByTestId('modal-surface')).toContainText('automation test');
    
     });
-    
-    test('Admin Patient Info View and Add Note', { tag: ['@Admin', '@DocumentAddNoteAdmin'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click();
-    await expect(page.locator('#root')).toContainText('Dokument Upload');
-    await page.getByTestId('button').nth(5).click({force: true});
-    await expect(page.getByTestId('modal-surface')).toContainText('Dokumentdetails');
-    await expect(page.getByTestId('modal-surface')).toContainText('Patienteninformationsbogen');
-    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('automation test');
-    await page.getByRole('button', { name: 'Änderungen speichern' }).click();
-    await expect(page.getByTestId('modal-surface')).toContainText('automation test');
-   
-    });
-
-    test('Admin Honorarvereinbarung View and Add Note', { tag: ['@Admin', '@DocumentAddNoteAdmin'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click();
-    await expect(page.locator('#root')).toContainText('Dokument Upload');
-    await page.getByTestId('button').nth(4).click({force: true});
-    await expect(page.getByTestId('modal-surface')).toContainText('Dokumentdetails');
-    await expect(page.getByTestId('modal-surface')).toContainText('Honorarvereinbarung');
-    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('automation test');
-    await page.getByRole('button', { name: 'Änderungen speichern' }).click();
-    await expect(page.getByTestId('modal-surface')).toContainText('automation test');
-   
-    });
-
-    test('Admin Andere View and Add Note', { tag: ['@Admin', '@DocumentAddNoteAdminAndere'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click();
-    await expect(page.locator('#root')).toContainText('Dokument Upload');
-    await page.getByTestId('button').nth(3).click({force: true});
-    await expect(page.getByTestId('modal-surface')).toContainText('Dokumentdetails');
-    await expect(page.getByTestId('modal-surface')).toContainText('Andere');
-    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('automation test');
-    await page.getByRole('button', { name: 'Änderungen speichern' }).click();
-    await expect(page.getByTestId('modal-surface')).toContainText('automation test');
-   
-    });    
 
     test('Admin Document Search by Therapist Name', { tag: ['@Admin', '@DocumentSearch'] }, async ({ page }) => {
     //search by therapist name

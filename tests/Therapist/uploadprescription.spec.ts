@@ -39,11 +39,11 @@ test.describe('Therapist Upload Prescription', () => {
     const viewButton = page.getByRole('button', { name: /view/i }).first();
     await viewButton.click({force: true});
     await expect(page.getByTestId('modal-surface')).toContainText('Prescription Image Details');
-    await page.getByRole('textbox', { name: 'Type your note here...' }).click();
-    await page.getByRole('textbox', { name: 'Type your note here...' }).fill('automation therapist test');
-    await page.getByRole('button', { name: 'Save changes' }).click();
+    await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).click();
+    await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).fill('automation therapist test');
+    await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     await expect(page.getByTestId('modal-surface')).toContainText('automation therapist test');
-    await page.getByText('Close').click();
+    await page.getByTestId('icon-button').click();
     });
 
 });

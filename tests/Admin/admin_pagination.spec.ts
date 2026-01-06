@@ -52,6 +52,6 @@ test.describe('Admin Pagination', () => {
     console.log('Back to first:', backToFirstRange);
 
     // Validate only that it returned to page 1
-    expect(backToFirstRange).toMatch(/^1\s*[-–]\s*\d+/);
+    expect(backToFirstRange).toMatch(/^1\s*[-–]\s*\d+\s+of\s+\d+$/);
     });
 });
