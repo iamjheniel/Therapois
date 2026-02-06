@@ -9,7 +9,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document single patient regular treatment', { tag: ['@Therapist','@singleregular'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(3).click({ force: true });
+    await page.getByRole('checkbox').nth(2).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
@@ -23,7 +23,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(11).click({ force: true });
+    await page.getByRole('checkbox').nth(17).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
@@ -41,7 +41,7 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document single patient doppel beh treatment', { tag: ['@Therapist','@doppelbeh'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(2).click({ force: true });
+    await page.getByRole('checkbox').nth(3).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();

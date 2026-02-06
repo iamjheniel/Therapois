@@ -51,7 +51,20 @@ test.describe('Admin Pagination', () => {
     const backToFirstRange = (await range.textContent())?.trim() || '';
     console.log('Back to first:', backToFirstRange);
 
-    // Validate only that it returned to page 1
-    expect(backToFirstRange).toMatch(/^1\s*[-–]\s*\d+\s+of\s+\d+$/);
+    // // Validate only that it returned to page 1
+    // expect(backToFirstRange).toMatch(/^1\s*[-–]\s*\d+\s+of\s+\d+$/);
+    const text = backToFirstRange.replace(/\u00A0/g, ' ').trim(); // normalize NBSP
+    const m = text.match(/^(\d+)\s*[-–]\s*(\d+)\s+of\s+(\d+)$/);
+
+    expect(m, `Unexpected pagination text: "${text}"`).not.toBeNull();
+
+    const start = Number(m![1]);
+    const end = Number(m![2]);
+    const total = Number(m![3]);
+
+    expect(start).toBe(1);
+    expect(end).toBeGreaterThan(0);
+    expect(end).toBeLessThanOrEqual(total);
+    
     });
 });

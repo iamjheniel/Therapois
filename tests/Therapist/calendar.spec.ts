@@ -56,11 +56,12 @@ test.describe('Calendar', () => {
     // Click the card
     await firstAppointment.click({ trial: false });
     // Now wait for modal
-    const input = page.getByTestId('text-input-outlined');
-    const uniqueValue = `automation update ${Date.now()}`;
-    await input.waitFor({ state: 'visible' });
-    await input.fill('');
-    await input.fill(uniqueValue);
+    const notes = page.getByPlaceholder('Doku eingeben');
+    await expect(notes).toBeVisible();
+    await notes.fill(`automation update ${Date.now()}`);
+
+    await notes.fill('');
+    await notes.fill(`automation update ${Date.now()}`);
 
     // Save
     await expect(page.getByRole('button', { name: 'Save' })).toBeEnabled();

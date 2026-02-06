@@ -38,7 +38,7 @@ test.describe('Therapist Upload Prescription', () => {
     // Click the first "View" button of the prescription
     const viewButton = page.getByRole('button', { name: /view/i }).first();
     await viewButton.click({force: true});
-    await expect(page.getByTestId('modal-surface')).toContainText('Prescription Image Details');
+    await expect(page.getByTestId('modal-surface')).toContainText('Details zum Verordnungsbild');
     await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).click();
     await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).fill('automation therapist test');
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
