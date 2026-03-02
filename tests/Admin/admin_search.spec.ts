@@ -10,7 +10,7 @@ test.describe('Admin Search', () => {
 
     test('Admin Search Active VO Functionality', { tag: ['@Admin', '@AdminSearchActiveVo'] }, async ({ page }) => {
     await page.getByText('VO Status').first().click();
-    await page.getByText('Aktiv').click();
+    await page.getByTestId('dropdown-item-Aktiv').click();
     await page.getByText('Therapeut: (Auswählen)').click();
     await page.getByText('Sandra Zeibig').click();
     await expect(page.locator('#root')).toContainText('VO Status');
@@ -37,7 +37,7 @@ test.describe('Admin Search', () => {
 
     test('Admin Search Abgelaufen VO Functionality', { tag: ['@Admin', '@AdminSearchAbgelaufenVo'] }, async ({ page }) => {
     await page.getByText('VO Status').first().click();
-    await page.getByText('Abgelaufen').click();
+    await page.getByTestId('dropdown-item-Abgelaufen').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Abgelaufen');
     });

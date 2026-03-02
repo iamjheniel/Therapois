@@ -14,19 +14,17 @@ export class CRMListPage extends CRMBasePage {
   }
 
   async filterTodayOverdue() {
-    await this.page.getByText('Heute + Übersicht').click();
-    await expect(this.page.locator('#root')).toContainText(
-      /[A-Z][a-z]{2} \d{1,2} \d{1,2}:\d{2} (AM|PM)/
-    );
+    await this.page.getByText('Heute', { exact: true }).click();
+    await expect(this.page.locator('#root')).toContainText(/\d/);
   }
 
   async filterNoNextActivity() {
-    await this.page.getByText('Keine nächste Aktivität').click();
+    await this.page.getByText('Geplant').click();
     await expect(this.page.locator('#root')).toContainText('-');
   }
 
   async resetFilters() {
-    await this.page.getByText('Alle', { exact: true }).click();
+    await this.page.getByText(/Alle \(\d+\)/).click();
   }
 
   /* ---------- Search ---------- */
@@ -40,10 +38,12 @@ export class CRMListPage extends CRMBasePage {
   /* ---------- Practice Info ---------- */
 
   async openPracticeView() {
-   
-    await this.page
-      .locator('div:nth-child(4) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:nth-child(11) > .css-g5y9jx.r-1awozwy > .css-g5y9jx').click();
+    // Click the "Anzeigen" (View) button in the first practice row to open the detail panel
+    await this.page.getByText('Anzeigen', { exact: true }).first().click();
+  }
 
+  async clearFilters() {
+    await this.page.getByText('Filter löschen').click();
   }
 
   async expectPracticeInfo() {

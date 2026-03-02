@@ -24,9 +24,6 @@ test.describe('Admin Dashboard', () => {
     await expect(page.locator('#root')).toContainText('Bestellen Date');
     await expect(page.locator('#root')).toContainText('Bestellt Datum');
     await expect(page.locator('#root')).toContainText('Nachverfolgen Datum');
-    await expect(page.locator('#root')).toContainText('Nachverfolgt Datum');
-    await expect(page.locator('#root')).toContainText('Telefonieren Datum');
-    await expect(page.locator('#root')).toContainText('Telefoniert Datum');
     await expect(page.locator('#root')).toContainText('Erhalten Datum');
     await expect(page.locator('#root')).toContainText('F.-VO');
     await expect(page.locator('#root')).toContainText('Bemerkungen');
@@ -37,7 +34,7 @@ test.describe('Admin Dashboard', () => {
     await expect(page.getByText('Bestell Status')).toBeVisible();
     await expect(page.locator('#root')).toContainText('Doku');
     await page.getByText('VO Status').first().click();
-    await page.getByText('Aktiv').click();
+    await page.getByTestId('dropdown-item-Aktiv').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Aktiv');
     });

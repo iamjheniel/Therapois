@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { ArztManagementPage } from '../../Pages/admin/admin.arzt-management.page';
 
 // Small helper to generate unique, reusable test data
-function makeArztData(prefix = 'QA') {
+function makeArztData() {
   const ts = Date.now();
   const firstName = `Jhen${ts}`;
   const lastName = `Sala${ts}`;
@@ -52,43 +52,39 @@ test.describe('Admin Dashboard', () => {
     }
   );
 
-  test('Search Arzt', 
+  test(
+    'Search Arzt',
     { tag: ['@Admin', '@ArztManagement'] },
     async ({ page }) => {
+      const arzt = new ArztManagementPage(page);
+      await arzt.openArztManagement();
+      await arzt.search('jhen');
+      await expect(page.locator('#root')).toContainText('Jhen');
+    }
+  );
+
+  test('Update Arzt last name only', { tag: ['@Admin', '@ArztManagement'] }, async ({ page }) => {
     const arzt = new ArztManagementPage(page);
+
     await arzt.openArztManagement();
     await arzt.search('jhen');
-    await expect(page.locator('#root')).toContainText('Jhen');
+
+    await arzt.openEditForRow('Jhen');
+
+    const newLastName = `Sala-${Date.now()}`;
+
+    const lastNameField = page.getByRole('textbox', { name: /nachname/i }).first();
+
+    await expect(lastNameField).toBeVisible({ timeout: 10000 });
+    await lastNameField.fill(newLastName);
+
+    await arzt.save();
+    await arzt.expectToast('Arzt erfolgreich aktualisiert');
+
+    // optional: verify list shows updated last name
+    await arzt.search(newLastName);
+    await expect(page.locator('#root')).toContainText(newLastName);
   });
-
-test('Update Arzt last name only', { tag: ['@Admin', '@ArztManagement'] }, async ({ page }) => {
-  const arzt = new ArztManagementPage(page);
-
-  await arzt.openArztManagement();
-  await arzt.search('jhen');
-
-  await arzt.openEditForRow('Jhen');
-
-  const newLastName = `Sala-${Date.now()}`;
-
-  // ✅ Last name only (try one of these that matches your UI)
-  const lastNameField =
-    page.getByRole('textbox', { name: /nachname/i }).first()
-    // if German label is different, try /name/i or /familienname/i
-    // or use placeholder:
-    // page.getByPlaceholder(/nachname/i).first()
-    ;
-
-  await expect(lastNameField).toBeVisible({ timeout: 10000 });
-  await lastNameField.fill(newLastName);
-
-  await arzt.save();
-  await arzt.expectToast('Arzt erfolgreich aktualisiert');
-
-  // optional: verify list shows updated last name
-  await arzt.search(newLastName);
-  await expect(page.locator('#root')).toContainText(newLastName);
-});
 
 
   test(

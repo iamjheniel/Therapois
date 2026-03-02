@@ -90,7 +90,7 @@ test.describe('Therapist Upload Documents', () => {
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('test automation');
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     await expect(page.getByTestId('modal-surface')).toContainText('test automation');
-    await page.getByTestId('icon-button').click();
+    await page.getByTestId('modal-surface').getByTestId('icon-button').click();
     });
 
 });

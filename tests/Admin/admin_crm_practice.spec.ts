@@ -27,6 +27,7 @@ test.describe('Admin CRM Practice Info', () => {
 
       // Search
       await crmList.searchPractice('QA test');
+      await crmList.clearFilters();
 
       // Open Practice Info
       await crmList.openPracticeView();

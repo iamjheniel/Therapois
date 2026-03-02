@@ -39,7 +39,8 @@ export class CRMInitialOrdersPage extends CRMBasePage {
   }
 
   async openBulkActions() {
-    await this.page.getByRole('checkbox').nth(2).click({ force: true });
+    await this.page.getByRole('checkbox').first().waitFor({ state: 'visible' });
+    await this.page.getByRole('checkbox').nth(1).click({ force: true });
   }
 
   async generateInitialOrderForm() {

@@ -43,7 +43,7 @@ test.describe('Therapist Upload Prescription', () => {
     await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).fill('automation therapist test');
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     await expect(page.getByTestId('modal-surface')).toContainText('automation therapist test');
-    await page.getByTestId('icon-button').click();
+    await page.getByTestId('modal-surface').getByTestId('icon-button').click();
     });
 
 });

@@ -8,19 +8,57 @@ test.describe('Document Treatment', () => {
     await page.goto('https://staging.therapios.de/therapist/'); // already logged in due to storageState
   });
 
-    test('Document single patient regular treatment', { tag: ['@Therapist','@singleregular'] }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(2).click({ force: true });
-    await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
-    await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
-    await page.getByTestId('surface').getByTestId('text-input-outlined').click();
-    await page.getByTestId('surface').getByTestId('text-input-outlined').fill('Regular treatment test automation');
-    await page.getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Save' }).click();
-    // Wait for backend + UI to stabilize
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(500);
-    await expect(page.getByText(/marked as Treated/i).first()).toBeVisible({ timeout: 20000 });
-  });
+
+  test('Create treatment then open Doku and delete treatment activity', {tag: ['@Therapist','@singleregular']}, async ({ page }) => {
+  // Using Martina Gerth - confirmed available in staging via search tests
+  const patientName = 'Martina Gerth';
+  const treatmentNote = 'Regular treatment test automation';
+
+  // Search for patient to ensure she's visible regardless of today's schedule
+  await page.getByTestId('text-input-outlined').fill(patientName);
+  await page.getByTestId('text-input-outlined').press('Enter');
+  await page.waitForTimeout(1500);
+
+  await page.getByRole('checkbox').first().click({ force: true });
+  await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
+
+  await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
+
+  await page.getByTestId('surface').getByTestId('text-input-outlined').click();
+  await page.getByTestId('surface').getByTestId('text-input-outlined').fill(treatmentNote);
+
+  await page.getByRole('radio').first().click();
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  // backend + UI stabilize
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await expect(page.getByText(/marked as Treated/i).first()).toBeVisible({ timeout: 20000 });
+
+  await page.getByText(patientName, { exact: true }).first().click();
+  await page.locator('div').filter({ hasText: /^$/ }).nth(1).click();
+  // Click the first treatment row's action cell (most recent treatment appears first)
+  await page.locator('.css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi').first().locator('div > div:nth-child(6) > .css-g5y9jx').click({ force: true });
+
+  // wait edit activity
+  await expect(page.getByText('Edit Activity', { exact: true })).toBeVisible({ timeout: 20000 });
+
+  // ✅ Click trash
+  const trash = page.getByTestId('activity-delete-button');
+  await expect(trash).toBeVisible({ timeout: 10000 });
+  await trash.click();
+
+  await expect(page.getByText('Are you sure?', { exact: true })).toBeVisible({ timeout: 10000 });
+
+  const confirmDialog = page.getByText('Are you sure?', { exact: true }).locator('xpath=ancestor::div[2]');
+  const jaText = confirmDialog.locator('[data-testid="button-text"]', { hasText: 'Ja' });
+
+  await jaText.locator('xpath=ancestor::button[1]').click();
+
+  // Assert toast
+  await expect(page.getByText(/Treatment deleted!/i)).toBeVisible({ timeout: 20000 });
+
+});
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(17).click({ force: true });
@@ -29,7 +67,8 @@ test.describe('Document Treatment', () => {
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('BV treatment test automation');
     await page.getByRole('radio').first().click();
-    await page.locator('div:nth-child(2) > div > .css-g5y9jx.r-gbtiil > div > .css-g5y9jx.r-1awozwy > .css-g5y9jx > .css-146c3p1').first().click();
+    // Click Heilmittelgruppe dropdown - use partial text match for the dropdown placeholder
+    await page.getByText(/heilmittelgruppe/i, { exact: false }).first().click();
     await page.getByText('HR-H-BV').click();
     await page.getByText('Search and  select Heilmittel').click();
     await page.locator('div').filter({ hasText: /^BGM-BV$/ }).nth(3).click();
@@ -74,7 +113,7 @@ test.describe('Document Treatment', () => {
 
   });
 
-    test('Validate required filleds', { tag: ['@Therapist','@validationerror'] }, async ({ page }) => {
+    test('Validate required fields', { tag: ['@Therapist','@validationerror'] }, async ({ page }) => {
     await page.getByRole('checkbox').nth(3).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
@@ -108,12 +147,12 @@ test.describe('Document Treatment', () => {
     await page.waitForTimeout(500);
     await expect(page.getByText(/marked as Treated/i).first()).toBeVisible({ timeout: 20000 });
   });
-  
+
   test('Document activity', { tag: ['@Therapist','@activity'] }, async ({ page }) => {
   await page.getByRole('checkbox').nth(6).click({ force: true });
   await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
-  await page.getByRole('button', { name: ' Aktivität' }).click();
-  await page.locator('div').filter({ hasText: /^Pause$/ }).nth(1).click();
+  await page.getByRole('button', { name: ' Aktivität' }).click();
+  await page.locator('div').filter({ hasText: /^Pause$/ }).nth(1).click();
   await page.getByText('Other').click();
   await page.getByRole('textbox', { name: 'Enter custom activity' }).click();
   await page.getByRole('textbox', { name: 'Enter custom activity' }).fill('dance');
@@ -125,8 +164,9 @@ test.describe('Document Treatment', () => {
   // Wait for backend + UI to stabilize
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(500);
-  await expect(page.getByTestId('surface')).toContainText(
-  '1 patients marked as Treated',
+  // Scope to the toast notification surface (aria-live="polite") to avoid strict mode violation
+  await expect(page.locator('[aria-live="polite"][data-testid="surface"]')).toContainText(
+  /patients marked as Treated/i,
   { timeout: 15000 });
   });
 
