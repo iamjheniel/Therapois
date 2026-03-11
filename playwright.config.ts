@@ -37,13 +37,13 @@ export default defineConfig({
   },
 
   projects: [
-    // 👇 Separate “setup” role — generates storageState
+    // 👇 Separate “setup” role — generates storageState (staging only)
     {
       name: 'setup',
-      testMatch: /.*\.setup\.ts/,
+      testMatch: '**/auth.setup.ts',
     },
 
-    // 👇 Role-based authenticated users
+    // 👇 Role-based authenticated users (Staging)
     {
       name: 'SandraZeibig',
       testMatch: '**/Therapist/**/*.spec.ts',
@@ -58,6 +58,42 @@ export default defineConfig({
       name: 'SAJhen',
       testMatch: '**/SuperAdmin/**/*.spec.ts',
       use: { storageState: path.join(__dirname, '.auth/SuperAdmin.json') },
+    },
+
+    // 👇 Production setup
+    {
+      name: 'setup-prod',
+      testMatch: /.*production\.auth\.setup\.ts/,
+      use: { baseURL: 'https://app.therapios.de/' },
+    },
+
+    // 👇 Role-based authenticated users (Production)
+    {
+      name: 'JhenQA-Prod',
+      testMatch: '**/Production/Therapist/**/*.spec.ts',
+      dependencies: ['setup-prod'],
+      use: {
+        storageState: path.join(__dirname, '.auth/JhenQA-Prod.json'),
+        baseURL: 'https://app.therapios.de/',
+      },
+    },
+    {
+      name: 'AdminJhen-Prod',
+      testMatch: '**/Production/Admin/**/*.spec.ts',
+      dependencies: ['setup-prod'],
+      use: {
+        storageState: path.join(__dirname, '.auth/AdminJhen-Prod.json'),
+        baseURL: 'https://app.therapios.de/',
+      },
+    },
+    {
+      name: 'SAJhen-Prod',
+      testMatch: '**/Production/SuperAdmin/**/*.spec.ts',
+      dependencies: ['setup-prod'],
+      use: {
+        storageState: path.join(__dirname, '.auth/SuperAdmin-Prod.json'),
+        baseURL: 'https://app.therapios.de/',
+      },
     },
 
     // 👇 Browser configurations (desktop)
