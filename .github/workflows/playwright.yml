@@ -36,24 +36,8 @@ on:
 # STAGING
 # ─────────────────────────────────────────────
 jobs:
-  setup:
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'staging' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: 💾 Upload staging auth states
-        uses: actions/upload-artifact@v4
-        with:
-          name: auth-staging
-          path: .auth/
-          retention-days: 1
-
   admin:
     if: ${{ (github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'staging') && (github.event.inputs.role == 'admin' || github.event.inputs.role == 'all' || github.event_name != 'workflow_dispatch') }}
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -77,11 +61,6 @@ jobs:
       - name: 🧱 Install browser system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
-      - name: 📥 Download staging auth states
-        uses: actions/download-artifact@v4
-        with:
-          name: auth-staging
-          path: .auth/
       - name: 🚀 Run Admin tests (Staging)
         run: npx playwright test --project=AdminJhen
       - name: 📤 Upload report
@@ -94,7 +73,6 @@ jobs:
 
   superadmin:
     if: ${{ (github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'staging') && (github.event.inputs.role == 'superadmin' || github.event.inputs.role == 'all' || github.event_name != 'workflow_dispatch') }}
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -118,11 +96,6 @@ jobs:
       - name: 🧱 Install browser system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
-      - name: 📥 Download staging auth states
-        uses: actions/download-artifact@v4
-        with:
-          name: auth-staging
-          path: .auth/
       - name: 🚀 Run SuperAdmin tests (Staging)
         run: npx playwright test --project=SAJhen
       - name: 📤 Upload report
@@ -135,7 +108,6 @@ jobs:
 
   therapist:
     if: ${{ (github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'staging') && (github.event.inputs.role == 'therapist' || github.event.inputs.role == 'all' || github.event_name != 'workflow_dispatch') }}
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -159,11 +131,6 @@ jobs:
       - name: 🧱 Install browser system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
-      - name: 📥 Download staging auth states
-        uses: actions/download-artifact@v4
-        with:
-          name: auth-staging
-          path: .auth/
       - name: 🚀 Run Therapist tests (Staging)
         run: npx playwright test --project=SandraZeibig
       - name: 📤 Upload report
@@ -177,24 +144,8 @@ jobs:
 # ─────────────────────────────────────────────
 # PRODUCTION  (manual only)
 # ─────────────────────────────────────────────
-  setup-prod:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: 💾 Upload production auth states
-        uses: actions/upload-artifact@v4
-        with:
-          name: auth-production
-          path: .auth/
-          retention-days: 1
-
   admin-prod:
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' && (github.event.inputs.role == 'admin' || github.event.inputs.role == 'all') }}
-    needs: setup-prod
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -218,11 +169,6 @@ jobs:
       - name: 🧱 Install browser system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
-      - name: 📥 Download production auth states
-        uses: actions/download-artifact@v4
-        with:
-          name: auth-production
-          path: .auth/
       - name: 🚀 Run Admin tests (Production)
         run: npx playwright test --project=AdminJhen-Prod
       - name: 📤 Upload report
@@ -235,7 +181,6 @@ jobs:
 
   superadmin-prod:
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' && (github.event.inputs.role == 'superadmin' || github.event.inputs.role == 'all') }}
-    needs: setup-prod
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -259,11 +204,6 @@ jobs:
       - name: 🧱 Install browser system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
-      - name: 📥 Download production auth states
-        uses: actions/download-artifact@v4
-        with:
-          name: auth-production
-          path: .auth/
       - name: 🚀 Run SuperAdmin tests (Production)
         run: npx playwright test --project=SAJhen-Prod
       - name: 📤 Upload report
@@ -276,7 +216,6 @@ jobs:
 
   therapist-prod:
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' && (github.event.inputs.role == 'therapist' || github.event.inputs.role == 'all') }}
-    needs: setup-prod
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -300,11 +239,6 @@ jobs:
       - name: 🧱 Install browser system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
-      - name: 📥 Download production auth states
-        uses: actions/download-artifact@v4
-        with:
-          name: auth-production
-          path: .auth/
       - name: 🚀 Run Therapist tests (Production)
         run: npx playwright test --project=JhenQA-Prod
       - name: 📤 Upload report
