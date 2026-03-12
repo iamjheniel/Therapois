@@ -36,17 +36,17 @@ for (const user of accounts) {
 
     console.log(`Logging in as ${user.name} on production...`);
 
-    await page.goto('https://app.therapios.de/');
+    await page.goto('https://app.therapios.de/', { timeout: 60_000 });
 
     // fill login form
-    await page.getByTestId('text-input-outlined').first().fill(user.email);
+    await page.locator('input').first().fill(user.email);
     await page.locator('input[type="password"]').fill(user.password);
 
-    // click submit
-    await page.locator('div').filter({ hasText: /^Proceed$/ }).first().click();
+    // click submit — production uses "Weiter" (div-based button)
+    await page.locator('div').filter({ hasText: /^Weiter$/ }).first().click();
 
     // wait for redirect away from login page (URL path changes from '/')
-    await page.waitForURL(url => new URL(url).pathname !== '/', { timeout: 30_000 });
+    await page.waitForURL(url => new URL(url).pathname !== '/', { timeout: 60_000 });
 
     // save session
     await context.storageState({ path: user.authFile });

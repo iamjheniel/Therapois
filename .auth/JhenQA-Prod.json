@@ -1,0 +1,22 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://app.therapios.de",
+      "localStorage": [
+        {
+          "name": "_savedCredentials_cleanup_done",
+          "value": "true"
+        },
+        {
+          "name": "auth-state",
+          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NzMzMTIwMjIsImV4cCI6MTgwNDg0ODAyMiwianRpIjoiMWU5NWZhYjg1MmZkMTBjNTFiNWU0YWQ0NTVmN2M3ODAiLCJyb2xlcyI6WyJST0xFX1RIRVJBUElTVCIsIlJPTEVfVVNFUiJdLCJ1c2VybmFtZSI6ImpoZW5xYUB0aGVyYXBpb3MuZGUifQ.RkxCAXr1mv60KgPnTvaqOuo40ww6cSWXYaJxwF8-GJ9f-iQA58prPY9m_1amNgH0qugb1uPLhYzX3J1bSupk8_kDcHzC4EaMZ0hJ-xNVKsqMk_xfl0avY7NxInKmpGCAqmREOwxRMDHemHrIwijouFsaFOYYloJtcijjrMHXWgHr3O1qNU_bpm3u0JcFKGzfrZ-9RfVtFh-GLg3TyocB2ofiqItF8APie9Asa-TW-yG4RQRgRbXxsC0_8i3z0OyWrHCeLbQyfHTNEqLcPP7xMGhYJAuXqPM_k1UHokGgXaCuFuVOGM7yDdNRyeZhBaWO7k5m2f-haPd0_GJGwtiEvA\",\"user\":{\"id\":198,\"username\":\"jhenqa@therapios.de\",\"roles\":[\"ROLE_THERAPIST\",\"ROLE_USER\"],\"firstName\":\"Jhenqa\",\"lastName\":\"Test\",\"fullName\":\"Jhenqa Test\",\"weak_credentials\":false,\"followUpOrderingEnabled\":true},\"fetching\":false}"
+        },
+        {
+          "name": "therapios\\REACT_QUERY_OFFLINE_CACHE",
+          "value": "{\"buster\":\"3.0.0\",\"timestamp\":1773312023842,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://app.therapios.de",
+      "localStorage": [
+        {
+          "name": "dismissed_announcement_ids",
+          "value": "[]"
+        },
+        {
+          "name": "_savedCredentials_cleanup_done",
+          "value": "true"
+        },
+        {
+          "name": "hidden_column_admin:dashboard",
+          "value": "[]"
+        },
+        {
+          "name": "auth-state",
+          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NzMzMTE2MTYsImV4cCI6MTgwNDg0NzYxNiwianRpIjoiZmM3YWU3MmNlMjcyMmY0NmIxODU4Yzg2OWQxZjVlNzAiLCJyb2xlcyI6WyJST0xFX0FETUlOIiwiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiYWRtaW4uamhlbkBnbWFpbC5jb20ifQ.DNfbX3AhmyeDimFIyM_DIK1qX3iDzfEKibR7KJ2IwI0FziPqmK8mFZD_4aIxaeh1VSRvY_m9EWQacrJslXtHdXsI7ZW7DNS6y2nC0JhX_mCcUVhnLBbR3CorbiTqvEB4N_dJzug-QEE2ahHKuT_VTMEWoPjexi0lTx1O0BtmCtaeSJA0wQoyNFqVx6Fwlqz1VqFTv13ej9YZBShyoVctTvlFIR7KFcSMUknpH_2KNKe5InKEi1-Er01DUJ-CfXvh8E3ljCsJyhGuHTn14c6Xf0W3wgj67UeU1bYvUBN10wpYiyouQ4TZA_XeQkFPvkd9zv0o-ZsRYMFnCWtIYWBUBQ\",\"user\":{\"id\":179,\"username\":\"admin.jhen@gmail.com\",\"roles\":[\"ROLE_ADMIN\",\"ROLE_USER\"],\"firstName\":\"Admin\",\"lastName\":\"Jhen\",\"fullName\":\"Admin Jhen\",\"weak_credentials\":false,\"followUpOrderingEnabled\":null},\"fetching\":false}"
+        },
+        {
+          "name": "therapios\\REACT_QUERY_OFFLINE_CACHE",
+          "value": "{\"buster\":\"3.0.0\",\"timestamp\":1773311617898,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+        }
+      ]
+    }
+  ]
+}
