@@ -62,7 +62,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
       - name: 🗑️ Clear existing staging auth so login always runs fresh
-        run: rm -f .auth/AdminJhen.json .auth/SandraZeibig.json .auth/SuperAdmin.json
+        run: rm -f .auth/AdminJhen.json .auth/SandraZeibig.json .auth/SuperAdmin.json && mkdir -p .auth
       - name: 🔐 Generate fresh staging auth states
         run: npx playwright test --project=setup
       - name: 💾 Upload staging auth states
