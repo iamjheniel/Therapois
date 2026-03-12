@@ -74,15 +74,20 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: npm ci
-      - run: npx playwright install
+      - run: npx playwright install --with-deps
       - name: 📥 Download staging auth states
         uses: actions/download-artifact@v4
         with:
           name: auth-staging
           path: .auth/
       - name: 🚀 Run Admin tests (Staging)
-        run: npx playwright test --project=AdminJhen --grep @Admin
+        run: npx playwright test --project=AdminJhen
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
@@ -98,15 +103,20 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: npm ci
-      - run: npx playwright install
+      - run: npx playwright install --with-deps
       - name: 📥 Download staging auth states
         uses: actions/download-artifact@v4
         with:
           name: auth-staging
           path: .auth/
       - name: 🚀 Run SuperAdmin tests (Staging)
-        run: npx playwright test --project=SAJhen --grep @SuperAdmin
+        run: npx playwright test --project=SAJhen
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
@@ -122,15 +132,20 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: npm ci
-      - run: npx playwright install
+      - run: npx playwright install --with-deps
       - name: 📥 Download staging auth states
         uses: actions/download-artifact@v4
         with:
           name: auth-staging
           path: .auth/
       - name: 🚀 Run Therapist tests (Staging)
-        run: npx playwright test --project=SandraZeibig --grep @Therapist
+        run: npx playwright test --project=SandraZeibig
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
@@ -175,15 +190,20 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: npm ci
-      - run: npx playwright install
+      - run: npx playwright install --with-deps
       - name: 📥 Download production auth states
         uses: actions/download-artifact@v4
         with:
           name: auth-production
           path: .auth/
       - name: 🚀 Run Admin tests (Production)
-        run: npx playwright test --project=AdminJhen-Prod --grep @Admin
+        run: npx playwright test --project=AdminJhen-Prod
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
@@ -199,15 +219,20 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: npm ci
-      - run: npx playwright install
+      - run: npx playwright install --with-deps
       - name: 📥 Download production auth states
         uses: actions/download-artifact@v4
         with:
           name: auth-production
           path: .auth/
       - name: 🚀 Run SuperAdmin tests (Production)
-        run: npx playwright test --project=SAJhen-Prod --grep @SuperAdmin
+        run: npx playwright test --project=SAJhen-Prod
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
@@ -223,15 +248,20 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: npm ci
-      - run: npx playwright install
+      - run: npx playwright install --with-deps
       - name: 📥 Download production auth states
         uses: actions/download-artifact@v4
         with:
           name: auth-production
           path: .auth/
       - name: 🚀 Run Therapist tests (Production)
-        run: npx playwright test --project=JhenQA-Prod --grep @Therapist
+        run: npx playwright test --project=JhenQA-Prod
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
