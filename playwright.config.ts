@@ -11,11 +11,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
 
   // ✅ Retry flaky tests automatically on CI
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
 
-  // ✅ Run more workers in CI (1 is too slow)
-  // Playwright handles parallel isolation well
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 2 : undefined,
 
   // ✅ Use concise + HTML reporter combo
   reporter: process.env.CI
@@ -31,9 +29,7 @@ export default defineConfig({
     actionTimeout: 0,           // disable low-level timeout
     navigationTimeout: 30_000,
     ignoreHTTPSErrors: true,
-    launchOptions: {
-  slowMo: process.env.CI ? 150 : 0,
-},
+    launchOptions: {},
   },
 
   projects: [
@@ -71,7 +67,6 @@ export default defineConfig({
     {
       name: 'JhenQA-Prod',
       testMatch: '**/Production/Therapist/**/*.spec.ts',
-      dependencies: ['setup-prod'],
       use: {
         storageState: path.join(__dirname, '.auth/JhenQA-Prod.json'),
         baseURL: 'https://app.therapios.de/',
@@ -80,7 +75,6 @@ export default defineConfig({
     {
       name: 'AdminJhen-Prod',
       testMatch: '**/Production/Admin/**/*.spec.ts',
-      dependencies: ['setup-prod'],
       use: {
         storageState: path.join(__dirname, '.auth/AdminJhen-Prod.json'),
         baseURL: 'https://app.therapios.de/',
@@ -89,7 +83,6 @@ export default defineConfig({
     {
       name: 'SAJhen-Prod',
       testMatch: '**/Production/SuperAdmin/**/*.spec.ts',
-      dependencies: ['setup-prod'],
       use: {
         storageState: path.join(__dirname, '.auth/SuperAdmin-Prod.json'),
         baseURL: 'https://app.therapios.de/',
