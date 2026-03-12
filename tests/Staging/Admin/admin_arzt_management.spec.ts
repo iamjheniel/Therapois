@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ArztManagementPage } from '../../Pages/admin/admin.arzt-management.page';
+import { ArztManagementPage } from '../../../Pages/admin/admin.arzt-management.page';
 
 // Small helper to generate unique, reusable test data
 function makeArztData() {

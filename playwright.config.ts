@@ -46,17 +46,17 @@ export default defineConfig({
     // 👇 Role-based authenticated users (Staging)
     {
       name: 'SandraZeibig',
-      testMatch: '**/Therapist/**/*.spec.ts',
+      testMatch: /tests\/Staging\/Therapist\/.*\.spec\.ts$/,
       use: { storageState: path.join(__dirname, '.auth/SandraZeibig.json') },
     },
     {
       name: 'AdminJhen',
-      testMatch: '**/Admin/**/*.spec.ts',
+      testMatch: /tests\/Staging\/Admin\/.*\.spec\.ts$/,
       use: { storageState: path.join(__dirname, '.auth/AdminJhen.json') },
     },
     {
       name: 'SAJhen',
-      testMatch: '**/SuperAdmin/**/*.spec.ts',
+      testMatch: /tests\/Staging\/SuperAdmin\/.*\.spec\.ts$/,
       use: { storageState: path.join(__dirname, '.auth/SuperAdmin.json') },
     },
 

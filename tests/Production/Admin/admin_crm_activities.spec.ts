@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
-import { CRMBasePage } from '../../Pages/crm/crm.base.page';
-import { CRMListPage } from '../../Pages/crm/crm.list.page';
-import { CRMActivities } from '../../Pages/crm/crm.activities.page';
+import { CRMBasePage } from '../../../Pages/crm/crm.base.page';
+import { CRMListPage } from '../../../Pages/crm/crm.list.page';
+import { CRMActivities } from '../../../Pages/crm/crm.activities.page';
 
 test.describe('Admin CRM Activities', () => {
   test.beforeEach(async ({ page }) => {

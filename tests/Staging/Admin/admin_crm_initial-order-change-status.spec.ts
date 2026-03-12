@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
-import { CRMBasePage } from '../../Pages/crm/crm.base.page';
-import { CRMListPage } from '../../Pages/crm/crm.list.page';
-import { CRMInitialOrdersPage } from '../../Pages/crm/crm.initial-orders.page';
+import { CRMBasePage } from '../../../Pages/crm/crm.base.page';
+import { CRMListPage } from '../../../Pages/crm/crm.list.page';
+import { CRMInitialOrdersPage } from '../../../Pages/crm/crm.initial-orders.page';
 
 test.describe('Admin CRM Practice Info', () => {
   test.beforeEach(async ({ page }) => {

@@ -45,8 +45,8 @@ for (const user of accounts) {
     // click submit
     await page.locator('div').filter({ hasText: /^Proceed$/ }).first().click();
 
-    // wait for successful login
-    await expect(page.locator('#root')).toContainText(user.name);
+    // wait for successful login (password field disappears once redirected to dashboard)
+    await expect(page.locator('input[type="password"]')).not.toBeVisible({ timeout: 30_000 });
 
     // save session
     await context.storageState({ path: user.authFile });
