@@ -42,14 +42,11 @@ for (const user of accounts) {
     await page.getByTestId('text-input-outlined').first().fill(user.email);
     await page.locator('input[type="password"]').fill(user.password);
 
-    // click submit and wait for navigation to complete
-    await Promise.all([
-      page.waitForLoadState('domcontentloaded', { timeout: 30_000 }),
-      page.locator('div').filter({ hasText: /^Proceed$/ }).first().click(),
-    ]);
+    // click submit
+    await page.locator('div').filter({ hasText: /^Proceed$/ }).first().click();
 
-    // confirm we left the login page
-    await expect(page.locator('input[type="password"]')).not.toBeVisible({ timeout: 15_000 });
+    // wait for redirect away from login page (URL path changes from '/')
+    await page.waitForURL(url => new URL(url).pathname !== '/', { timeout: 30_000 });
 
     // save session
     await context.storageState({ path: user.authFile });
