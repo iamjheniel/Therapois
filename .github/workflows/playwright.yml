@@ -34,7 +34,6 @@ on:
 
 # ─────────────────────────────────────────────
 # STAGING  (push / pull_request / manual staging)
-# Auth files are committed to the repo — no artifact sharing needed
 # ─────────────────────────────────────────────
 jobs:
   setup:
@@ -52,8 +51,16 @@ jobs:
         run: npm ci
       - name: 🧱 Install browsers
         run: npx playwright install --with-deps
-      - name: 🔐 Generate .auth storage states (Staging)
+      - name: 🗑️ Clear existing staging auth so login always runs fresh
+        run: rm -f .auth/AdminJhen.json .auth/SandraZeibig.json .auth/SuperAdmin.json
+      - name: 🔐 Generate fresh staging auth states
         run: npx playwright test --project=setup
+      - name: 💾 Upload staging auth states
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-staging
+          path: .auth/
+          retention-days: 1
 
   admin:
     if: ${{ (github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'staging') && (github.event.inputs.role == 'admin' || github.event.inputs.role == 'all' || github.event_name != 'workflow_dispatch') }}
@@ -64,6 +71,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci
       - run: npx playwright install
+      - name: 📥 Download staging auth states
+        uses: actions/download-artifact@v4
+        with:
+          name: auth-staging
+          path: .auth/
       - name: 🚀 Run Admin tests (Staging)
         run: npx playwright test --project=AdminJhen --grep @Admin
       - name: 📤 Upload report
@@ -83,6 +95,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci
       - run: npx playwright install
+      - name: 📥 Download staging auth states
+        uses: actions/download-artifact@v4
+        with:
+          name: auth-staging
+          path: .auth/
       - name: 🚀 Run SuperAdmin tests (Staging)
         run: npx playwright test --project=SAJhen --grep @SuperAdmin
       - name: 📤 Upload report
@@ -102,6 +119,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci
       - run: npx playwright install
+      - name: 📥 Download staging auth states
+        uses: actions/download-artifact@v4
+        with:
+          name: auth-staging
+          path: .auth/
       - name: 🚀 Run Therapist tests (Staging)
         run: npx playwright test --project=SandraZeibig --grep @Therapist
       - name: 📤 Upload report
@@ -114,7 +136,6 @@ jobs:
 
 # ─────────────────────────────────────────────
 # PRODUCTION  (manual only)
-# Auth files are NOT committed — generated at runtime and shared via artifact
 # ─────────────────────────────────────────────
   setup-prod:
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' }}
@@ -131,7 +152,7 @@ jobs:
         run: npm ci
       - name: 🧱 Install browsers
         run: npx playwright install --with-deps
-      - name: 🔐 Generate .auth storage states (Production)
+      - name: 🔐 Generate production auth states
         run: npx playwright test --project=setup-prod
       - name: 💾 Upload production auth states
         uses: actions/upload-artifact@v4
