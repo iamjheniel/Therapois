@@ -48,6 +48,9 @@ test.describe('Super Admin Pagination', () => {
    console.log('Last page:', lastPageRange);
 
     // 👉 BACK TO FIRST PAGE
+    await firstBtn.click();
+    await page.waitForTimeout(1500);
+
     const backToFirstRange = (await range.textContent())?.trim() || '';
     console.log('Back to first:', backToFirstRange);
 

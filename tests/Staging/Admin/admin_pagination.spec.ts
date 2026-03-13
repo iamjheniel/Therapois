@@ -33,7 +33,7 @@ test.describe('Admin Pagination', () => {
 
     // 👉 NEXT PAGE
     await nextBtn.click();
-    await page.waitForTimeout(1200); // allow React Native list to re-render
+    await expect(range).not.toHaveText(new RegExp(firstPageRange.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), { timeout: 10000 });
 
     const secondPageRange = (await range.textContent())?.trim() || '';
     console.log('Second page:', secondPageRange);
@@ -42,14 +42,14 @@ test.describe('Admin Pagination', () => {
 
     // 👉 LAST PAGE
     await lastBtn.click();
-    await page.waitForTimeout(1500);
+    await expect(range).not.toHaveText(new RegExp(secondPageRange.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), { timeout: 15000 });
 
     const lastPageRange = (await range.textContent())?.trim() || '';
-   console.log('Last page:', lastPageRange);
+    console.log('Last page:', lastPageRange);
 
     // 👉 BACK TO FIRST PAGE
     await firstBtn.click();
-    await page.waitForTimeout(1500);
+    await expect(range).toHaveText(/^1[\s\u00A0]/, { timeout: 15000 });
 
     const backToFirstRange = (await range.textContent())?.trim() || '';
     console.log('Back to first:', backToFirstRange);

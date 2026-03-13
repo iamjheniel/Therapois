@@ -14,14 +14,14 @@ test.describe('Admin TBoard', () => {
     await page.getByText('Sandra Zeibig').click();
     await page.getByRole('checkbox').nth(2).click({force:true});
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
-    await page.getByTestId('surface').getByTestId('text-input-outlined').click();
-    await page.getByTestId('surface').getByTestId('text-input-outlined').fill('test admin');
+    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').click();
+    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('test admin');
     await page.getByRole('radio').first().click();
     await page.getByRole('button', { name: 'Save' }).click();
     // Wait for backend + UI to stabilize
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
-    await expect(page.getByTestId('surface')).toContainText(
+    await expect(page.locator('[aria-live="polite"][data-testid="surface"]')).toContainText(
     '1 patients marked as Treated',
     { timeout: 15000 });
     });
