@@ -16,6 +16,9 @@ test.describe('Admin Pagination', () => {
     const range = page.getByText(/of\s+\d+$/).first(); // regex: "of <number>"
     await expect(range).toBeVisible();
 
+    // Wait for real data to load (total > 0), so we don't capture "1-0 of 0"
+    await expect(range).toHaveText(/of\s+[1-9]/, { timeout: 30000 });
+
     // Go up to the container that also holds the pagination buttons
     // (span -> parent div -> row container)
     const paginationRow = range.locator('xpath=../..');
@@ -33,7 +36,7 @@ test.describe('Admin Pagination', () => {
 
     // 👉 NEXT PAGE
     await nextBtn.click();
-    await page.waitForTimeout(1200); // allow React Native list to re-render
+    await page.waitForTimeout(2000);
 
     const secondPageRange = (await range.textContent())?.trim() || '';
     console.log('Second page:', secondPageRange);
@@ -42,14 +45,14 @@ test.describe('Admin Pagination', () => {
 
     // 👉 LAST PAGE
     await lastBtn.click();
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(3000);
 
     const lastPageRange = (await range.textContent())?.trim() || '';
-   console.log('Last page:', lastPageRange);
+    console.log('Last page:', lastPageRange);
 
     // 👉 BACK TO FIRST PAGE
     await firstBtn.click();
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(2000);
 
     const backToFirstRange = (await range.textContent())?.trim() || '';
     console.log('Back to first:', backToFirstRange);
