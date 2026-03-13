@@ -10,9 +10,9 @@ test.describe('Search Functionality', () => {
 
   test('should show results for a valid search name', { tag: ['@Therapist','@searchname'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').click();
-    await page.getByTestId('text-input-outlined').fill('gerth');
+    await page.getByTestId('text-input-outlined').fill('jhen');
     await page.getByTestId('text-input-outlined').press('Enter');
-    await expect(page.locator('#root')).toContainText('Martina Gerth');
+    await expect(page.locator('#root')).toContainText('Jheniel Test');
   });
 
   test('should show results for a valid search vo number', { tag: ['@Therapist','@searchvo'] }, async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('Search Functionality', () => {
 
   test('should show "no patient found" message for unknown name', { tag: ['@Therapist','@searchunknownname'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').click();
-    await page.getByTestId('text-input-outlined').fill('test');
+    await page.getByTestId('text-input-outlined').fill('xxxxxxunknown99999');
     await page.getByTestId('text-input-outlined').press('Enter');
     await expect(page.locator('#root')).toContainText('Keine Patienten gefunden');
 
@@ -42,9 +42,12 @@ test.describe('Search Functionality', () => {
 
   test('should filter search results by location', { tag: ['@Therapist','@searchlocation'] }, async ({ page }) => {
     await page.waitForLoadState('networkidle');
-    // NOTE: Update 'ECH' if the location chip label changes in staging
     await page.getByText('ECH', { exact: true }).click({ force: true });
-    await page.getByText('AIP Inter Care GmbH').click();
-    await expect(page.locator('#root')).toContainText('AIP Inter Care GmbH');
+    // Click the first available location option in the dropdown
+    const firstOption = page.locator('[data-testid="modal-surface"] div[tabindex="0"]').first();
+    await firstOption.waitFor({ state: 'visible', timeout: 10000 });
+    const locationName = (await firstOption.textContent()) ?? '';
+    await firstOption.click();
+    await expect(page.locator('#root')).toContainText(locationName);
   });
 });

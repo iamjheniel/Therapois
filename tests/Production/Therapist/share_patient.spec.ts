@@ -8,9 +8,9 @@ test.describe('Therapist Share Patient', () => {
   });
 
     test('Therapist Share Patient with another Therapist', {tag: ['@Therapist', '@sharepatient']}, async ({page}) => {
-    // Use Martina Gerth — confirmed to have no existing shared therapists ("Geteilter Therapeut: -")
+    // Use JhenTest QA — confirmed to have no existing shared therapists ("Geteilter Therapeut: -")
     // This avoids "Failed to share patients" errors from state pollution
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
     await page.getByTestId('text-input-outlined').press('Enter');
     await page.waitForTimeout(1500);
 
@@ -37,8 +37,8 @@ test.describe('Therapist Share Patient', () => {
     });
 
     test('Therapist Remove Shared Patient with another Therapist', {tag: ['@Therapist', '@removesharedpatient']}, async ({page}) => {
-    // Use Martina Gerth (same as share test — should have exactly 1 shared therapist after share test)
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
+    // Use JhenTest QA (same as share test — should have exactly 1 shared therapist after share test)
+    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
     await page.getByTestId('text-input-outlined').press('Enter');
     await page.waitForTimeout(1500);
 

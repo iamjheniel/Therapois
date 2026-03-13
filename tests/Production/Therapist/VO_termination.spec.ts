@@ -7,7 +7,10 @@ test.describe('VO Termination', () => {
   });
 
   test('Non-immediate termination (Keine Folge-VO bestellen)', { tag: '@KFvo' }, async ({ page }) => {
-    await page.getByRole('checkbox').nth(12).click({ force: true });
+    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
+    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.waitForTimeout(1500);
+    await page.getByRole('checkbox').first().click({ force: true });
     await page.getByRole('button', { name: 'Abbrechen VO' }).click();
     await page.getByText('Keine Folge-VO Bestellen').click();
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').click();
