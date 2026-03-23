@@ -42,7 +42,10 @@ test.describe('Search Functionality', () => {
 
   test('should filter search results by location', { tag: ['@Therapist','@searchlocation'] }, async ({ page }) => {
     await page.waitForLoadState('networkidle');
-    await page.getByText('ECH', { exact: true }).click({ force: true });
+    // Click the location filter button (shows abbreviated location name or placeholder)
+    const locationFilter = page.getByRole('button', { name: /Ort|ECH|Location/i }).first();
+    await locationFilter.waitFor({ state: 'visible', timeout: 10000 });
+    await locationFilter.click({ force: true });
     // Click the first available location option in the dropdown
     const firstOption = page.locator('[data-testid="modal-surface"] div[tabindex="0"]').first();
     await firstOption.waitFor({ state: 'visible', timeout: 10000 });

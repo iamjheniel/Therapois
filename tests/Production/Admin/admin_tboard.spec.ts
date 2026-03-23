@@ -9,9 +9,10 @@ test.describe('Admin TBoard', () => {
     test('Admin TBoard Document Treatment', { tag: ['@Admin', '@AdminDoku'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' T Board' }).click();
-    await page.waitForTimeout(10000);
+    await page.waitForLoadState('networkidle');
     await page.getByText('Therapist: (Select)').click();
     await page.getByText('Sandra Zeibig').click();
+    await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
     await page.getByRole('checkbox').nth(2).click({force:true});
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').click();

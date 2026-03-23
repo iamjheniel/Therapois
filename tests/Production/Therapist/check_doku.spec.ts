@@ -10,7 +10,8 @@ test.describe('Therapist Doku Check', () => {
     // Search for patient
     await page.getByTestId('text-input-outlined').fill('JhenTest QA');
     await page.getByTestId('text-input-outlined').press('Enter');
-    await page.getByText('JhenTest QA').first().waitFor({ state: 'visible' });
+    await page.waitForLoadState('networkidle');
+    await page.getByText('JhenTest QA').first().waitFor({ state: 'visible', timeout: 20000 });
     await page.getByText('JhenTest QA').first().click({ force: true });
 
     // Click the Doku eye icon safely using boundingBox with null guard
@@ -27,7 +28,8 @@ test.describe('Therapist Doku Check', () => {
     // Search for patient
     await page.getByTestId('text-input-outlined').fill('JhenTest QA');
     await page.getByTestId('text-input-outlined').press('Enter');
-    await page.getByText('JhenTest QA').first().waitFor({ state: 'visible' });
+    await page.waitForLoadState('networkidle');
+    await page.getByText('JhenTest QA').first().waitFor({ state: 'visible', timeout: 20000 });
     await page.getByText('JhenTest QA').first().click({ force: true });
 
     // Click the Protokolle eye icon safely using boundingBox with null guard

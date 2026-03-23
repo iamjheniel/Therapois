@@ -10,7 +10,7 @@ test.describe('Admin Upload Prescription', () => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');
-    await page.getByTestId('button').nth(3).click({force: true});
+    await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
     await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).click();
     await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).fill('test automation');
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
@@ -33,14 +33,14 @@ test.describe('Admin Upload Prescription', () => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');
-    await page.getByTestId('button').nth(3).click({force: true});
+    await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
     await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
     await page.locator('div:nth-child(2) > .css-g5y9jx.r-lrvibr > div > .css-g5y9jx').click();
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     await page.getByText(/^In Prüfung\s*\(\d+\)$/).click();
     await page.getByText(/^Nicht lesbar\s*\(\d+\)$/).click();
     await expect(page.locator('#root')).toContainText('Nicht lesbar');
-    await page.getByTestId('button').nth(3).click({force: true});
+    await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
     await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
     await page.getByText('In Prüfung').click({force: true});
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
