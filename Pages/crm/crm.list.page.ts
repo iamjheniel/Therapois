@@ -14,7 +14,7 @@ export class CRMListPage extends CRMBasePage {
   }
 
   async filterTodayOverdue() {
-    await this.page.getByText('Heute', { exact: true }).click();
+    await this.page.getByText(/^Heute(\s*\(\d+\))?$/).click();
     await expect(this.page.locator('#root')).toContainText(/\d/);
   }
 

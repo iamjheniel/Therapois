@@ -15,8 +15,8 @@ test.describe('Document Treatment', () => {
   const treatmentNote = 'Regular treatment test automation';
 
   // Search for patient to ensure she's visible regardless of today's schedule
-  await page.getByTestId('text-input-outlined').fill(patientName);
-  await page.getByTestId('text-input-outlined').press('Enter');
+  await page.getByTestId('text-input-outlined').first().fill(patientName);
+  await page.getByTestId('text-input-outlined').first().press('Enter');
   await page.waitForLoadState('networkidle');
   await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
 
@@ -63,8 +63,8 @@ test.describe('Document Treatment', () => {
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
     // Search for BV patient (KG-H-BV VO is on Jheniel Test row, second result after JhenTest QA)
-    await page.getByTestId('text-input-outlined').fill('Jheniel Test');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('Jheniel Test');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
     await page.getByRole('checkbox').first().click({ force: true });
@@ -86,8 +86,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document single patient doppel beh treatment', { tag: ['@Therapist','@doppelbeh'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
     await page.getByRole('checkbox').first().click({ force: true });
@@ -104,8 +104,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document multiple patients regular treatment', { tag: ['@Therapist','@multipleregular'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').fill('jhen');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('jhen');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
     await page.getByRole('checkbox').nth(0).click({ force: true });
@@ -128,8 +128,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Validate required fields', { tag: ['@Therapist','@validationerror'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
     await page.getByRole('checkbox').first().click({ force: true });
@@ -139,8 +139,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document reject treatment', { tag: ['@Therapist','@rejecttreatment'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
     await page.getByRole('checkbox').first().click({ force: true });
@@ -157,8 +157,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document planned treatment', { tag: ['@Therapist','@plannedtreatment'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
     await page.getByRole('checkbox').first().click({ force: true });
@@ -175,8 +175,8 @@ test.describe('Document Treatment', () => {
   });
 
   test('Document activity', { tag: ['@Therapist','@activity'] }, async ({ page }) => {
-  await page.getByTestId('text-input-outlined').fill('JhenTest QA');
-  await page.getByTestId('text-input-outlined').press('Enter');
+  await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
+  await page.getByTestId('text-input-outlined').first().press('Enter');
   await page.waitForLoadState('networkidle');
   await page.getByRole('checkbox').first().waitFor({ state: 'visible', timeout: 30000 });
   await page.getByRole('checkbox').first().click({ force: true });

@@ -8,8 +8,8 @@ test.describe('Therapist Doku Check', () => {
 
   test('Check Doku feature', { tag: ['@Therapist', '@checkdoku'] }, async ({ page }) => {
     // Search for patient
-    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByText('JhenTest QA').first().waitFor({ state: 'visible', timeout: 20000 });
     await page.getByText('JhenTest QA').first().click({ force: true });
@@ -26,8 +26,8 @@ test.describe('Therapist Doku Check', () => {
 
   test('Check Logs feature', { tag: ['@Therapist', '@checklogs'] }, async ({ page }) => {
     // Search for patient
-    await page.getByTestId('text-input-outlined').fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForLoadState('networkidle');
     await page.getByText('JhenTest QA').first().waitFor({ state: 'visible', timeout: 20000 });
     await page.getByText('JhenTest QA').first().click({ force: true });

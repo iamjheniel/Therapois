@@ -19,9 +19,9 @@ test.describe('Admin Pagination', () => {
     // Wait for real data to load (total > 0), so we don't capture "1-0 of 0"
     await expect(range).toHaveText(/of\s+[1-9]/, { timeout: 30000 });
 
-    // Go up to the container that also holds the pagination buttons
-    // (span -> parent div -> row container)
-    const paginationRow = range.locator('xpath=../..');
+    // Find the nearest ancestor div that actually contains the icon buttons
+    // (more robust than a fixed ../.. which breaks if nesting depth changes)
+    const paginationRow = range.locator('xpath=ancestor::div[.//div[@data-testid="icon-button-container"]][1]');
 
     // Find the icon buttons inside this row only (<<, <, >, >>)
     const buttons = paginationRow.locator('[data-testid="icon-button-container"]');
