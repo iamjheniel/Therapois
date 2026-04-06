@@ -57,7 +57,7 @@ export class CRMActivities {
   async resolveFirstIssue(note: string) {
     await this.page.getByText('Resolve').first().click();
     const noteInput = this.page.getByRole('textbox', {
-      name: '(Optional) Resolution note...',
+      name: /(Optional).*[Rr]esolution|[Rr]esolution.*note/i,
     });
     await noteInput.fill(note);
     await this.page.getByText('Confirm', { exact: true }).click();

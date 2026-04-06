@@ -4,7 +4,7 @@ export class PatientManagementPage {
   constructor(private page: Page) {}
 
   async openPatientManagement() {
-    await this.page.getByText('').last().click();
+    await this.page.getByText('\uf451').click();
     await this.page
       .locator('button')
       .filter({ hasText: /Patient Management/ })

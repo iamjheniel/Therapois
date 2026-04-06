@@ -8,8 +8,8 @@ test.describe('Therapist Doku Check', () => {
 
   test('Check Doku feature', { tag: ['@Therapist', '@checkdoku'] }, async ({ page }) => {
     // Search for patient
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.getByText('Martina Gerth').first().waitFor({ state: 'visible' });
     await page.getByText('Martina Gerth').first().click({ force: true });
 
@@ -25,8 +25,8 @@ test.describe('Therapist Doku Check', () => {
 
   test('Check Logs feature', { tag: ['@Therapist', '@checklogs'] }, async ({ page }) => {
     // Search for patient
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.getByText('Martina Gerth').first().waitFor({ state: 'visible' });
     await page.getByText('Martina Gerth').first().click({ force: true });
 

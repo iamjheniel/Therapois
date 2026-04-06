@@ -15,8 +15,8 @@ test.describe('Document Treatment', () => {
   const treatmentNote = 'Regular treatment test automation';
 
   // Search for patient to ensure she's visible regardless of today's schedule
-  await page.getByTestId('text-input-outlined').fill(patientName);
-  await page.getByTestId('text-input-outlined').press('Enter');
+  await page.getByTestId('text-input-outlined').first().fill(patientName);
+  await page.getByTestId('text-input-outlined').first().press('Enter');
   await page.waitForTimeout(1500);
 
   await page.getByRole('checkbox').first().click({ force: true });
@@ -61,8 +61,8 @@ test.describe('Document Treatment', () => {
 });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
     await page.getByRole('checkbox').first().click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();

@@ -9,8 +9,8 @@ test.describe('Super Admin Announcements', () => {
     test('Super Admin Announcement Creation', { tag: ['@SuperAdmin', '@announcement'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Announcements' }).click();
-    await page.getByRole('textbox', { name: 'Enter announcement message...' }).click();
-    await page.getByRole('textbox', { name: 'Enter announcement message...' }).fill('test automation');
+    await page.getByRole('textbox', { name: /announcement message/i }).first().click();
+    await page.getByRole('textbox', { name: /announcement message/i }).first().fill('test automation');
     await page.getByRole('radio', { name: 'Never expire' }).click();
     await page.getByRole('button', { name: 'Create Announcement' }).click();
     await expect(page.getByTestId('surface')).toContainText('Announcement created successfully');

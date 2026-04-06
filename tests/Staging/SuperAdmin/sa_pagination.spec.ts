@@ -16,6 +16,9 @@ test.describe('Super Admin Pagination', () => {
     const range = page.getByText(/of\s+\d+$/).first(); // regex: "of <number>"
     await expect(range).toBeVisible();
 
+    // Wait for real data to load (total > 0), so we don't capture "1-0 of 0"
+    await expect(range).toHaveText(/of\s+[1-9]/, { timeout: 30000 });
+
     // Go up to the container that also holds the pagination buttons
     // (span -> parent div -> row container)
     const paginationRow = range.locator('xpath=../..');

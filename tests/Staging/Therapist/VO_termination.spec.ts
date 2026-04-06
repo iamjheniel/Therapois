@@ -7,8 +7,8 @@ test.describe('VO Termination', () => {
   });
 
   test('Non-immediate termination (Keine Folge-VO bestellen)', { tag: '@KFvo' }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
     await page.getByRole('checkbox').first().click({ force: true });
     await page.getByRole('button', { name: 'Abbrechen VO' }).click();

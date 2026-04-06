@@ -9,7 +9,7 @@ export class IcdManagementPage {
   constructor(private page: Page) {}
 
   async openIcdManagement() {
-    await this.page.getByText('').last().click();
+    await this.page.getByText('\uf451').click();
     await this.page
       .locator('button')
       .filter({ hasText: /ICD-Code Verwaltung/ })

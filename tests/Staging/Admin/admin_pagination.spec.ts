@@ -35,6 +35,7 @@ test.describe('Admin Pagination', () => {
     console.log('First page:', firstPageRange);
 
     // 👉 NEXT PAGE
+    await expect(nextBtn).toBeVisible({ timeout: 10_000 });
     await nextBtn.click();
     await page.waitForTimeout(2000);
 

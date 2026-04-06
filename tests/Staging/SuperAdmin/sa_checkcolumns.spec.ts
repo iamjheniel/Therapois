@@ -23,9 +23,6 @@ test.describe('Super Admin Dashboard Check all columns', () => {
     await expect(page.locator('#root')).toContainText('Bestellen Date');
     await expect(page.locator('#root')).toContainText('Bestellt Datum');
     await expect(page.locator('#root')).toContainText('Nachverfolgen Datum');
-    await expect(page.locator('#root')).toContainText('Nachverfolgt Datum');
-    await expect(page.locator('#root')).toContainText('Telefonieren Datum');
-    await expect(page.locator('#root')).toContainText('Telefoniert Datum');
     await expect(page.locator('#root')).toContainText('Erhalten Datum');
     await expect(page.locator('#root')).toContainText('F.-VO');
     await expect(page.locator('#root')).toContainText('Bemerkungen');

@@ -4,7 +4,7 @@ export class AbrechnungPage {
   constructor(private page: Page) {}
 
   async openAbrechnung() {
-    await this.page.getByText('').last().click();
+    await this.page.getByText('\uf451').click();
     await this.page
       .locator('button')
       .filter({ hasText: /Abrechnung/ })
@@ -14,43 +14,27 @@ export class AbrechnungPage {
 
   // ── Tabs ──────────────────────────────────────────────
   async clickTab(name: 'All' | 'No Status' | 'For Fixing') {
-    await this.page
-      .getByRole('tab', { name: new RegExp(name, 'i') })
-      .first()
-      .click();
-
-    // fallback: plain text match if tabs aren't role="tab"
-    if (!(await this.page.getByRole('tab', { name: new RegExp(name, 'i') }).first().isVisible().catch(() => false))) {
-      await this.page.getByText(new RegExp(name, 'i')).first().click();
-    }
+    // Tabs are plain div elements (no role="tab"). "All" is labelled "Alle" in the UI.
+    const tabText = name === 'All' ? 'Alle' : name;
+    await this.page.getByText(tabText, { exact: true }).first().click();
   }
 
   // ── Filters ───────────────────────────────────────────
   async filterByVoStatus(status: string) {
-    await this.page
-      .locator('div')
-      .filter({ hasText: /^VO Status$|Auswählen/ })
-      .first()
-      .click();
-    await this.page.getByText(status, { exact: true }).first().click();
+    // VO Status has a single visible element so .first() works directly
+    await this.page.getByText(/VO Status:/).first().click();
+    await this.page.getByRole('dialog').getByText(status, { exact: true }).click();
   }
 
   async filterByTherapist(name: string) {
-    await this.page
-      .locator('div')
-      .filter({ hasText: /^Therapeut|Therapist/ })
-      .first()
-      .click();
-    await this.page.getByText(name, { exact: true }).first().click();
+    // The app renders hidden zero-size duplicates; target the visible element
+    await this.page.getByText(/Therapeut:/).filter({ visible: true }).first().click();
+    await this.page.getByRole('dialog').getByText(name, { exact: true }).click();
   }
 
   async filterByEinrichtung(name: string) {
-    await this.page
-      .locator('div')
-      .filter({ hasText: /^ER$|Einrichtung/ })
-      .first()
-      .click();
-    await this.page.getByText(name, { exact: true }).first().click();
+    await this.page.getByText(/ER:/).filter({ visible: true }).first().click();
+    await this.page.getByRole('dialog').getByText(name, { exact: true }).click();
   }
 
   async resetFilters() {
@@ -105,7 +89,7 @@ export class AbrechnungPage {
   }
 
   // ── Assertions ────────────────────────────────────────
-  async expectToast(text: string) {
+  async expectToast(text: string | RegExp) {
     await expect(this.page.getByTestId('surface')).toContainText(text, {
       timeout: 15_000,
     });

@@ -47,7 +47,7 @@ test.describe('Super Admin Team', () => {
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).fill('automation');
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).press('Enter');
   await page.waitForLoadState('networkidle');
-  await page.locator('div:nth-child(2) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').click();
+  await page.locator('div:nth-child(2) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').first().click();
  // generate a unique last name so save button gets enabled
   const updatedLastName = `Updated_${Date.now()}`;
   await page.getByRole('textbox', { name: 'e.g. Bond' }).fill(updatedLastName);
@@ -63,13 +63,13 @@ test.describe('Super Admin Team', () => {
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).fill('automation');
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).press('Enter');
   await page.waitForLoadState('networkidle');
-  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').click();
+  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').first().click();
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Aktualisieren' }).click();
   await expect(page.locator('html')).toContainText('User updated successfully');
   await expect(page.locator('#root')).toContainText('Inaktiv ✗');
   //activate again for test idempotency
-  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').click();
+  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').first().click();
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Aktualisieren' }).click();
   await expect(page.locator('html')).toContainText('User updated successfully');

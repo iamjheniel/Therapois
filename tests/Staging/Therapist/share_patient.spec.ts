@@ -10,8 +10,8 @@ test.describe('Therapist Share Patient', () => {
     test('Therapist Share Patient with another Therapist', {tag: ['@Therapist', '@sharepatient']}, async ({page}) => {
     // Use Martina Gerth — confirmed to have no existing shared therapists ("Geteilter Therapeut: -")
     // This avoids "Failed to share patients" errors from state pollution
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
 
     await page.getByRole('checkbox').first().click({ force: true });
@@ -38,8 +38,8 @@ test.describe('Therapist Share Patient', () => {
 
     test('Therapist Remove Shared Patient with another Therapist', {tag: ['@Therapist', '@removesharedpatient']}, async ({page}) => {
     // Use Martina Gerth (same as share test — should have exactly 1 shared therapist after share test)
-    await page.getByTestId('text-input-outlined').fill('Martina Gerth');
-    await page.getByTestId('text-input-outlined').press('Enter');
+    await page.getByTestId('text-input-outlined').first().fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
 
     await page.getByRole('checkbox').first().click({ force: true });
