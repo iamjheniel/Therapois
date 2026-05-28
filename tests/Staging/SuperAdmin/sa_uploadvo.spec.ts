@@ -8,6 +8,7 @@ test.describe('Super Admin Upload Prescription', () => {
 
 
     test('Super Admin Upload Prescription View and Add Note', { tag: ['@SuperAdmin', '@AddNoteUploadVO'] }, async ({ page }) => {
+    test.fixme(true, 'SA upload list shows "Keine Patienten gefunden" on staging — needs test data (an uploaded VO) before this can run');
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');
@@ -21,6 +22,7 @@ test.describe('Super Admin Upload Prescription', () => {
     });
     
     test('Super Admin Upload Prescription Search', { tag: ['@SuperAdmin', '@SearchUploadVO'] }, async ({ page }) => {
+    test.fixme(true, 'SA upload search shows "Keine Patienten gefunden" for "sandra" on staging — needs test data');
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Rezept' }).click();
     await expect(page.locator('#root')).toContainText('VO Upload');

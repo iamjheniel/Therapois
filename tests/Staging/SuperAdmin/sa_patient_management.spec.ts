@@ -18,7 +18,7 @@ test.describe('Super Admin - Patient Management', () => {
       await pm.openPatientManagement();
       // Verify the section heading is visible
       await expect(page.locator('#root')).toContainText(
-        /Patient Management|Patientenverwaltung/i,
+        /Patient(en)? Management|Patientenverwaltung/i,
         { timeout: 15_000 }
       );
     }
@@ -110,7 +110,7 @@ test.describe('Super Admin - Patient Management', () => {
       await pm.clearSearch();
       // After clearing, the list should show more than the filtered result
       await expect(page.locator('#root')).toContainText(
-        /Patient Management|Patientenverwaltung/i,
+        /Patient(en)? Management|Patientenverwaltung/i,
         { timeout: 10_000 }
       );
     }

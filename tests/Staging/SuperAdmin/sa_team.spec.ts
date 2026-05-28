@@ -58,18 +58,30 @@ test.describe('Super Admin Team', () => {
 
   test('Super Admin Inactivate + Activate User', { tag: ['@SuperAdmin', '@inactivateuser'] }, async ({ page }) => {
   await page.getByText('').click();
-  await page.getByRole('button', { name: ' Team' }).click();
+  await page.getByRole('button', { name: ' Team' }).click();
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).click();
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).fill('automation');
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).press('Enter');
   await page.waitForLoadState('networkidle');
-  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').first().click();
+
+  // Open the edit panel for the third automation row via its action icon.
+  const openThirdRowEdit = async () => {
+    const emailCells = page.getByText(/automation_\d+@gmail\.com/);
+    await expect(emailCells.nth(2)).toBeVisible({ timeout: 10_000 });
+    const thirdEmail = emailCells.nth(2);
+    const row = thirdEmail.locator(
+      'xpath=ancestor::*[self::div][.//*[@role="img" or self::img]][1]'
+    );
+    await row.getByRole('img').last().click();
+  };
+
+  await openThirdRowEdit();
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Aktualisieren' }).click();
   await expect(page.locator('html')).toContainText('User updated successfully');
   await expect(page.locator('#root')).toContainText('Inaktiv ✗');
   //activate again for test idempotency
-  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').first().click();
+  await openThirdRowEdit();
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Aktualisieren' }).click();
   await expect(page.locator('html')).toContainText('User updated successfully');

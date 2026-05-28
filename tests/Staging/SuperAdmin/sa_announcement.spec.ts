@@ -9,11 +9,14 @@ test.describe('Super Admin Announcements', () => {
     test('Super Admin Announcement Creation', { tag: ['@SuperAdmin', '@announcement'] }, async ({ page }) => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Announcements' }).click();
-    await page.getByRole('textbox', { name: /announcement message/i }).first().click();
-    await page.getByRole('textbox', { name: /announcement message/i }).first().fill('test automation');
-    await page.getByRole('radio', { name: 'Never expire' }).click();
-    await page.getByRole('button', { name: 'Create Announcement' }).click();
-    await expect(page.getByTestId('surface')).toContainText('Announcement created successfully');
+    const messageBox = page
+      .getByRole('textbox', { name: /announcement message|Ankündigungsnachricht/i })
+      .first();
+    await messageBox.click();
+    await messageBox.fill('test automation');
+    await page.getByRole('radio', { name: /Never expire|Niemals ablaufen/i }).click();
+    await page.getByRole('button', { name: /Create Announcement|Ankündigung erstellen/i }).click();
+    await expect(page.getByTestId('surface')).toContainText(/Announcement created successfully|Ankündigung erfolgreich erstellt/i);
     // 1. Locate the correct announcement card
     const card = page
     .locator('div[data-testid="card-container"]', { hasText: 'test automation' })
@@ -36,7 +39,7 @@ test.describe('Super Admin Announcements', () => {
     await page.getByText('SJSA JhenSuper Admin').click();
     await page.getByRole('button', { name: ' Admin Board' }).click();
     await page.getByText('').first().click();
-    await expect(page.locator('#root')).toContainText('General Announcement');
+    await expect(page.locator('#root')).toContainText(/General Announcement|Allgemeine Ankündigung/i);
     await expect(page.locator('#root')).toContainText('test automation');
     await page.getByText('Notifications').click();
     await page.getByText('').click();

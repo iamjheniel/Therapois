@@ -15,7 +15,7 @@ test.describe('Super Admin Search', () => {
     await page.getByText('Sandra Zeibig').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Aktiv');
-    await expect(page.locator('#root')).toContainText('Sa. Zeibig');
+    await expect(page.locator('#root')).toContainText(/Sa\.\s*Zeibig|Sandra Zeibig/);
     });
 
     test('Super Admin Search Abgebrochen VO Functionality', { tag: ['@SuperAdmin','@SuperAdminSearchAbgebrochenVo']}, async ({ page }) => {

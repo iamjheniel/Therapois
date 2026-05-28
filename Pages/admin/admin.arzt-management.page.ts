@@ -17,14 +17,23 @@ export class ArztManagementPage {
   }
 
   async openArztManagement() {
-    await this.page.getByText('').last().click();
-
+    await this.page.waitForLoadState('domcontentloaded');
     const arztBtn = this.page
       .locator('button')
       .filter({ hasText: 'Arzt Management' })
       .last();
-
-    await arztBtn.click();
+    const found = await arztBtn
+      .waitFor({ state: 'attached', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!found) {
+      await this.page.getByText('').first().click();
+      await arztBtn.waitFor({ state: 'attached', timeout: 10_000 });
+    }
+    await arztBtn.evaluate((el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      el.click();
+    });
   }
 
   async openAddArzt() {
@@ -48,7 +57,16 @@ export class ArztManagementPage {
 
   async selectPractice(practiceName: string) {
     await this.rnText('Wählen Sie eine Praxis').click();
-    await this.rnText(practiceName).click();
+    // The picker now opens a search-enabled list; filter to the desired practice.
+    const searchBox = this.page.getByRole('textbox', { name: 'Search' });
+    if (await searchBox.isVisible().catch(() => false)) {
+      await searchBox.fill(practiceName);
+    }
+    await this.page
+      .getByRole('dialog')
+      .getByText(practiceName, { exact: false })
+      .first()
+      .click();
   }
 
   async save() {

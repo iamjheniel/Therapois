@@ -4,12 +4,23 @@ export class AbrechnungPage {
   constructor(private page: Page) {}
 
   async openAbrechnung() {
-    await this.page.getByText('\uf451').click();
-    await this.page
+    await this.page.waitForLoadState('domcontentloaded');
+    const navButton = this.page
       .locator('button')
       .filter({ hasText: /Abrechnung/ })
-      .last()
-      .click();
+      .last();
+    const found = await navButton
+      .waitFor({ state: 'attached', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!found) {
+      await this.page.getByText('\uf451').first().click();
+      await navButton.waitFor({ state: 'attached', timeout: 10_000 });
+    }
+    await navButton.evaluate((el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      el.click();
+    });
   }
 
   // ── Tabs ──────────────────────────────────────────────
