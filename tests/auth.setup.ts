@@ -6,7 +6,7 @@ import path from 'path';
 const accounts = [
   {
     name: 'Sandra Zeibig',
-    email: 'sandra.zeibig.66@therapios.com',
+    email: 'jhenqa@therapios.de',
     password: '12345678',
     authFile: path.join(__dirname, '../.auth/SandraZeibig.json'),
   },
@@ -43,7 +43,7 @@ for (const user of accounts) {
     await page.locator('input[type="password"]').fill(user.password);
 
     // click submit
-    await page.locator('div').filter({ hasText: /^Proceed$/ }).first().click();
+    await page.locator('div').filter({ hasText: /^Weiter$/ }).first().click();
 
     // wait for redirect away from login page (URL path changes from '/')
     await page.waitForURL(url => new URL(url).pathname !== '/', { timeout: 30_000 });

@@ -11,7 +11,7 @@ test.describe('Therapist Upload Documents', () => {
     await page.getByText('').click();
     await page.getByRole('button', { name: ' Dokument' }).click();
     await page.getByRole('button', { name: '󰩎 Dokument hochladen' }).click();
-    await page.getByText('Zuzahlungsdokumente hochladen').click();
+    await page.getByTestId('modal-surface').getByText('Zuzahlungsbefreiung').click();
      const filePath = path.join(__dirname, "sampleprescription.png");
      console.log("FILE PATH:", filePath);  // debug
  

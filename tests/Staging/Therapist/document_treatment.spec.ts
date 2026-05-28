@@ -10,8 +10,8 @@ test.describe('Document Treatment', () => {
 
 
   test('Create treatment then open Doku and delete treatment activity', {tag: ['@Therapist','@singleregular']}, async ({ page }) => {
-  // Using Martina Gerth - confirmed available in staging via search tests
-  const patientName = 'Martina Gerth';
+  // Using JhenTest QASala - confirmed available in staging via search tests
+  const patientName = 'JhenTest QASala';
   const treatmentNote = 'Regular treatment test automation';
 
   // Search for patient to ensure she's visible regardless of today's schedule
@@ -61,7 +61,7 @@ test.describe('Document Treatment', () => {
 });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').first().fill('Martina Gerth');
+    await page.getByTestId('text-input-outlined').first().fill('JhenTest QASala');
     await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
     await page.getByRole('checkbox').first().click({ force: true });
@@ -99,9 +99,11 @@ test.describe('Document Treatment', () => {
 
     test('Document multiple patients regular treatment', { tag: ['@Therapist','@multipleregular'] }, async ({ page }) => {
     await page.getByRole('checkbox').first().waitFor();
-    await page.getByRole('checkbox').nth(8).click({ force: true });
-    await page.getByRole('checkbox').nth(9).click({ force: true });
-    await page.getByRole('checkbox').nth(10).click({ force: true });
+    // First 3 active-patient rows — these have a Heilmittel pre-set, so Save enables
+    // without manually filling the Heilmittel dropdown for each.
+    await page.getByRole('checkbox').nth(1).click({ force: true });
+    await page.getByRole('checkbox').nth(2).click({ force: true });
+    await page.getByRole('checkbox').nth(3).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (3)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (3)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').nth(0).fill('multiple regular treatment automation');
@@ -129,7 +131,7 @@ test.describe('Document Treatment', () => {
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();
     await page.getByTestId('surface').getByTestId('text-input-outlined').fill('reject automation test');
-    await page.locator('.css-g5y9jx.r-14lw9ot > div > div:nth-child(2) > .css-g5y9jx.r-1awozwy.r-18u37iz > div > .css-g5y9jx.r-1otgn73').click();
+    await page.getByText('Patient hat die Behandlung verweigert').click();
     await page.getByRole('button', { name: 'Save' }).click();
     // Wait for backend + UI to stabilize
     await page.waitForLoadState('networkidle');
@@ -157,7 +159,7 @@ test.describe('Document Treatment', () => {
   await page.getByRole('checkbox').first().waitFor();
   await page.getByRole('checkbox').nth(6).click({ force: true });
   await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
-  await page.getByRole('button', { name: ' Aktivität' }).click();
+  await page.getByTestId('surface').getByRole('button', { name: ' Aktivität' }).click();
   await page.locator('div').filter({ hasText: /^Pause$/ }).nth(1).click();
   await page.getByText('Other').click();
   await page.getByRole('textbox', { name: 'Enter custom activity' }).click();

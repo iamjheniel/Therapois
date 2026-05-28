@@ -10,9 +10,9 @@ test.describe('Search Functionality', () => {
 
   test('should show results for a valid search name', { tag: ['@Therapist','@searchname'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').first().click();
-    await page.getByTestId('text-input-outlined').first().fill('gerth');
+    await page.getByTestId('text-input-outlined').first().fill('namjoon');
     await page.getByTestId('text-input-outlined').first().press('Enter');
-    await expect(page.locator('#root')).toContainText('Martina Gerth');
+    await expect(page.locator('#root')).toContainText('Namjoon Test');
   });
 
   test('should show results for a valid search vo number', { tag: ['@Therapist','@searchvo'] }, async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('Search Functionality', () => {
 
   test('should show "no patient found" message for unknown name', { tag: ['@Therapist','@searchunknownname'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').first().click();
-    await page.getByTestId('text-input-outlined').first().fill('test');
+    await page.getByTestId('text-input-outlined').first().fill('Mustermann');
     await page.getByTestId('text-input-outlined').first().press('Enter');
     await expect(page.locator('#root')).toContainText('Keine Patienten gefunden');
 
@@ -44,7 +44,7 @@ test.describe('Search Functionality', () => {
     await page.waitForLoadState('networkidle');
     // NOTE: Update 'ECH' if the location chip label changes in staging
     await page.getByText('ECH', { exact: true }).first().click({ force: true });
-    await page.getByText('AIP Inter Care GmbH').click();
-    await expect(page.locator('#root')).toContainText('AIP Inter Care GmbH');
+    await page.getByText('QA Test ER').click();
+    await expect(page.locator('#root')).toContainText('QA Test ER');
   });
 });

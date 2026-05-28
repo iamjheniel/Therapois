@@ -9,16 +9,20 @@
           "value": "[]"
         },
         {
-          "name": "hidden_column_prescriptions",
+          "name": "_savedCredentials_cleanup_done",
+          "value": "true"
+        },
+        {
+          "name": "hidden_column_therapist-prescriptions-v2",
           "value": "[]"
         },
         {
           "name": "auth-state",
-          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NjI0MDAxNzgsImV4cCI6MTc5MzkzNjE3OCwianRpIjoiZGU1YzdkNGViZmZhNmU0MzViOGI5ODUzMGM1NWYxMGEiLCJyb2xlcyI6WyJST0xFX1RIRVJBUElTVCIsIlJPTEVfVVNFUiJdLCJ1c2VybmFtZSI6InNhbmRyYS56ZWliaWcuNjZAdGhlcmFwaW9zLmNvbSJ9.C6n2Nym60--D-ZZkL2y2T05GzTdjImc4wxvnlIzq24xFnekW0pOzHKMbmNHy2CJPc5gidpZHY7RH7UFhuUA06gyPlX4N7BJavotNZoDdIFw3w0fiFwtj4LNfSWLveznLQUwIb9-YpPugBaNiruM3agSIoMQEHwQvmWMPCrWgYBRel8H3TiqkSDmDxD5vlBhRDkROcPUf98bSarBaf3ZOkcu9PwThTAdV3hs4MVEp-YjppN9lFNRk0EAc8mpGDmO-zthDpnGtpeRAQUpjTwklXqTRmSicTWFP0VDF3h8BLBjtGVE7Hez_Muq2A9ILVt7w0AAcuFjfwHAaZkr-PcZl2w\",\"user\":{\"id\":6,\"username\":\"sandra.zeibig.66@therapios.com\",\"roles\":[\"ROLE_THERAPIST\",\"ROLE_USER\"],\"firstName\":\"Sandra\",\"lastName\":\"Zeibig\",\"fullName\":\"Sandra Zeibig\",\"weak_credentials\":false,\"followupOrderingEnabled\":false},\"fetching\":false}"
+          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3Nzg0Nzg3MjMsImV4cCI6MTgxMDAxNDcyMywianRpIjoiMGIwYTRmYzFjODNlY2E1ZjA1OTQ1NTIyMGM3MTIwZjUiLCJyb2xlcyI6WyJST0xFX1RIRVJBUElTVCIsIlJPTEVfVVNFUiJdLCJ1c2VybmFtZSI6ImpoZW5xYUB0aGVyYXBpb3MuZGUifQ.ooELjDdbofQ8ipdGf5yhgZCa9KbzLoSuH9HElSlBRQABs9VxjshrFp2QB5gSq9_V9ZahaUmFXzRRYqSwEnbiDe9njVgcurEZQ-TlL2kcQXOE6_HRtVRaqwSculrEinsKtc3WRIJZCvSC5yj6XjGYxSANDiSQEa5yeUK38Tf71bR7HeOv42eJuvHLkao-mDXfAOPA0keCr0KSWTelpg_kIkdQsskbzmBUoOuxBW3m8aYdvbdo_dFxOPahc8VUDbpAjO3yPvwCkkqJ6CLNRuGRJaRLWuYR-HwGDjJJXM1rK4_QGn8aXb6fEMZTYkoBdJZM0EHbVOcmfApDcQRRHwWWTw\",\"user\":{\"id\":198,\"username\":\"jhenqa@therapios.de\",\"roles\":[\"ROLE_THERAPIST\",\"ROLE_USER\"],\"firstName\":\"Jhenqa\",\"lastName\":\"Test\",\"fullName\":\"Jhenqa Test\",\"weak_credentials\":false,\"followUpOrderingEnabled\":true,\"therapyDepartment\":null},\"fetching\":false}"
         },
         {
           "name": "therapios\\REACT_QUERY_OFFLINE_CACHE",
-          "value": "{\"buster\":\"v1\",\"timestamp\":1762400179734,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+          "value": "{\"buster\":\"3.4.0\",\"timestamp\":1778478724863,\"clientState\":{\"mutations\":[],\"queries\":[{\"dehydratedAt\":1778478724863,\"state\":{\"dataUpdateCount\":0,\"dataUpdatedAt\":0,\"error\":null,\"errorUpdateCount\":0,\"errorUpdatedAt\":0,\"fetchFailureCount\":0,\"fetchFailureReason\":null,\"fetchMeta\":null,\"isInvalidated\":false,\"status\":\"pending\",\"fetchStatus\":\"idle\"},\"queryKey\":[\"notification-center\",\"list\",{\"pagination\":false,\"filter\":{\"user\":198}}],\"queryHash\":\"[\\\"notification-center\\\",\\\"list\\\",{\\\"filter\\\":{\\\"user\\\":198},\\\"pagination\\\":false}]\"}]}}"
         }
       ]
     }
