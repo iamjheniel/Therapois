@@ -38,5 +38,20 @@ test.describe('Super Admin Copayment', () => {
     await expect(page.locator('#root')).toContainText(/66-/i);
     });
 
+    test('Super Admin Document Update Status', { tag: ['@SuperAdmin', '@DocumentStatusChange'] }, async ({ page }) => {
+    await page.getByText('').click();
+    await page.getByRole('button', { name: ' Dokument' }).click();
+    await page.getByTestId('button').nth(3).click({force: true});
+    await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
+    await page.locator('div:nth-child(2) > .css-g5y9jx.r-lrvibr > div > .css-g5y9jx').click();
+    await page.getByRole('button', { name: 'Änderungen speichern' }).click();
+    await page.getByText(/^In Prüfung\s*\(\d+\)$/).click();
+    await page.getByText(/^Nicht lesbar\s*\(\d+\)$/).click();
+    await expect(page.locator('#root')).toContainText('Nicht lesbar');
+    await page.getByTestId('button').nth(3).click({force: true});
+    await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
+    await page.getByText('In Prüfung').click({force: true});
+    await page.getByRole('button', { name: 'Änderungen speichern' }).click();
+    });
 
 });

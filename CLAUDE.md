@@ -148,6 +148,20 @@ playwright.config.ts
 | `sa_patient_management.spec.ts` | `@SuperAdmin @PatientManagement` | Patient management |
 | `sa_announcement.spec.ts` | `@SuperAdmin @announcement` | Create system announcement |
 | `sa_abrechnung.spec.ts` | `@SuperAdmin @Abrechnung @VOValidation` | Abrechnung (billing) VO validation workflows |
+| `sa_crm_practice.spec.ts` | `@SuperAdmin @CRMFilters` | CRM practice list filtering |
+| `sa_crm_activities.spec.ts` | `@SuperAdmin @CRMActivities @CRMCreateIssue @CRMResolveIssue` | CRM: create activity, create issue, resolve issue, next activity |
+| `sa_crm_follow-up-orders.spec.ts` | `@SuperAdmin @CRMFollowUpOrder` | CRM follow-up order actions |
+| `sa_crm_initial-order-change-status.spec.ts` | `@SuperAdmin @CRMInitialOrder` | CRM initial order status changes |
+| `sa_tboard.spec.ts` | `@SuperAdmin @SADoku` | T Board document treatment flow |
+| `sa_reports.spec.ts` | `@SuperAdmin @Reports @ReportsDateFilter @ReportsTherapieformFilter @ReportsExport` | Reports page: date filter, therapieform filter, export |
+| `sa_vo_rueckseite.spec.ts` | `@SuperAdmin @VORueckseite` | VO Rückseite (back-of-VO) batch upload page |
+| `sa_daten_hochladen.spec.ts` | `@SuperAdmin @DatenHochladen` | Data upload (CSV) page and import history |
+| `sa_praxis.spec.ts` | `@SuperAdmin @Praxis` | Practice tracking CRM page |
+| `sa_entities.spec.ts` | `@SuperAdmin @Entities` | Entitätsverwaltung (entity/company management) |
+| `sa_dokumentenzentrale.spec.ts` | `@SuperAdmin @Dokumentenzentrale` | Document center: Therapieberichte, Honorarvereinbarungen, etc. |
+| `sa_kpi_dashboard.spec.ts` | `@SuperAdmin @KPIDashboard` | KPI Dashboard: period filters, charts |
+| `sa_to_management.spec.ts` | `@SuperAdmin @TOManagement` | TO Verwaltung: Auslastung/Abrechnung/KPIs tabs, therapist health counters |
+| `sa_validation_config.spec.ts` | `@SuperAdmin @ValidationConfig` | Validierungskonfiguration: rule table, auto-validation rules |
 
 Production specs mirror the Staging inventory under `tests/Production/`.
 
