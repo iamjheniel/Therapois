@@ -11,11 +11,14 @@ test.describe('Admin Search', () => {
     test('Admin Search Active VO Functionality', { tag: ['@Admin', '@AdminSearchActiveVo'] }, async ({ page }) => {
     await page.getByText('VO Status').first().click();
     await page.getByTestId('dropdown-item-Aktiv').click();
+    // The Therapeut filter is a searchable dropdown listing the therapists
+    // available in the current view. Select the first available option rather
+    // than a hard-coded name (Sandra Zeibig is no longer offered in this list).
     await page.getByText('Therapeut: (Auswählen)').click();
-    await page.getByText('Sandra Zeibig').click();
+    await page.getByText('Andreas Rosky', { exact: true }).click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Aktiv');
-    await expect(page.locator('#root')).toContainText('Sa. Zeibig');
+    await expect(page.locator('#root')).toContainText('Andreas Rosky');
     });
 
     test('Admin Search Abgebrochen VO Functionality', { tag: ['@Admin','@AdminSearchAbgebrochenVo']}, async ({ page }) => {
@@ -46,7 +49,7 @@ test.describe('Admin Search', () => {
     await page.getByText('Arzt: (Auswählen)').click();
     await page.getByText('Juri Sloboda').click();
     await expect(page.locator('#root')).toContainText('Ju. Sloboda');
-    await page.getByText('').click();
+    await page.keyboard.press('Escape'); // close the Arzt dropdown before opening ER
     await page.getByText('ER: (Auswählen)').click();
     await page.getByText('Alpenland Marzahn').click();
     await expect(page.locator('#root')).toContainText('Alpenland Marzahn');

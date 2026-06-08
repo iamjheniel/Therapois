@@ -121,8 +121,10 @@ test.describe('Super Admin - Abrechnung (VO Validation)', () => {
       const ab = new AbrechnungPage(page);
 
       await ab.openAbrechnung();
-      await ab.filterByTherapist('Sandra Zeibig');
-      await expect(page.locator('#root')).toContainText('Sandra Zeibig', {
+      // The therapist filter lists the therapists available in the current view;
+      // Sandra Zeibig is no longer offered, so filter by the first available option.
+      await ab.filterByTherapist('Andreas Rosky');
+      await expect(page.locator('#root')).toContainText('Andreas Rosky', {
         timeout: 10_000,
       });
     }

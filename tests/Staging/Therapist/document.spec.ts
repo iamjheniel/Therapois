@@ -17,7 +17,7 @@ test.describe('Therapist Upload Documents', () => {
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);
@@ -36,7 +36,7 @@ test.describe('Therapist Upload Documents', () => {
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);
@@ -55,7 +55,7 @@ test.describe('Therapist Upload Documents', () => {
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);
@@ -74,7 +74,7 @@ test.describe('Therapist Upload Documents', () => {
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);

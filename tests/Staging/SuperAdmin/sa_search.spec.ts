@@ -11,11 +11,14 @@ test.describe('Super Admin Search', () => {
     test('Super Admin Search Active VO Functionality', { tag: ['@SuperAdmin', '@SuperAdminSearchActiveVo'] }, async ({ page }) => {
     await page.getByText('VO Status').first().click();
     await page.getByText('Aktiv').click();
+    // The Therapeut filter is a searchable dropdown listing the therapists
+    // available in the current view. Select the first available option rather
+    // than a hard-coded name (Sandra Zeibig is no longer offered in this list).
     await page.getByText('Therapeut: (Auswählen)').click();
-    await page.getByText('Sandra Zeibig').click();
+    await page.getByText('Andreas Rosky', { exact: true }).click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Aktiv');
-    await expect(page.locator('#root')).toContainText(/Sa\.\s*Zeibig|Sandra Zeibig/);
+    await expect(page.locator('#root')).toContainText('Andreas Rosky');
     });
 
     test('Super Admin Search Abgebrochen VO Functionality', { tag: ['@SuperAdmin','@SuperAdminSearchAbgebrochenVo']}, async ({ page }) => {

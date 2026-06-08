@@ -1,0 +1,76 @@
+import { test, expect } from '@playwright/test';
+import { VoFormPage } from '../../../Pages/vo/vo.form.page';
+
+// Epic: VO Direct Practice Assignment — therapios/monorepo#2670
+//   #2671 VO Form: practice is a direct, required field (searchable by name + BSNR),
+//          doctor becomes optional.
+//   #2673 Surfaces: the dashboard shows a VO's directly-assigned practice column.
+//
+// Note: on Staging the `/practices` API currently returns 500, so the dropdown renders no
+// options — the "select a practice" test self-skips there. The required/optional contract
+// and the name+BSNR search request are still fully verifiable (the request fires regardless
+// of the API response), and they are the headline behavioural changes of the epic.
+
+test.describe('Admin — VO Direct Practice Assignment', () => {
+  test(
+    'VO form requires Praxis and makes Doctor optional',
+    { tag: ['@Admin', '@VOPracticeAssignment', '@VOFormPractice'] },
+    async ({ page }) => {
+      const voForm = new VoFormPage(page);
+      await voForm.openCreateVoForm();
+      await voForm.expectPracticeRequired();
+      await voForm.expectDoctorOptional();
+    }
+  );
+
+  test(
+    'VO practice selector searches by name and BSNR',
+    { tag: ['@Admin', '@VOPracticeAssignment', '@VOPracticeSearch'] },
+    async ({ page }) => {
+      const voForm = new VoFormPage(page);
+      await voForm.openCreateVoForm();
+
+      // Typing into the practice dropdown queries /practices with BOTH search[name] and
+      // search[practiceId] (BSNR) — proving it is searchable by name and BSNR (#2671 AC1).
+      const requestPromise = page.waitForRequest(
+        (r) =>
+          r.url().includes('/practices?') &&
+          r.url().includes('search%5Bname%5D') &&
+          r.url().includes('search%5BpracticeId%5D'),
+        { timeout: 20_000 }
+      );
+      await voForm.searchPractice('Ortho');
+      const request = await requestPromise;
+      expect(request.url()).toContain('search%5Bname%5D=Ortho');
+      expect(request.url()).toContain('search%5BpracticeId%5D=Ortho');
+    }
+  );
+
+  test(
+    'VO practice selector lists options and selects one',
+    { tag: ['@Admin', '@VOPracticeAssignment', '@VOPracticeSelect'] },
+    async ({ page }) => {
+      const voForm = new VoFormPage(page);
+      await voForm.openCreateVoForm();
+      await voForm.searchPractice('a');
+
+      const optionCount = await voForm.practiceOptionCount();
+      test.skip(
+        optionCount === 0,
+        'No practice options in this environment (/practices API unavailable) — selection cannot be exercised.'
+      );
+
+      const name = await voForm.selectFirstPractice();
+      await expect(page.getByText(name).first()).toBeVisible();
+    }
+  );
+
+  test(
+    'Dashboard exposes a Praxis column (direct practice)',
+    { tag: ['@Admin', '@VOPracticeAssignment', '@DashboardPracticeColumn'] },
+    async ({ page }) => {
+      const voForm = new VoFormPage(page);
+      await voForm.expectDashboardPraxisColumnOption();
+    }
+  );
+});

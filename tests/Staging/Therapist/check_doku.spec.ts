@@ -296,17 +296,17 @@ async function deleteFirstTreatment(page: Page) {
 // ---------------------------------------------------------------------------
 
 // Active patient with valid VO — supports Doku erfassen via per-row checkbox.
-const TEST_PATIENT = 'JhenTest QASala';
+const TEST_PATIENT = 'BiniStacey Test';
 
 test.describe('Therapist Doku Check', () => {
   // Serial mode: all 6 tests share the same patient. Running
   // them in parallel means multiple workers mutate the same backend data simultaneously,
   // causing cleanup to take 180+ s due to inter-worker conflicts.
   test.describe.configure({ mode: 'serial' });
-  // Extend timeout to 1800 s (30 min): first run may have a large accumulated backlog of
-  // orphaned treatments to delete (each deletion takes ~8 s; 200 deletions × 8 s = 1600 s).
-  // After the backlog is cleared, subsequent runs are fast (at most 1 treatment per run).
-  test.setTimeout(1800000);
+  // Extend timeout to 5 min to allow for cleanup of orphaned treatments from prior runs.
+  // (Previously 30 min — that made a missing-patient failure hang for half an hour and
+  // block every subsequent serial test; a real failure should surface quickly.)
+  test.setTimeout(300000);
 
   test.beforeEach(async ({ page }) => {
     // First load: run cleanup to remove any orphaned treatments from prior runs.

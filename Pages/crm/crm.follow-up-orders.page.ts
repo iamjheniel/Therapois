@@ -6,7 +6,8 @@ export class CRMFollowUpOrdersPage {
   /* ---------- Navigation ---------- */
 
   async openFollowUpOrders() {
-    await this.page.getByText('Folge-Verordnungen').click();
+    // The CRM practice panel was redesigned: the old "Folge-Verordnungen" tab is now "Nachverfolgung".
+    await this.page.getByText('Nachverfolgung', { exact: true }).click({ force: true });
   }
 
  async addNote(note: string) {

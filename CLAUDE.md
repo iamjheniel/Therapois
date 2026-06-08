@@ -61,6 +61,8 @@ Pages/                              # Page Object Model classes
     sa.abrechnung.page.ts           # Abrechnung (billing) VO validation
     sa.icd-management.page.ts       # ICD code management
     sa.patient-management.page.ts   # Patient management
+  vo/
+    vo.form.page.ts                 # Create-VO form: practice (required) + doctor (optional) selectors
 tests/
   Staging/
     Admin/                          # 13 spec files — project: AdminJhen
@@ -117,6 +119,7 @@ playwright.config.ts
 | `admin_crm_initial-order-change-status.spec.ts` | `@Admin @CRMInitialOrder` | CRM initial order status changes |
 | `admin_tboard.spec.ts` | `@Admin @AdminDoku` | T Board document treatment flow |
 | `admin_reports.spec.ts` | `@Admin @Reports @ReportsDateFilter @ReportsExport @ReportsTherapieformFilter` | Reports page: date filter, therapieform filter, export |
+| `admin_vo_practice.spec.ts` | `@Admin @VOPracticeAssignment @VOFormPractice @VOPracticeSearch @VOPracticeSelect @DashboardPracticeColumn` | VO Direct Practice Assignment (#2670): Create-VO form requires Praxis + makes Doctor optional, practice searchable by name & BSNR, select a practice, Dashboard Praxis column |
 
 ### Therapist (Staging) — `tests/Staging/Therapist/`
 
@@ -162,6 +165,7 @@ playwright.config.ts
 | `sa_kpi_dashboard.spec.ts` | `@SuperAdmin @KPIDashboard` | KPI Dashboard: period filters, charts |
 | `sa_to_management.spec.ts` | `@SuperAdmin @TOManagement` | TO Verwaltung: Auslastung/Abrechnung/KPIs tabs, therapist health counters |
 | `sa_validation_config.spec.ts` | `@SuperAdmin @ValidationConfig` | Validierungskonfiguration: rule table, auto-validation rules |
+| `sa_vo_practice.spec.ts` | `@SuperAdmin @VOPracticeAssignment @VOFormPractice @VOPracticeSearch @VOPracticeSelect @DashboardPracticeColumn` | VO Direct Practice Assignment (#2670): Create-VO form requires Praxis + makes Doctor optional, practice searchable by name & BSNR, select a practice, Dashboard Praxis column |
 
 Production specs mirror the Staging inventory under `tests/Production/`.
 
@@ -242,3 +246,4 @@ await feature.doSomething();
 - **T Board requires therapist selection** — tests using the T Board must select a therapist from the dropdown or use a therapist account; it does not auto-populate.
 - **Backend-only tickets** — auto-validation rules (VO creation validation, billing auto-validation) cannot be verified via UI alone; they require specific data scenarios to trigger.
 - **Parallel writes conflict** — tests that create/modify the same record must run in serial mode.
+- **Staging `/practices` API returns 500** — the Create-VO practice dropdown renders no options on Staging, so `admin_vo_practice` / `sa_vo_practice`'s `@VOPracticeSelect` test self-skips there (it runs on Production where the API is healthy). The `@VOFormPractice` and `@VOPracticeSearch` tests still pass on Staging because they assert the form contract and the search request, not the API response.

@@ -53,7 +53,7 @@ test.describe('Admin Pagination', () => {
 
     // 👉 BACK TO FIRST PAGE
     await firstBtn.click();
-    await expect(range).toHaveText(/^1[\s\u00A0]/, { timeout: 15000 });
+    await expect(range).toHaveText(/^1\s*[-\u2013]/, { timeout: 15000 });
 
     const backToFirstRange = (await range.textContent())?.trim() || '';
     console.log('Back to first:', backToFirstRange);

@@ -42,6 +42,30 @@ export class CRMListPage extends CRMBasePage {
     await this.page.getByText('Anzeigen', { exact: true }).first().click();
   }
 
+  /**
+   * Opens a practice that actually has initial orders (Bestellung) and leaves the detail
+   * panel on the "Bestellung" tab. The first practice often has 0 initial orders
+   * ("Showing 0 initial order"), so we apply the "Mit Problemen" filter and walk the rows
+   * until one's Bestellung tab has selectable order rows (more than the header checkbox).
+   * Re-navigates each iteration to keep row order stable.
+   */
+  async openPracticeViewWithOrders(maxTries = 6) {
+    for (let i = 0; i < maxTries; i++) {
+      await this.openCRM();
+      await this.page.waitForTimeout(2500);
+      await this.page.getByText('Mit Problemen').click().catch(() => {});
+      await this.page.waitForTimeout(2500);
+      const anzeigen = this.page.getByText('Anzeigen', { exact: true });
+      if ((await anzeigen.count()) <= i) break;
+      await anzeigen.nth(i).click();
+      await this.page.waitForTimeout(2500);
+      await this.page.getByText('Bestellung', { exact: true }).click({ force: true });
+      await this.page.waitForTimeout(2500);
+      if ((await this.page.getByRole('checkbox').count()) > 1) return;
+    }
+    throw new Error('CRM: no practice with initial orders found in the first ' + maxTries + ' rows');
+  }
+
   async clearFilters() {
     await this.page.getByText('Filter löschen').click();
   }

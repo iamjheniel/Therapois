@@ -11,8 +11,10 @@ test.describe('Admin TBoard', () => {
     await page.getByRole('button', { name: ' T Board' }).click();
     await page.waitForTimeout(10000);
     await page.getByText('Therapist: (Select)').click();
-    await page.getByText('Sandra Zeibig').click();
-    await page.getByRole('checkbox').nth(2).click({force:true});
+    // The T Board therapist selector lists therapists as plain text options.
+    await page.getByText('Sandra Zeibig', { exact: true }).first().click();
+    await page.waitForTimeout(3000); // let the therapist's board load
+    await page.getByRole('checkbox').nth(1).click({force:true}); // nth(1) = first patient row (nth(0) = header)
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').click();
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('test admin');

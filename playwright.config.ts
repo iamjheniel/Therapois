@@ -27,7 +27,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     headless: true,
     actionTimeout: 0,           // disable low-level timeout
-    navigationTimeout: 30_000,
+    navigationTimeout: 60_000, // staging's `load` event can be slow; avoid transient goto timeouts
     ignoreHTTPSErrors: true,
     launchOptions: {},
   },

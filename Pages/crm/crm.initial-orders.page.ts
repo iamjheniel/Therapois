@@ -7,7 +7,8 @@ export class CRMInitialOrdersPage extends CRMBasePage {
   }
 
   async openErstverordnungen() {
-    await this.page.getByText('Erstverordnungen').click({force: true});
+    // The CRM practice panel was redesigned: the old "Erstverordnungen" tab is now "Bestellung".
+    await this.page.getByText('Bestellung', { exact: true }).click({ force: true });
   }
 
   async addNote(note: string) {

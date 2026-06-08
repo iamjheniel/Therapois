@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Super Admin Team', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
+    // Staging sometimes keeps the `load` event pending (long-polling), so wait only for DOM.
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test('Super Admin Team Account Creation', { tag: ['@SuperAdmin', '@accountcreation'] }, async ({ page }) => {
@@ -47,10 +48,36 @@ test.describe('Super Admin Team', () => {
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).fill('automation');
   await page.getByRole('textbox', { name: 'Benutzer suchen' }).press('Enter');
   await page.waitForLoadState('networkidle');
-  await page.locator('div:nth-child(2) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').first().click();
+  await page.waitForTimeout(1500);
+  // Open the first matching user's edit form. The edit affordance is the icon (svg)
+  // in the row's rightmost Aktion column, which sits off-screen to the right. Anchor to
+  // the first result row by its "Automation Test" name cell, then dispatch a click on
+  // the nearest clickable ancestor of the rightmost svg in that row.
+  const editHandle = await page.evaluateHandle(() => {
+    const nameCell = Array.from(document.querySelectorAll('body *')).find(
+      (e) => e.childElementCount === 0 && (e.textContent || '').trim() === 'Automation Test'
+    );
+    if (!nameCell) return null;
+    const rowY = nameCell.getBoundingClientRect().y;
+    const target = Array.from(document.querySelectorAll('svg'))
+      .map((s) => ({ s, r: s.getBoundingClientRect() }))
+      .filter((o) => Math.abs(o.r.y - rowY) < 25 && o.r.x > 1000)
+      .sort((a, b) => b.r.x - a.r.x)[0]; // rightmost svg in the row
+    if (!target) return null;
+    let el: Element | null = target.s;
+    for (let i = 0; i < 6 && el; i++) {
+      if (el.getAttribute && el.getAttribute('role') === 'button') break;
+      el = el.parentElement;
+    }
+    return (el || target.s) as Element;
+  });
+  const editEl = editHandle.asElement();
+  if (editEl) await editEl.click({ force: true });
  // generate a unique last name so save button gets enabled
   const updatedLastName = `Updated_${Date.now()}`;
-  await page.getByRole('textbox', { name: 'e.g. Bond' }).fill(updatedLastName);
+  const lastNameField = page.getByRole('textbox', { name: 'e.g. Bond' });
+  await expect(lastNameField).toBeVisible({ timeout: 15000 });
+  await lastNameField.fill(updatedLastName);
   // Now the button becomes enabled
   await page.getByRole('button', { name: 'Aktualisieren' }).click();
   await expect(page.getByTestId('surface')).toContainText('User updated successfully');

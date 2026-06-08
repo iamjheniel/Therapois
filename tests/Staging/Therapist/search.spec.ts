@@ -10,9 +10,10 @@ test.describe('Search Functionality', () => {
 
   test('should show results for a valid search name', { tag: ['@Therapist','@searchname'] }, async ({ page }) => {
     await page.getByTestId('text-input-outlined').first().click();
-    await page.getByTestId('text-input-outlined').first().fill('namjoon');
+    // Search an existing patient (Namjoon Test is no longer in this therapist's list).
+    await page.getByTestId('text-input-outlined').first().fill('BiniColet');
     await page.getByTestId('text-input-outlined').first().press('Enter');
-    await expect(page.locator('#root')).toContainText('Namjoon Test');
+    await expect(page.locator('#root')).toContainText('BiniColet Test');
   });
 
   test('should show results for a valid search vo number', { tag: ['@Therapist','@searchvo'] }, async ({ page }) => {

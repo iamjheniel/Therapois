@@ -16,9 +16,8 @@ test.describe('Admin CRM Practice Info', () => {
     const crmList = new CRMListPage(page);
     const initialOrders = new CRMInitialOrdersPage(page);
 
-    await crmBase.openCRM();
-    await crmList.openPracticeView();       // 🔑 REQUIRED
-    await initialOrders.openErstverordnungen(); // now VOs load
+    // Open a practice that actually has initial orders, landing on the Bestellung tab.
+    await crmList.openPracticeViewWithOrders();
     await initialOrders.openBulkActions();
     await initialOrders.addNote('test automation');
     await initialOrders.openBulkActions();
@@ -36,9 +35,8 @@ test.describe('Admin CRM Practice Info', () => {
     const crmList = new CRMListPage(page);
     const initialOrders = new CRMInitialOrdersPage(page);
 
-    await crmBase.openCRM();
-    await crmList.openPracticeView();       // 🔑 REQUIRED
-    await initialOrders.openErstverordnungen(); // now VOs load
+    // Open a practice that actually has initial orders, landing on the Bestellung tab.
+    await crmList.openPracticeViewWithOrders();
     await initialOrders.openBulkActions();
     await initialOrders.changeStatusToBestellt();
 

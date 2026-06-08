@@ -10,8 +10,8 @@ test.describe('Document Treatment', () => {
 
 
   test('Create treatment then open Doku and delete treatment activity', {tag: ['@Therapist','@singleregular']}, async ({ page }) => {
-  // Using JhenTest QASala - confirmed available in staging via search tests
-  const patientName = 'JhenTest QASala';
+  // Existing active patient in this therapist's list (JhenTest QASala is no longer present).
+  const patientName = 'BiniStacey Test';
   const treatmentNote = 'Regular treatment test automation';
 
   // Search for patient to ensure she's visible regardless of today's schedule
@@ -19,7 +19,8 @@ test.describe('Document Treatment', () => {
   await page.getByTestId('text-input-outlined').first().press('Enter');
   await page.waitForTimeout(1500);
 
-  await page.getByRole('checkbox').first().click({ force: true });
+  // nth(0) = select-all header checkbox; nth(1) = the (single) filtered patient row.
+  await page.getByRole('checkbox').nth(1).click({ force: true });
   await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
 
   await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
@@ -61,10 +62,11 @@ test.describe('Document Treatment', () => {
 });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').first().fill('JhenTest QASala');
+    await page.getByTestId('text-input-outlined').first().fill('BTSJin Test');
     await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
-    await page.getByRole('checkbox').first().click({ force: true });
+    // nth(1) = the filtered patient row (nth(0) = select-all header).
+    await page.getByRole('checkbox').nth(1).click({ force: true });
     await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
     await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)󰅖');
     await page.getByTestId('surface').getByTestId('text-input-outlined').click();

@@ -8,13 +8,15 @@ test.describe('Therapist Share Patient', () => {
   });
 
     test('Therapist Share Patient with another Therapist', {tag: ['@Therapist', '@sharepatient']}, async ({page}) => {
-    // Use JhenTest QASala — confirmed to have no existing shared therapists ("Geteilter Therapeut: -")
-    // This avoids "Failed to share patients" errors from state pollution
-    await page.getByTestId('text-input-outlined').first().fill('JhenTest QASala');
+    // Search an existing patient, then select that patient's row checkbox.
+    // (JhenTest QASala is no longer present; an unfiltered select-all header checkbox
+    // would select every visible patient and yield "Patient teilen (N)".)
+    await page.getByTestId('text-input-outlined').first().fill('BiniStacey Test');
     await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
 
-    await page.getByRole('checkbox').first().click({ force: true });
+    // nth(0) = select-all header checkbox; nth(1) = the (single) filtered patient row.
+    await page.getByRole('checkbox').nth(1).click({ force: true });
 
     const shareButton = page.getByRole('button', {
       name: /Patient teilen/
@@ -37,12 +39,12 @@ test.describe('Therapist Share Patient', () => {
     });
 
     test('Therapist Remove Shared Patient with another Therapist', {tag: ['@Therapist', '@removesharedpatient']}, async ({page}) => {
-    // Use JhenTest QASala (same as share test — should have exactly 1 shared therapist after share test)
-    await page.getByTestId('text-input-outlined').first().fill('JhenTest QASala');
+    // Same patient as the share test — should have exactly 1 shared therapist after it.
+    await page.getByTestId('text-input-outlined').first().fill('BiniStacey Test');
     await page.getByTestId('text-input-outlined').first().press('Enter');
     await page.waitForTimeout(1500);
 
-    await page.getByRole('checkbox').first().click({ force: true });
+    await page.getByRole('checkbox').nth(1).click({ force: true });
     await page.getByRole('button', { name: /Patient teilen/ }).click();
     // Use .last() to remove the most recently added shared therapist
     await page.getByTestId('modal-surface').getByRole('button', { name: 'Close' }).last().click({force: true });

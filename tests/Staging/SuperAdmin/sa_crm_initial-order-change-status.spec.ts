@@ -18,9 +18,7 @@ test.describe('Super Admin CRM Initial Orders', () => {
       const crmList = new CRMListPage(page);
       const initialOrders = new CRMInitialOrdersPage(page);
 
-      await crmBase.openCRM();
-      await crmList.openPracticeView();
-      await initialOrders.openErstverordnungen();
+      await crmList.openPracticeViewWithOrders();
       await initialOrders.openBulkActions();
       await initialOrders.addNote('test automation');
       await initialOrders.openBulkActions();
@@ -37,9 +35,7 @@ test.describe('Super Admin CRM Initial Orders', () => {
       const crmList = new CRMListPage(page);
       const initialOrders = new CRMInitialOrdersPage(page);
 
-      await crmBase.openCRM();
-      await crmList.openPracticeView();
-      await initialOrders.openErstverordnungen();
+      await crmList.openPracticeViewWithOrders();
       await initialOrders.openBulkActions();
       await initialOrders.changeStatusToBestellt();
     }
