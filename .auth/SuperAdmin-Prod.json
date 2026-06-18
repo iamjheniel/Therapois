@@ -5,24 +5,16 @@
       "origin": "https://app.therapios.de",
       "localStorage": [
         {
-          "name": "dismissed_announcement_ids",
-          "value": "[]"
-        },
-        {
           "name": "_savedCredentials_cleanup_done",
           "value": "true"
         },
         {
-          "name": "hidden_column_admin:dashboard",
-          "value": "[]"
-        },
-        {
           "name": "auth-state",
-          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NzMzMTE2MjMsImV4cCI6MTgwNDg0NzYyMywianRpIjoiYTI4YWE5OTVkZmJhMWNlOWU2ZjAyMDUzYTcxMjQwZGYiLCJyb2xlcyI6WyJST0xFX1NVUEVSX0FETUlOIiwiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoic2EuamhlbkBnbWFpbC5jb20ifQ.mSb53-38T2fV8SyARNWcInrPE3PleyTQIZkQAAY9glLnL85kySO2dpzs4NY4Fwisgw4bpPvLKoUXp4kbNEsfSOJqzc6LEj6wQvVXyBfXVqFbEXcsMoOV9gKWDmv_-6I3Z0UudM9HqkaQJqBMNanxqRVQ-1fiNb-DEDr_P6nO9lOfJTN2ki-Ej54_k5nk5m_XiX-ntUkN6ni62vRcrXa9EhaDlV3qA8f23g8fcUHWFlmGe7zTl6YVDUNeDMmu4IuFvMkdxy-1mM9QPyY6owb3_TZIQNYy1MNY9BQ-40ee9N86NlmqStRO_QpNgwNgw0LIDuDLVHWZwNlVRFE6H4_waQ\",\"user\":{\"id\":167,\"username\":\"sa.jhen@gmail.com\",\"roles\":[\"ROLE_SUPER_ADMIN\",\"ROLE_USER\"],\"firstName\":\"SA\",\"lastName\":\"Jhen\",\"fullName\":\"SA Jhen\",\"weak_credentials\":false,\"followUpOrderingEnabled\":null},\"fetching\":false}"
+          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3ODE1NzcyNjAsImV4cCI6MTgxMzExMzI2MCwianRpIjoiODJkNmJhYWM1MWQ3OGYxNTlkNWQ0ODI2ODZmMmNlYTgiLCJyb2xlcyI6WyJST0xFX1NVUEVSX0FETUlOIiwiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoic2EuamhlbkBnbWFpbC5jb20ifQ.aulr2WriOxvQ3bqLrQ_TeX-sZEjfVk0sOSn5jzMk8BIBcvcnG8Nxc6acVxvyC8KGdiUu-4CMtkKr4UEI_fLxHlTV5YqYTknLRiOO9r_0DXsHJyc-ALEHa6eVloLIw7p3bI4wIzKWye0Xbv_WcHjlMu4NtvsmIHFbyPwWDX21bRMaHQGeQTaYk3hpzkwR_ewreIAQrsAxzyKfD_evZpYSYYCj4-Um_2cpxPsspXMAYcpcTK6unTM3wJqeQSbzQOgR4OZzADpFISs_fI4ba5Lx6z7Zqo-TON-AaLKhoWD59pzwU777XRBcmp4CMhL_uSvlPVg4JhiTmNRTdm-yXYA8bA\",\"user\":{\"id\":167,\"username\":\"sa.jhen@gmail.com\",\"roles\":[\"ROLE_SUPER_ADMIN\",\"ROLE_USER\"],\"firstName\":\"SA\",\"lastName\":\"Jhen\",\"fullName\":\"SA Jhen\",\"weak_credentials\":false,\"followUpOrderingEnabled\":null,\"therapyDepartment\":null},\"fetching\":false}"
         },
         {
           "name": "therapios\\REACT_QUERY_OFFLINE_CACHE",
-          "value": "{\"buster\":\"3.0.0\",\"timestamp\":1773311625861,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+          "value": "{\"buster\":\"3.7.0\",\"timestamp\":1781577262545,\"clientState\":{\"mutations\":[],\"queries\":[{\"dehydratedAt\":1781577262546,\"state\":{\"dataUpdateCount\":0,\"dataUpdatedAt\":0,\"error\":null,\"errorUpdateCount\":0,\"errorUpdatedAt\":0,\"fetchFailureCount\":0,\"fetchFailureReason\":null,\"fetchMeta\":null,\"isInvalidated\":false,\"status\":\"pending\",\"fetchStatus\":\"idle\"},\"queryKey\":[\"notification-center\",\"list\",{\"pagination\":false,\"filter\":{\"user\":167}}],\"queryHash\":\"[\\\"notification-center\\\",\\\"list\\\",{\\\"filter\\\":{\\\"user\\\":167},\\\"pagination\\\":false}]\"}]}}"
         }
       ]
     }

@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { AppPage } from '../base/app.page';
 
 type ArztData = {
   salutation: string;
@@ -27,7 +28,7 @@ export class ArztManagementPage {
       .then(() => true)
       .catch(() => false);
     if (!found) {
-      await this.page.getByText('').first().click();
+      await new AppPage(this.page).openSideMenu();
       await arztBtn.waitFor({ state: 'attached', timeout: 10_000 });
     }
     await arztBtn.evaluate((el) => {
@@ -57,16 +58,16 @@ export class ArztManagementPage {
 
   async selectPractice(practiceName: string) {
     await this.rnText('Wählen Sie eine Praxis').click();
-    // The picker now opens a search-enabled list; filter to the desired practice.
+    // The picker opens a search-enabled list; wait for the dialog, then filter.
+    const dialog = this.page.getByRole('dialog');
+    await dialog.waitFor({ state: 'visible', timeout: 15_000 });
     const searchBox = this.page.getByRole('textbox', { name: 'Search' });
     if (await searchBox.isVisible().catch(() => false)) {
       await searchBox.fill(practiceName);
     }
-    await this.page
-      .getByRole('dialog')
-      .getByText(practiceName, { exact: false })
-      .first()
-      .click();
+    const option = dialog.getByText(practiceName, { exact: false }).first();
+    await option.waitFor({ state: 'visible', timeout: 20_000 });
+    await option.click();
   }
 
   async save() {
@@ -85,14 +86,21 @@ export class ArztManagementPage {
     await search.press('Enter');
   }
 
+  // After search() narrows the Arzt list to the matching row(s), the row's
+  // Aktion column (edit/delete SVGs) sits off-screen to the right. Use force +
+  // scrollIntoView so the icon is clickable even when not in the viewport.
   async openEditForRow(name: string) {
     const row = this.page.locator('#root').filter({ hasText: name });
-    await row.locator('svg').last().click();
+    const editIcon = row.locator('svg').last();
+    await editIcon.scrollIntoViewIfNeeded().catch(() => {});
+    await editIcon.click({ force: true });
   }
 
   async deleteArzt(name: string) {
     const row = this.page.locator('#root').filter({ hasText: name });
-    await row.locator('svg').last().click();
+    const deleteIcon = row.locator('svg').last();
+    await deleteIcon.scrollIntoViewIfNeeded().catch(() => {});
+    await deleteIcon.click({ force: true });
 
     await this.page.getByRole('button', { name: 'Arzt löschen' }).click();
     await this.page

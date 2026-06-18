@@ -7,10 +7,15 @@ test.describe('Super Admin Heilmittelverwaltung', () => {
   const uniqueCode = `QA-${Date.now()}`;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard'); // already logged in via storageState
-    // Open sidebar and navigate to Heilmittelverwaltung
-    await page.getByText('\uf451').click();
-    await page.getByRole('button', { name: /Heilmittelverwaltung/ }).click();
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in via storageState
+    // Navigate to Heilmittelverwaltung. The nav button can sit below the fold,
+    // so scroll it into view and click via the DOM (RNW scroll-container quirk).
+    const navBtn = page.getByRole('button', { name: /Heilmittelverwaltung/ }).last();
+    await navBtn.waitFor({ state: 'attached', timeout: 10_000 });
+    await navBtn.evaluate((el: HTMLElement) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      el.click();
+    });
   });
 
   // ─────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { CRMListPage } from '../../../Pages/crm/crm.list.page';
 
 test.describe('Super Admin CRM Practice Info', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(

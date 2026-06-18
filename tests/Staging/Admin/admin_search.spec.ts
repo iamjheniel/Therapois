@@ -5,7 +5,7 @@ import {test , expect} from '@playwright/test';
 test.describe('Admin Search', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Admin Search Active VO Functionality', { tag: ['@Admin', '@AdminSearchActiveVo'] }, async ({ page }) => {

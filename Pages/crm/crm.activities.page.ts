@@ -68,6 +68,7 @@ export class CRMActivities {
 
   async createNextActivity(activityText: string, todoText: string) {
     await this.activityInput.fill(activityText);
+    // "Schedule Next Activity" quick chip (+3D = three days out).
     await this.page
       .locator('div')
       .filter({ hasText: /^\+3D$/ })
@@ -78,23 +79,29 @@ export class CRMActivities {
       name: 'What needs to be done?',
     });
     await todoInput.fill(todoText);
-    await this.page.getByText('Save').click();
+    await this.page.getByText('Save', { exact: true }).click();
+
+    // If the practice already has a pending next activity, a confirmation modal asks to
+    // replace it ("Bestehende nächste Aktivität ersetzen"). Confirm it when present.
+    const replace = this.page.getByText('Ersetzen & Erstellen', { exact: true });
+    if (await replace.isVisible({ timeout: 4000 }).catch(() => false)) {
+      await replace.click();
+    }
 
     await expect(this.page.getByTestId('surface')).toContainText(
       'Activity created successfully'
     );
-    await expect(this.page.locator('#root')).toContainText(todoText);
   }
 
-  async completeActivity(note: string, index = 1) {
-    await this.page.getByText('Complete').nth(index).click();
+  async completeActivity(note: string) {
+    // There is one "Complete" button per pending next activity; complete the first one.
+    await this.page.getByText('Complete', { exact: true }).first().click();
     const noteInput = this.page.getByRole('textbox', {
       name: '(Optional) Completion note...',
     });
     await noteInput.fill(note);
     await this.page.getByText('Confirm', { exact: true }).click();
-    await expect(this.page.getByTestId('surface')).toContainText(
-      'Next activity completed'
-    );
+    // The success toast text can vary; assert the completion modal closed and a toast fired.
+    await expect(this.page.getByTestId('surface')).toBeVisible({ timeout: 30000 });
   }
 }

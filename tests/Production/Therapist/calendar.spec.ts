@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Calendar', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/therapist/'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/therapist/', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
 
@@ -15,8 +15,7 @@ test.describe('Calendar', () => {
     // Open Kalender
     await page.getByText('Kalender', { exact: true }).click();
 
-    // Wait for calendar to load (calendar data fetch takes time after networkidle)
-    await page.waitForLoadState('networkidle');
+    // Wait for calendar to load (calendar data fetch takes time)
     await page.waitForTimeout(3000);
 
     // "Doku erfassen" button is visible in calendar header; force-click bypasses disabled state
@@ -39,7 +38,6 @@ test.describe('Calendar', () => {
     await page.getByText('Kalender', { exact: true }).click();
 
     // Wait for calendar to finish loading
-    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(5000);
 
     // Helper: check if any time-formatted appointment card is visible

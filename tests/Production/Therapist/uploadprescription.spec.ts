@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Therapist Upload Prescription', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/therapist/'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/therapist/', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
   test('Therapist Upload VO', { tag: ['@Therapist','@uploadvo'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept' }).click();
+    const app = new AppPage(page);
+    await app.navTo(/Rezept/);
     await expect(page.locator('#root')).toContainText('VO Upload');
     await page.getByRole('button', { name: '󰩎 Rezept hochladen' }).click();
     await page.getByRole('button', { name: 'Continue' }).click();
@@ -29,8 +30,8 @@ test.describe('Therapist Upload Prescription', () => {
     });
 
   test('Therapist Upload VO View and Add Note', { tag: ['@Therapist', '@AddNoteTherapist'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept' }).click();
+    const app = new AppPage(page);
+    await app.navTo(/Rezept/);
     await expect(page.locator('#root')).toContainText('VO Upload');
     // Wait for the list to load prescriptions
     await expect(page.locator('div:has-text("In Prüfung")').first()).toBeVisible({ timeout: 30000 });

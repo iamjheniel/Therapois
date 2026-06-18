@@ -40,8 +40,17 @@ export class CRMInitialOrdersPage extends CRMBasePage {
   }
 
   async openBulkActions() {
-    await this.page.getByRole('checkbox').first().waitFor({ state: 'visible' });
-    await this.page.getByRole('checkbox').nth(1).click({ force: true });
+    // The practice detail panel can still be loading when this runs, so wait for the order
+    // list to actually render (the "Showing N initial order(s)" summary plus selectable
+    // checkboxes) before selecting a row. Selecting an order row reveals the bulk actions.
+    await expect(
+      this.page.getByText(/Showing\s+\d+\s+initial\s+order/i).first()
+    ).toBeVisible({ timeout: 30000 });
+    const rowCheckbox = this.page.getByRole('checkbox').nth(1);
+    await rowCheckbox.waitFor({ state: 'attached', timeout: 15000 });
+    // Row checkboxes render disabled (React Native Web), so force-click with an explicit
+    // timeout — without it a transient actionability miss would hang until the test times out.
+    await rowCheckbox.click({ force: true, timeout: 15000 });
   }
 
   async generateInitialOrderForm() {

@@ -16,7 +16,7 @@ test.describe('Super Admin - ICD-Code Verwaltung', () => {
   const shared = makeIcdData();
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   // ────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ test.describe('Super Admin - ICD-Code Verwaltung', () => {
       await icd.openIcdManagement();
       await icd.search('ZZZZNOTEXIST99999');
       await expect(page.locator('#root')).toContainText(
-        /Keine Ergebnisse|Kein Eintrag|No results/i,
+        /Keine ICD-Codes gefunden|Keine Ergebnisse|Kein Eintrag|No results/i,
         { timeout: 10_000 }
       );
     }

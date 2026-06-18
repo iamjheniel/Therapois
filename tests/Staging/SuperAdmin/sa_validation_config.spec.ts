@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Super Admin Validierungskonfiguration', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/validation-config');
+    await page.goto('https://staging.therapios.de/validation-config', { waitUntil: 'domcontentloaded' });
   });
 
   test(

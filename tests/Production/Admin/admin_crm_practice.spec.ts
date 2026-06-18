@@ -5,7 +5,7 @@ import { CRMListPage } from '../../../Pages/crm/crm.list.page';
 test.describe('Admin CRM Practice Info', () => {
   test.beforeEach(async ({ page }) => {
     // Already authenticated via storageState
-    await page.goto('https://app.therapios.de/dashboard');
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(

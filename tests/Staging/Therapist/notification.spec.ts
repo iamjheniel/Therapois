@@ -81,7 +81,7 @@ async function skipIfNoBanner(page: Page): Promise<void> {
 
 test.describe('Notification functionality', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/therapist/');
+    await page.goto('https://staging.therapios.de/therapist/', { waitUntil: 'domcontentloaded' });
   });
 
   test('Therapist UI Banner Notification', { tag: ['@Therapist', '@notification'] }, async ({ page }) => {

@@ -1,17 +1,23 @@
 import { test ,  expect } from '@playwright/test';
+import { TherapistListPage } from '../../../Pages/therapist/therapist.list.page';
 
 test.describe('VO Termination', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/therapist/'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/therapist/', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
   test('Non-immediate termination (Keine Folge-VO bestellen)', { tag: '@KFvo' }, async ({ page }) => {
-    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').first().press('Enter');
-    await page.waitForTimeout(1500);
-    await page.getByRole('checkbox').first().click({ force: true });
-    await page.getByRole('button', { name: 'Abbrechen VO' }).click();
+    // Resolve a real patient from live data and leave the list filtered to it.
+    const list = new TherapistListPage(page);
+    const name = await list.resolvePatientName(['JhenTest QA']);
+    test.skip(!name, 'No patient available in this therapist\'s list');
+    // nth(1) = the filtered patient's row checkbox (nth(0) = select-all header).
+    await page.getByRole('checkbox').nth(1).click({ force: true });
+    // Not every patient has a cancellable active VO — skip if the action isn't available.
+    const abbrechen = page.getByRole('button', { name: 'Abbrechen VO' });
+    test.skip(!(await abbrechen.isVisible({ timeout: 8000 }).catch(() => false)), 'Resolved patient has no cancellable VO');
+    await abbrechen.click();
     await page.getByText('Keine Folge-VO Bestellen').click();
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').click();
     await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('keine folge- VO termination automation');

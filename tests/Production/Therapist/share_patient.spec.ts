@@ -1,20 +1,23 @@
 import {test,  expect} from '@playwright/test';
+import { TherapistListPage } from '../../../Pages/therapist/therapist.list.page';
 
 test.describe('Therapist Share Patient', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({page}) => {
-    await page.goto('https://app.therapios.de/therapist/'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/therapist/', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Therapist Share Patient with another Therapist', {tag: ['@Therapist', '@sharepatient']}, async ({page}) => {
     // Use JhenTest QA — confirmed to have no existing shared therapists ("Geteilter Therapeut: -")
     // This avoids "Failed to share patients" errors from state pollution
-    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').first().press('Enter');
-    await page.waitForTimeout(1500);
+    // Resolve a real patient from live data and leave the list filtered to it.
+    const list = new TherapistListPage(page);
+    const name = await list.resolvePatientName(['JhenTest QA']);
+    test.skip(!name, 'No patient available in this therapist\'s list');
 
-    await page.getByRole('checkbox').first().click({ force: true });
+    // nth(0) = select-all header checkbox; nth(1) = the (single) filtered patient row.
+    await page.getByRole('checkbox').nth(1).click({ force: true });
 
     const shareButton = page.getByRole('button', {
       name: /Patient teilen/
@@ -38,11 +41,13 @@ test.describe('Therapist Share Patient', () => {
 
     test('Therapist Remove Shared Patient with another Therapist', {tag: ['@Therapist', '@removesharedpatient']}, async ({page}) => {
     // Use JhenTest QA (same as share test — should have exactly 1 shared therapist after share test)
-    await page.getByTestId('text-input-outlined').first().fill('JhenTest QA');
-    await page.getByTestId('text-input-outlined').first().press('Enter');
-    await page.waitForTimeout(1500);
+    // Resolve a real patient from live data and leave the list filtered to it.
+    const list = new TherapistListPage(page);
+    const name = await list.resolvePatientName(['JhenTest QA']);
+    test.skip(!name, 'No patient available in this therapist\'s list');
 
-    await page.getByRole('checkbox').first().click({ force: true });
+    // nth(0) = select-all header checkbox; nth(1) = the (single) filtered patient row.
+    await page.getByRole('checkbox').nth(1).click({ force: true });
     await page.getByRole('button', { name: /Patient teilen/ }).click();
     // Use .last() to remove the most recently added shared therapist
     await page.getByTestId('modal-surface').getByRole('button', { name: 'Close' }).last().click({force: true });

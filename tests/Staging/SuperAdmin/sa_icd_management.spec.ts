@@ -16,7 +16,7 @@ test.describe('Super Admin - ICD-Code Verwaltung', () => {
   const shared = makeIcdData();
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   // ────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ test.describe('Super Admin - ICD-Code Verwaltung', () => {
       await icd.expectToast('ICD-Code erfolgreich aktualisiert');
 
       // Re-open ICD-Code Verwaltung to force a fresh list, then search and verify
-      await page.goto('https://staging.therapios.de/dashboard');
+      await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
       await icd.openIcdManagement();
       await icd.search(shared.code);
       await expect(page.locator('#root')).toContainText(

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Super Admin Entitäten', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/entities');
+    await page.goto('https://staging.therapios.de/entities', { waitUntil: 'domcontentloaded' });
   });
 
   test(

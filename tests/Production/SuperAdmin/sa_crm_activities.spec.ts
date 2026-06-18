@@ -7,7 +7,7 @@ test.describe('Super Admin CRM Activities', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(

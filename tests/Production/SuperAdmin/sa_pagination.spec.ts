@@ -5,7 +5,7 @@ import {test , expect} from '@playwright/test';
 test.describe('Super Admin Pagination', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Pagination works correctly on Flow page', { tag: ['@SuperAdmin', '@pagination'] }, async ({ page }) => {

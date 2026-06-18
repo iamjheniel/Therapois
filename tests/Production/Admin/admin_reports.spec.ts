@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Admin Reports', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
-    // \uF451 is the private-use icon character that renders as the hamburger menu
-    await page.getByText('\uF451').click();
-    await page.getByRole('button', { name: /Berichte/ }).click();
+    const app = new AppPage(page);
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
+    await app.navTo(/Berichte/);
     await expect(page.locator('#root')).toContainText('Reports', { timeout: 15000 });
   });
 

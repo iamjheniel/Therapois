@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Super Admin Announcements', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Super Admin Announcement Creation', { tag: ['@SuperAdmin', '@announcement'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Announcements' }).click();
+    const app = new AppPage(page);
+    await app.navTo(/Announcements/);
     const messageBox = page
       .getByRole('textbox', { name: /announcement message|Ankündigungsnachricht/i })
       .first();

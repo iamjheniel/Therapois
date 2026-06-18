@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Admin Upload Prescription', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Admin Upload Prescription View and Add Note', { tag: ['@Admin', '@AddNoteUploadVO'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept' }).click();
+    const app = new AppPage(page);
+    await app.navTo(/Rezept/);
     await expect(page.locator('#root')).toContainText('VO Upload');
     await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
     await page.getByRole('textbox', { name: 'Geben Sie Ihre Notiz hier ein' }).click();
@@ -20,29 +21,41 @@ test.describe('Admin Upload Prescription', () => {
     });
     
     test('Admin Upload Prescription Search', { tag: ['@Admin', '@SearchUploadVO'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept' }).click();
+    const app = new AppPage(page);
+    await app.navTo(/Rezept/);
     await expect(page.locator('#root')).toContainText('VO Upload');
-    await page.getByRole('textbox', { name: 'Suchen' }).click();
-    await page.getByRole('textbox', { name: 'Suchen' }).fill('sandra');
-    await page.getByRole('textbox', { name: 'Suchen' }).press('Enter');
-    await expect(page.locator('#root')).toContainText('Sa. Zeibig');
+    // Data-robust: the set of uploaders/IDs in this view changes over time, so
+    // derive the search term from a value actually present in the live list
+    // (the first row's Upload ID, formatted NNN-NN) instead of a hard-coded name.
+    await expect(page.getByRole('button', { name: 'View' }).first()).toBeVisible({ timeout: 15000 });
+    const firstId = (await page.locator('#root').innerText()).match(/\b\d{2,4}-\d{1,4}\b/)?.[0];
+    expect(firstId, 'expected at least one uploaded VO with an Upload ID').toBeTruthy();
+    const search = page.getByRole('textbox', { name: 'Suchen' });
+    await search.click();
+    await search.fill(firstId!);
+    await search.press('Enter');
+    await expect(page.locator('#root')).not.toContainText('Keine Patienten gefunden', { timeout: 15000 });
+    await expect(page.locator('#root')).toContainText(firstId!);
     });
 
     test('Admin Upload Prescription Update Status', { tag: ['@Admin', '@updateStatusUploadVO'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Rezept' }).click();
+    const app = new AppPage(page);
+    await app.navTo(/Rezept/);
     await expect(page.locator('#root')).toContainText('VO Upload');
-    await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
-    await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
-    await page.locator('div:nth-child(2) > .css-g5y9jx.r-lrvibr > div > .css-g5y9jx').click();
+    // The VO Upload page only exposes the default "In Prüfung" view (there is NO
+    // "Nicht lesbar" filter tab here, unlike the Dokument page). Verify a status
+    // change by marking the first row "Nicht lesbar": it then leaves the
+    // In-Prüfung view, so the row (View-button) count drops by one.
+    const rowCount = () => page.getByRole('button', { name: 'View' }).count();
+    await expect.poll(rowCount, { timeout: 15000 }).toBeGreaterThan(0);
+    const before = await rowCount();
+    await page.getByRole('button', { name: 'View' }).first().click({ force: true });
+    // Clicking the status field opens a dropdown (rendered in a portal OUTSIDE
+    // modal-surface). "Nicht lesbar" is unique on the page, so target it directly.
+    await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').first().click();
+    await page.getByText('Nicht lesbar', { exact: true }).first().click({ force: true });
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
-    await page.getByText(/^In Prüfung\s*\(\d+\)$/).click();
-    await page.getByText(/^Nicht lesbar\s*\(\d+\)$/).click();
-    await expect(page.locator('#root')).toContainText('Nicht lesbar');
-    await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
-    await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
-    await page.getByText('In Prüfung').click({force: true});
-    await page.getByRole('button', { name: 'Änderungen speichern' }).click();
+    // The marked row drops out of the In-Prüfung view.
+    await expect.poll(rowCount, { timeout: 15000 }).toBeLessThan(before);
     });
 });

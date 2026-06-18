@@ -8,7 +8,7 @@ import { AbrechnungPage } from '../../../Pages/superadmin/sa.abrechnung.page';
 
 test.describe('Super Admin - Abrechnung (VO Validation)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   // ────────────────────────────────────────────────────

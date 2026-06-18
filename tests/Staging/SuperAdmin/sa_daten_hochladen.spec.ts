@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Super Admin Daten Hochladen', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/uploads');
-    await page.waitForLoadState('networkidle');
+    await page.goto('https://staging.therapios.de/uploads', { waitUntil: 'domcontentloaded' });
   });
 
   test(

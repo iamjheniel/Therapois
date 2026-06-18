@@ -5,7 +5,7 @@ import {test , expect} from '@playwright/test';
 test.describe('Admin Search', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Admin Search Active VO Functionality', { tag: ['@Admin', '@AdminSearchActiveVo'] }, async ({ page }) => {
@@ -15,7 +15,9 @@ test.describe('Admin Search', () => {
     await page.getByText('Sandra Zeibig').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Aktiv');
-    await expect(page.locator('#root')).toContainText('Sa. Zeibig');
+    // Filtered results carry the full therapist name; the dashboard Therapeut
+    // column abbreviation is not "Sa. Zeibig" so assert the full name instead.
+    await expect(page.locator('#root')).toContainText('Sandra Zeibig');
     });
 
     test('Admin Search Abgebrochen VO Functionality', { tag: ['@Admin','@AdminSearchAbgebrochenVo']}, async ({ page }) => {
@@ -46,7 +48,7 @@ test.describe('Admin Search', () => {
     await page.getByText('Arzt: (Auswählen)').click();
     await page.getByText('Juri Sloboda').click();
     await expect(page.locator('#root')).toContainText('Ju. Sloboda');
-    await page.getByText('').click();
+    await page.keyboard.press('Escape'); // close the Arzt dropdown before opening ER
     await page.getByText('ER: (Auswählen)').click();
     await page.getByText('Alpenland Marzahn').click();
     await expect(page.locator('#root')).toContainText('Alpenland Marzahn');

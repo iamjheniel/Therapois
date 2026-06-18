@@ -5,24 +5,16 @@
       "origin": "https://staging.therapios.de",
       "localStorage": [
         {
-          "name": "dismissed_announcement_ids",
-          "value": "[]"
-        },
-        {
           "name": "_savedCredentials_cleanup_done",
           "value": "true"
         },
         {
-          "name": "hidden_column_therapist-prescriptions-v2",
-          "value": "[]"
-        },
-        {
           "name": "auth-state",
-          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3ODA4NzgxOTUsImV4cCI6MTgxMjQxNDE5NSwianRpIjoiYmVhMjY4ZjE3ZjE3ZTkyMWY2MTdhMjU4MDM0OGViYWUiLCJyb2xlcyI6WyJST0xFX1RIRVJBUElTVCIsIlJPTEVfVVNFUiJdLCJ1c2VybmFtZSI6ImpoZW5xYUB0aGVyYXBpb3MuZGUifQ.WdTZ6RnTDhoBUUaH3lfnza1H0iZZYNzXBf9ptm6etFD59g1v2VVA5u40TdRR5x1qWHTA8cX1iYpQZwfHCT6pTbidNTL6XLQGMskDjzDx0nXrXIHglbg_KdQgM-7cxiK729km-AJr468mUsc4JCdf4ytytsfWBFj9_h9jv5xDKq1gX9BsIu7XWzijkXv8_xK28OQc5ZJBdltzS1PxW1R0hf_WKRulnlXI_LuYPricRRQ14w5QZQujmwqA9zUbbsqobMYPA6nlC2C1QgFNN3j8RY_Mn4ZJnOFmsJSTGCQJVBodcqAVs-t3-CTbQ6KBkyKgAjzWAHy678-53uVQvBKZ5Q\",\"user\":{\"id\":198,\"username\":\"jhenqa@therapios.de\",\"roles\":[\"ROLE_THERAPIST\",\"ROLE_USER\"],\"firstName\":\"Jhenqa\",\"lastName\":\"Test\",\"fullName\":\"Jhenqa Test\",\"weak_credentials\":false,\"followUpOrderingEnabled\":true,\"therapyDepartment\":null},\"fetching\":false}"
+          "value": "{\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3ODE1NzA3MzQsImV4cCI6MTgxMzEwNjczNCwianRpIjoiYzE1NzE2MWYyOGRhNzE0NGVkNWMwNzI5NGExYTE0MTkiLCJyb2xlcyI6WyJST0xFX1RIRVJBUElTVCIsIlJPTEVfVVNFUiJdLCJ1c2VybmFtZSI6ImpoZW5xYUB0aGVyYXBpb3MuZGUifQ.GfF_FJwbnmeSCyi3xxKrJS_UCp1cLlbZoSyBIXUx82Wlbij-niUxpJL89azQu7vcymRJ4SibYXKpEdsfsem20AWHlDu7GmJtmVWwtNG5Zq4Tq04YJ07xFVyc8YPFIm7T5WvhyBx6LgMel478LztlvqZyDIbMBzGqtt4ROK0PosujtUHkTux3jFtQ8HOjXss0A9GwdzpnGeW9DxoXgm9ywWovReMQM9DD6yEzyZJtc8htFelhL2B_wecC6u3ehUo4wgu1PDZD0e49ab2lBlXlzayAOiRUTtlmuDLZYMDUPH8EdHAQmFv19h9FMEm4B7pFzdRbuk5FixrdqpWtl7-reQ\",\"user\":{\"id\":198,\"username\":\"jhenqa@therapios.de\",\"roles\":[\"ROLE_THERAPIST\",\"ROLE_USER\"],\"firstName\":\"Jhenqa\",\"lastName\":\"Test\",\"fullName\":\"Jhenqa Test\",\"weak_credentials\":false,\"followUpOrderingEnabled\":true,\"therapyDepartment\":null},\"fetching\":false}"
         },
         {
           "name": "therapios\\REACT_QUERY_OFFLINE_CACHE",
-          "value": "{\"buster\":\"3.6.1\",\"timestamp\":1780878199565,\"clientState\":{\"mutations\":[],\"queries\":[{\"dehydratedAt\":1780878199565,\"state\":{\"dataUpdateCount\":0,\"dataUpdatedAt\":0,\"error\":null,\"errorUpdateCount\":0,\"errorUpdatedAt\":0,\"fetchFailureCount\":0,\"fetchFailureReason\":null,\"fetchMeta\":null,\"isInvalidated\":false,\"status\":\"pending\",\"fetchStatus\":\"idle\"},\"queryKey\":[\"notification-center\",\"list\",{\"pagination\":false,\"filter\":{\"user\":198}}],\"queryHash\":\"[\\\"notification-center\\\",\\\"list\\\",{\\\"filter\\\":{\\\"user\\\":198},\\\"pagination\\\":false}]\"}]}}"
+          "value": "{\"buster\":\"3.7.0\",\"timestamp\":1781570736448,\"clientState\":{\"mutations\":[],\"queries\":[{\"dehydratedAt\":1781570736448,\"state\":{\"dataUpdateCount\":0,\"dataUpdatedAt\":0,\"error\":null,\"errorUpdateCount\":0,\"errorUpdatedAt\":0,\"fetchFailureCount\":0,\"fetchFailureReason\":null,\"fetchMeta\":null,\"isInvalidated\":false,\"status\":\"pending\",\"fetchStatus\":\"idle\"},\"queryKey\":[\"notification-center\",\"list\",{\"pagination\":false,\"filter\":{\"user\":198}}],\"queryHash\":\"[\\\"notification-center\\\",\\\"list\\\",{\\\"filter\\\":{\\\"user\\\":198},\\\"pagination\\\":false}]\"}]}}"
         }
       ]
     }

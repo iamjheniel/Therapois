@@ -7,7 +7,7 @@ test.describe('Super Admin CRM Follow-up Orders', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(
@@ -18,9 +18,8 @@ test.describe('Super Admin CRM Follow-up Orders', () => {
       const followUpOrders = new CRMFollowUpOrdersPage(page);
       const crmList = new CRMListPage(page);
 
-      await crm.openCRM();
-      await crmList.openPracticeView();
-      await followUpOrders.openFollowUpOrders();
+      const found = await crmList.openPracticeViewWithFollowUpOrders();
+      test.skip(!found, 'No practice with follow-up orders (Nachverfolgung) available in this environment');
       await followUpOrders.openBulkActions();
       await followUpOrders.addNote('test automation');
       await followUpOrders.openBulkActions();
@@ -37,9 +36,8 @@ test.describe('Super Admin CRM Follow-up Orders', () => {
       const followUpOrders = new CRMFollowUpOrdersPage(page);
       const crmList = new CRMListPage(page);
 
-      await crm.openCRM();
-      await crmList.openPracticeView();
-      await followUpOrders.openFollowUpOrders();
+      const found = await crmList.openPracticeViewWithFollowUpOrders();
+      test.skip(!found, 'No practice with follow-up orders (Nachverfolgung) available in this environment');
       await followUpOrders.openBulkActions();
       await followUpOrders.changeStatusToBestellt();
     }

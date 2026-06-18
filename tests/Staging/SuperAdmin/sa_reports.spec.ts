@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Super Admin Reports', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
-    await page.getByText('').click();
-    await page.getByRole('button', { name: /Berichte/ }).click();
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
+    const app = new AppPage(page);
+    await app.navTo(/Berichte/);
     await expect(page.locator('#root')).toContainText('Reports', { timeout: 15000 });
   });
 

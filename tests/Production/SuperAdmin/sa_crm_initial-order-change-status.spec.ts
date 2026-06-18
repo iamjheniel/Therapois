@@ -7,7 +7,10 @@ test.describe('Super Admin CRM Initial Orders', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
+    // Walking practice rows for one with initial orders can be slow (and exhausts the full
+    // walk on environments with no such data), so allow more than the default 90s.
+    test.setTimeout(180000);
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(
@@ -18,9 +21,8 @@ test.describe('Super Admin CRM Initial Orders', () => {
       const crmList = new CRMListPage(page);
       const initialOrders = new CRMInitialOrdersPage(page);
 
-      await crmBase.openCRM();
-      await crmList.openPracticeView();
-      await initialOrders.openErstverordnungen();
+      const found = await crmList.openPracticeViewWithOrders();
+      test.skip(!found, 'No practice with initial orders (Bestellung) available in this environment');
       await initialOrders.openBulkActions();
       await initialOrders.addNote('test automation');
       await initialOrders.openBulkActions();
@@ -37,9 +39,8 @@ test.describe('Super Admin CRM Initial Orders', () => {
       const crmList = new CRMListPage(page);
       const initialOrders = new CRMInitialOrdersPage(page);
 
-      await crmBase.openCRM();
-      await crmList.openPracticeView();
-      await initialOrders.openErstverordnungen();
+      const found = await crmList.openPracticeViewWithOrders();
+      test.skip(!found, 'No practice with initial orders (Bestellung) available in this environment');
       await initialOrders.openBulkActions();
       await initialOrders.changeStatusToBestellt();
     }

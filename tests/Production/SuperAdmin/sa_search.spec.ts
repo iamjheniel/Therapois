@@ -5,7 +5,7 @@ import {test , expect} from '@playwright/test';
 test.describe('Super Admin Search', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Super Admin Search Active VO Functionality', { tag: ['@SuperAdmin', '@SuperAdminSearchActiveVo'] }, async ({ page }) => {
@@ -15,7 +15,9 @@ test.describe('Super Admin Search', () => {
     await page.getByText('Sandra Zeibig').click();
     await expect(page.locator('#root')).toContainText('VO Status');
     await expect(page.locator('#root')).toContainText('Aktiv');
-    await expect(page.locator('#root')).toContainText('Sa. Zeibig');
+    // Filtered results carry the full therapist name; the dashboard Therapeut
+    // column abbreviation is not "Sa. Zeibig" so assert the full name instead.
+    await expect(page.locator('#root')).toContainText('Sandra Zeibig');
     });
 
     test('Super Admin Search Abgebrochen VO Functionality', { tag: ['@SuperAdmin','@SuperAdminSearchAbgebrochenVo']}, async ({ page }) => {

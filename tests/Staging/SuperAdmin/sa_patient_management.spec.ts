@@ -3,7 +3,7 @@ import { PatientManagementPage } from '../../../Pages/superadmin/sa.patient-mana
 
 test.describe('Super Admin - Patient Management', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   // ────────────────────────────────────────────────────

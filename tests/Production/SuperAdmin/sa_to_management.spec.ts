@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Super Admin TO Management', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/to-management');
-    await page.waitForLoadState('networkidle');
+    await page.goto('https://app.therapios.de/to-management', { waitUntil: 'domcontentloaded' });
   });
 
   test(

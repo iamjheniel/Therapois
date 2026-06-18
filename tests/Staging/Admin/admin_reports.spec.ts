@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Admin Reports', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
-    // \uF451 is the private-use icon character that renders as the hamburger menu
-    await page.getByText('\uF451').click();
-    await page.getByRole('button', { name: /Berichte/ }).click();
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
+    // Use the robust sidebar nav helper (waits for + opens the menu, glyph-agnostic) instead of
+    // a raw nerd-font glyph click, which flakes when the sidebar hasn't painted yet.
+    const app = new AppPage(page);
+    await app.navTo(/Berichte/);
     await expect(page.locator('#root')).toContainText('Reports', { timeout: 15000 });
   });
 

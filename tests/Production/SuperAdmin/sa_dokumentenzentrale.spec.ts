@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Super Admin Dokumentenzentrale', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/document-center');
-    await page.waitForLoadState('networkidle');
+    await page.goto('https://app.therapios.de/document-center', { waitUntil: 'domcontentloaded' });
   });
 
   test(

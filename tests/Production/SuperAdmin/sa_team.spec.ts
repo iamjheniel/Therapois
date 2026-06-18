@@ -1,8 +1,41 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+// Robustly navigate to the Team page (sidebar nav can be below the fold).
+async function openTeam(page: Page) {
+  const navBtn = page.getByRole('button', { name: ' Team' }).last();
+  await navBtn.waitFor({ state: 'attached', timeout: 10_000 });
+  await navBtn.evaluate((el: HTMLElement) => {
+    el.scrollIntoView({ block: 'center', inline: 'center' });
+    el.click();
+  });
+}
+
+async function searchUsers(page: Page, term: string) {
+  const search = page.getByRole('textbox', { name: 'Benutzer suchen' });
+  await search.click();
+  await search.fill(term);
+  await search.press('Enter');
+  await page.waitForTimeout(1500);
+}
+
+// Open the edit form for the row matching `rowText` (e.g. a unique email).
+// Each data row is a `.r-qklmqi` wrapper; the Aktion (last) cell holds a single
+// clickable edit control with the stable classes `.r-1i6wzkk.r-1ux3glh`.
+async function openEditForRow(page: Page, rowText: string | RegExp) {
+  const row = page.locator('.r-qklmqi').filter({ hasText: rowText }).first();
+  await expect(row).toBeVisible({ timeout: 10_000 });
+  const editBtn = row.locator('.r-1i6wzkk.r-1ux3glh').first();
+  await editBtn.scrollIntoViewIfNeeded();
+  await editBtn.click({ force: true });
+  // Edit form is open once the last-name field renders
+  await expect(page.getByRole('textbox', { name: 'e.g. Bond' })).toBeVisible({
+    timeout: 10_000,
+  });
+}
 
 test.describe('Super Admin Team', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test('Super Admin Team Account Creation', { tag: ['@SuperAdmin', '@accountcreation'] }, async ({ page }) => {
@@ -11,8 +44,7 @@ test.describe('Super Admin Team', () => {
     const uniqueEmpId = `test${timestamp}`;
     const uniqueEmail = `automation_${timestamp}@gmail.com`;
 
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Team' }).click();
+    await openTeam(page);
     await page.getByText('Nutzer hinzufügen').click();
 
     // Select role
@@ -41,38 +73,46 @@ test.describe('Super Admin Team', () => {
   });
 
   test('Super Admin Edit User', { tag: ['@SuperAdmin', '@edituser'] }, async ({ page }) => {
-  await page.getByText('').click();
-  await page.getByRole('button', { name: ' Team' }).click();
-  await page.getByRole('textbox', { name: 'Benutzer suchen' }).click();
-  await page.getByRole('textbox', { name: 'Benutzer suchen' }).fill('automation');
-  await page.getByRole('textbox', { name: 'Benutzer suchen' }).press('Enter');
-  await page.waitForLoadState('networkidle');
-  await page.locator('div:nth-child(2) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').click();
- // generate a unique last name so save button gets enabled
-  const updatedLastName = `Updated_${Date.now()}`;
-  await page.getByRole('textbox', { name: 'e.g. Bond' }).fill(updatedLastName);
-  // Now the button becomes enabled
-  await page.getByRole('button', { name: 'Aktualisieren' }).click();
-  await expect(page.getByTestId('surface')).toContainText('User updated successfully');
-});
+    await openTeam(page);
+    await searchUsers(page, 'automation');
+
+    // Act on the first automation test user (never a real admin account)
+    await openEditForRow(page, /automation_\d+@gmail\.com/);
+
+    // Generate a unique last name so the save button gets enabled
+    const updatedLastName = `Updated_${Date.now()}`;
+    await page.getByRole('textbox', { name: 'e.g. Bond' }).fill(updatedLastName);
+
+    await page.getByRole('button', { name: 'Aktualisieren' }).click();
+    await expect(page.getByTestId('surface')).toContainText('User updated successfully');
+  });
 
   test('Super Admin Inactivate + Activate User', { tag: ['@SuperAdmin', '@inactivateuser'] }, async ({ page }) => {
-  await page.getByText('').click();
-  await page.getByRole('button', { name: ' Team' }).click();
-  await page.getByRole('textbox', { name: 'Benutzer suchen' }).click();
-  await page.getByRole('textbox', { name: 'Benutzer suchen' }).fill('automation');
-  await page.getByRole('textbox', { name: 'Benutzer suchen' }).press('Enter');
-  await page.waitForLoadState('networkidle');
-  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').click();
-  await page.getByRole('checkbox').click();
-  await page.getByRole('button', { name: 'Aktualisieren' }).click();
-  await expect(page.locator('html')).toContainText('User updated successfully');
-  await expect(page.locator('#root')).toContainText('Inaktiv ✗');
-  //activate again for test idempotency
-  await page.locator('div:nth-child(3) > .css-g5y9jx.r-12vffkv.r-bnwqim.r-ctqt5z.r-113qch9.r-qklmqi > div > div:last-child > .css-g5y9jx').click();
-  await page.getByRole('checkbox').click();
-  await page.getByRole('button', { name: 'Aktualisieren' }).click();
-  await expect(page.locator('html')).toContainText('User updated successfully');
-  await expect(page.locator('#root')).toContainText('Aktiv ✓');
-});
+    await openTeam(page);
+    await searchUsers(page, 'automation');
+
+    // Capture the email of the first automation user so we can re-open the same
+    // row to restore its state afterwards.
+    const emailText = await page
+      .getByText(/automation_\d+@gmail\.com/)
+      .first()
+      .textContent();
+    const email = (emailText || '').trim();
+    expect(email).toMatch(/automation_\d+@gmail\.com/);
+
+    // Inactivate
+    await openEditForRow(page, email);
+    await page.getByRole('checkbox').click();
+    await page.getByRole('button', { name: 'Aktualisieren' }).click();
+    await expect(page.getByTestId('surface')).toContainText('User updated successfully');
+    await expect(page.locator('#root')).toContainText('Inaktiv ✗');
+
+    // Reactivate (restore original state for idempotency)
+    await searchUsers(page, 'automation');
+    await openEditForRow(page, email);
+    await page.getByRole('checkbox').click();
+    await page.getByRole('button', { name: 'Aktualisieren' }).click();
+    await expect(page.getByTestId('surface')).toContainText('User updated successfully');
+    await expect(page.locator('#root')).toContainText('Aktiv ✓');
+  });
 });

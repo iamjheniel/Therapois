@@ -17,7 +17,7 @@ function makeArztData() {
 
 test.describe('Super Admin - Arzt Management', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(

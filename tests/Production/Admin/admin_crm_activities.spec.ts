@@ -5,7 +5,7 @@ import { CRMActivities } from '../../../Pages/crm/crm.activities.page';
 
 test.describe('Admin CRM Activities', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(

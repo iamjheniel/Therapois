@@ -3,7 +3,7 @@ import { PatientManagementPage } from '../../../Pages/superadmin/sa.patient-mana
 
 test.describe('Super Admin - Patient Management', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard');
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   // ────────────────────────────────────────────────────
@@ -16,9 +16,9 @@ test.describe('Super Admin - Patient Management', () => {
       const pm = new PatientManagementPage(page);
 
       await pm.openPatientManagement();
-      // Verify the section heading is visible
+      // Verify the section heading is visible (German UI: "Patienten Management")
       await expect(page.locator('#root')).toContainText(
-        /Patient Management|Patientenverwaltung/i,
+        /Patienten? Management|Patientenverwaltung/i,
         { timeout: 15_000 }
       );
     }
@@ -34,8 +34,11 @@ test.describe('Super Admin - Patient Management', () => {
       const pm = new PatientManagementPage(page);
 
       await pm.openPatientManagement();
-      await pm.search('JhenTest');
-      await pm.expectPatientVisible('JhenTest');
+      // Data-robust: derive the search term from a patient actually in the list
+      const surname = await pm.firstPatientSurname();
+      expect(surname.length).toBeGreaterThan(0);
+      await pm.search(surname);
+      await pm.expectPatientVisible(surname);
     }
   );
 
@@ -83,12 +86,15 @@ test.describe('Super Admin - Patient Management', () => {
       const pm = new PatientManagementPage(page);
 
       await pm.openPatientManagement();
-      await pm.search('JhenTest');
-      await pm.openPatientDetail('JhenTest');
+      const surname = await pm.firstPatientSurname();
+      expect(surname.length).toBeGreaterThan(0);
+      await pm.search(surname);
+      await pm.expectPatientVisible(surname);
+      await pm.openPatientDetail(surname);
 
       // Verify a detail panel/section is shown
       await expect(page.locator('#root')).toContainText(
-        /Patientendetails|Patient Details|JhenTest/i,
+        new RegExp(`Patientendetails|Patient Details|${surname}`, 'i'),
         { timeout: 15_000 }
       );
     }
@@ -104,13 +110,15 @@ test.describe('Super Admin - Patient Management', () => {
       const pm = new PatientManagementPage(page);
 
       await pm.openPatientManagement();
-      await pm.search('JhenTest');
-      await pm.expectPatientVisible('JhenTest');
+      const surname = await pm.firstPatientSurname();
+      expect(surname.length).toBeGreaterThan(0);
+      await pm.search(surname);
+      await pm.expectPatientVisible(surname);
 
       await pm.clearSearch();
-      // After clearing, the list should show more than the filtered result
+      // After clearing, the list should show the section heading again
       await expect(page.locator('#root')).toContainText(
-        /Patient Management|Patientenverwaltung/i,
+        /Patienten? Management|Patientenverwaltung/i,
         { timeout: 10_000 }
       );
     }

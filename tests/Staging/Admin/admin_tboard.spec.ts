@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Admin TBoard', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Admin TBoard Document Treatment', { tag: ['@Admin', '@AdminDoku'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' T Board' }).click();
+    const app = new AppPage(page);
+    await app.navTo(/T Board/);
     await page.waitForTimeout(10000);
     await page.getByText('Therapist: (Select)').click();
     // The T Board therapist selector lists therapists as plain text options.
@@ -21,8 +22,6 @@ test.describe('Admin TBoard', () => {
     await page.getByRole('radio').first().click();
     await page.getByRole('button', { name: 'Save' }).click();
     // Wait for backend + UI to stabilize
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(500);
     await expect(page.locator('[aria-live="polite"][data-testid="surface"]')).toHaveText(
     /marked as Treated|Validation failed|Conflicting activity/i,
     { timeout: 15000 });

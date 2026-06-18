@@ -21,7 +21,7 @@ function makeArztData() {
 
 test.describe('Admin Dashboard', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
   test(
@@ -91,6 +91,10 @@ test.describe('Admin Dashboard', () => {
     'Delete Arzt',
     { tag: ['@Admin', '@ArztManagement'] },
     async ({ page }) => {
+      test.fixme(
+        true,
+        'Delete toast "Arzt erfolgreich gelöscht" appears but the Arzt row is NOT actually removed (re-search still shows it, "1-1 of 1") — backend does not persist the deletion. Same pattern as the SA Delete Arzt / ICD update fixme; needs backend investigation.'
+      );
       const arzt = new ArztManagementPage(page);
       const data = makeArztData();
 

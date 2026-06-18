@@ -5,11 +5,11 @@ const DOCUMENT_URL = 'https://staging.therapios.de/document';
 test.describe('Admin Documents', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Admin Document View and Add Note', { tag: ['@Admin', '@DocumentAddNoteAdmin'] }, async ({ page }) => {
-    await page.goto(DOCUMENT_URL);
+    await page.goto(DOCUMENT_URL, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#root')).toContainText('Dokument Upload');
     await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
     await expect(page.getByTestId('modal-surface')).toContainText('Dokumentdetails');
@@ -22,7 +22,7 @@ test.describe('Admin Documents', () => {
     test('Admin Document Search by Therapist Name', { tag: ['@Admin', '@DocumentSearch'] }, async ({ page }) => {
     // Retargeted to existing data: staging documents are unassigned (no patient/therapist),
     // so we search by an existing Document ID instead of a therapist name.
-    await page.goto(DOCUMENT_URL);
+    await page.goto(DOCUMENT_URL, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#root')).toContainText('Dokument Upload');
     await page.getByRole('textbox', { name: 'Suchen' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).fill('00001');
@@ -32,7 +32,7 @@ test.describe('Admin Documents', () => {
     });
     test('Admin Document Search by Document ID', { tag: ['@Admin', '@DocumentSearch'] }, async ({ page }) => {
     // existing staging document IDs are of the form 00001-NN
-    await page.goto(DOCUMENT_URL);
+    await page.goto(DOCUMENT_URL, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#root')).toContainText('Dokument Upload');
     await page.getByRole('textbox', { name: 'Suchen' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).fill('00001');

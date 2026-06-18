@@ -39,7 +39,12 @@ export class CRMFollowUpOrdersPage {
   }
 
   async openBulkActions() {
-    await this.page.getByRole('checkbox').nth(3).click({ force: true });
+    // Selecting an order row reveals the bulk actions. The row checkboxes render disabled
+    // (React Native Web), so force-click with an explicit timeout to avoid hanging the test
+    // on a transient actionability miss.
+    const rowCheckbox = this.page.getByRole('checkbox').nth(3);
+    await rowCheckbox.waitFor({ state: 'attached', timeout: 15000 });
+    await rowCheckbox.click({ force: true, timeout: 15000 });
   }
 
   async generateFollowUpOrderForm() {

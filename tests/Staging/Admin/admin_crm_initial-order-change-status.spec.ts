@@ -5,7 +5,10 @@ import { CRMInitialOrdersPage } from '../../../Pages/crm/crm.initial-orders.page
 
 test.describe('Admin CRM Practice Info', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard');
+    // Walking practice rows for one with initial orders can be slow (and exhausts the full
+    // walk on environments with no such data), so allow more than the default 90s.
+    test.setTimeout(180000);
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
   test(
@@ -17,7 +20,8 @@ test.describe('Admin CRM Practice Info', () => {
     const initialOrders = new CRMInitialOrdersPage(page);
 
     // Open a practice that actually has initial orders, landing on the Bestellung tab.
-    await crmList.openPracticeViewWithOrders();
+    const found = await crmList.openPracticeViewWithOrders();
+    test.skip(!found, 'No practice with initial orders (Bestellung) available in this environment');
     await initialOrders.openBulkActions();
     await initialOrders.addNote('test automation');
     await initialOrders.openBulkActions();
@@ -36,7 +40,8 @@ test.describe('Admin CRM Practice Info', () => {
     const initialOrders = new CRMInitialOrdersPage(page);
 
     // Open a practice that actually has initial orders, landing on the Bestellung tab.
-    await crmList.openPracticeViewWithOrders();
+    const found = await crmList.openPracticeViewWithOrders();
+    test.skip(!found, 'No practice with initial orders (Bestellung) available in this environment');
     await initialOrders.openBulkActions();
     await initialOrders.changeStatusToBestellt();
 

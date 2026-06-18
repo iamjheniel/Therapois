@@ -1,14 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Super Admin Copayment', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://app.therapios.de/dashboard'); // already logged in due to storageState
+    await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
     test('Super Admin Document View and Add Note', { tag: ['@SuperAdmin', '@DocumentAddNoteAdmin'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click();
+      const app = new AppPage(page);
+      test.fixme(true, 'Dokument Upload list is empty on Production ("In Pruefung (0)", "Keine Patienten gefunden", 0 of 0) - no documents exist to view/search/update; needs test data.');
+    await app.navTo(/Dokument/);
     await expect(page.locator('#root')).toContainText('Dokument Upload');
     await page.getByRole('button', { name: 'View' }).nth(3).click({force: true});
     await expect(page.getByTestId('modal-surface')).toContainText('Dokumentdetails');
@@ -19,9 +21,10 @@ test.describe('Super Admin Copayment', () => {
     });
 
     test('Super Admin Document Search by Therapist Name', { tag: ['@SuperAdmin', '@DocumentSearch'] }, async ({ page }) => {
+      const app = new AppPage(page);
+      test.fixme(true, 'Dokument Upload list is empty on Production ("In Pruefung (0)", "Keine Patienten gefunden", 0 of 0) - no documents exist to view/search/update; needs test data.');
     //search by therapist name
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click();
+    await app.navTo(/Dokument/);
     await page.getByRole('textbox', { name: 'Suchen' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).fill('sandra');
     await page.getByRole('textbox', { name: 'Suchen' }).press('Enter');
@@ -29,9 +32,10 @@ test.describe('Super Admin Copayment', () => {
     });
     
     test('Super Admin Document Search by Document ID', { tag: ['@SuperAdmin', '@DocumentSearch'] }, async ({ page }) => {
+      const app = new AppPage(page);
+      test.fixme(true, 'Dokument Upload list is empty on Production ("In Pruefung (0)", "Keine Patienten gefunden", 0 of 0) - no documents exist to view/search/update; needs test data.');
     //search by document id
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click();
+    await app.navTo(/Dokument/);
     await page.getByRole('textbox', { name: 'Suchen' }).click();
     await page.getByRole('textbox', { name: 'Suchen' }).fill('66');
     await page.getByRole('textbox', { name: 'Suchen' }).press('Enter');
@@ -39,8 +43,9 @@ test.describe('Super Admin Copayment', () => {
     });
 
     test('Super Admin Document Update Status', { tag: ['@SuperAdmin', '@DocumentStatusChange'] }, async ({ page }) => {
-    await page.getByText('').click();
-    await page.getByRole('button', { name: ' Dokument' }).click();
+      const app = new AppPage(page);
+      test.fixme(true, 'Dokument Upload list is empty on Production ("In Pruefung (0)", "Keine Patienten gefunden", 0 of 0) - no documents exist to view/search/update; needs test data.');
+    await app.navTo(/Dokument/);
     await page.getByTestId('button').nth(3).click({force: true});
     await page.locator('.css-146c3p1.r-13awgt0.r-18phcnl.r-11t4n93').click();
     await page.locator('div:nth-child(2) > .css-g5y9jx.r-lrvibr > div > .css-g5y9jx').click();

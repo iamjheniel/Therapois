@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { AppPage } from '../../../Pages/base/app.page';
 
 test.describe('Super Admin Heilmittelverwaltung', () => {
   test.describe.configure({ mode: 'serial' });
@@ -7,10 +8,11 @@ test.describe('Super Admin Heilmittelverwaltung', () => {
   const uniqueCode = `QA-${Date.now()}`;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard'); // already logged in via storageState
-    // Open sidebar and navigate to Heilmittelverwaltung
-    await page.getByText('\uf451').click();
-    await page.getByRole('button', { name: /Heilmittelverwaltung/ }).click();
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in via storageState
+    // Use the robust sidebar nav helper instead of a raw nerd-font glyph click, which flakes
+    // when the sidebar hasn't painted yet.
+    const app = new AppPage(page);
+    await app.navTo(/Heilmittelverwaltung/);
   });
 
   // ─────────────────────────────────────────────────
