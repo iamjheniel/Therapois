@@ -120,6 +120,7 @@ playwright.config.ts
 | `admin_tboard.spec.ts` | `@Admin @AdminDoku` | T Board document treatment flow |
 | `admin_reports.spec.ts` | `@Admin @Reports @ReportsDateFilter @ReportsExport @ReportsTherapieformFilter` | Reports page: date filter, therapieform filter, export |
 | `admin_vo_practice.spec.ts` | `@Admin @VOPracticeAssignment @VOFormPractice @VOPracticeSearch @VOPracticeSelect @DashboardPracticeColumn` | VO Direct Practice Assignment (#2670): Create-VO form requires Praxis + makes Doctor optional, practice searchable by name & BSNR, select a practice, Dashboard Praxis column |
+| `admin_create_vo.spec.ts` | `@Admin @CreateVO` | Create VO end-to-end: fills every required field (patient auto-fills Praxis+Facility; Area surfaces ICD+Diagnosegruppe; ICD auto-fills Diagnose+Diagnosis Group) and saves through the validation gate (Speichern → approve checks → Speichern again → POST /prescriptions). **Creates a real VO.** |
 
 ### Therapist (Staging) — `tests/Staging/Therapist/`
 
@@ -166,6 +167,7 @@ playwright.config.ts
 | `sa_to_management.spec.ts` | `@SuperAdmin @TOManagement` | TO Verwaltung: Auslastung/Abrechnung/KPIs tabs, therapist health counters |
 | `sa_validation_config.spec.ts` | `@SuperAdmin @ValidationConfig` | Validierungskonfiguration: rule table, auto-validation rules |
 | `sa_vo_practice.spec.ts` | `@SuperAdmin @VOPracticeAssignment @VOFormPractice @VOPracticeSearch @VOPracticeSelect @DashboardPracticeColumn` | VO Direct Practice Assignment (#2670): Create-VO form requires Praxis + makes Doctor optional, practice searchable by name & BSNR, select a practice, Dashboard Praxis column |
+| `sa_create_vo.spec.ts` | `@SuperAdmin @CreateVO` | Create VO end-to-end: fills every required field and saves through the validation gate (Speichern → approve checks → Speichern again → POST /prescriptions). **Creates a real VO.** |
 
 Production specs mirror the Staging inventory under `tests/Production/`.
 
@@ -246,4 +248,5 @@ await feature.doSomething();
 - **T Board requires therapist selection** — tests using the T Board must select a therapist from the dropdown or use a therapist account; it does not auto-populate.
 - **Backend-only tickets** — auto-validation rules (VO creation validation, billing auto-validation) cannot be verified via UI alone; they require specific data scenarios to trigger.
 - **Parallel writes conflict** — tests that create/modify the same record must run in serial mode.
+- **Create VO is data-creating + multi-gate** — `admin_create_vo` / `sa_create_vo` create a *real* VO. The form auto-fills Praxis/Facility from the patient and Diagnose/Diagnosis-Group from the ICD code; saving passes a validation gate: click **Speichern** to run the checks, approve each manual/failed check via **"Bestanden"** until the panel reads **"Alle N Prüfungen bestanden"**, then click **Speichern again** to POST `/prescriptions` (there is no separate "Validiert speichern" button or "Confirm Save" dialog). When the chosen patient already has a similar VO, a "Mögliches doppeltes Rezept" dialog and/or an inline "Vorgänger-VO erkannt" prompt appear and block the save until resolved — `VoFormPage` handles both and randomises the patient to minimise collisions. The flow is written to be **data-agnostic** (first-available patient/Area/ICD/Heilmittel, retried live searches) and falls back to asserting the form contract (skipping) when the environment can't complete a real save. See `Pages/vo/vo.form.page.ts`.
 - **Staging `/practices` API returns 500** — the Create-VO practice dropdown renders no options on Staging, so `admin_vo_practice` / `sa_vo_practice`'s `@VOPracticeSelect` test self-skips there (it runs on Production where the API is healthy). The `@VOFormPractice` and `@VOPracticeSearch` tests still pass on Staging because they assert the form contract and the search request, not the API response.

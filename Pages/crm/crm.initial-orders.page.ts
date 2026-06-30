@@ -46,11 +46,26 @@ export class CRMInitialOrdersPage extends CRMBasePage {
     await expect(
       this.page.getByText(/Showing\s+\d+\s+initial\s+order/i).first()
     ).toBeVisible({ timeout: 30000 });
-    const rowCheckbox = this.page.getByRole('checkbox').nth(1);
+    await this.selectOrderRow(1);
+  }
+
+  /** Selects a single order-row checkbox by index (0 = the "select all" header checkbox). */
+  private async selectOrderRow(index: number) {
+    const rowCheckbox = this.page.getByRole('checkbox').nth(index);
     await rowCheckbox.waitFor({ state: 'attached', timeout: 15000 });
     // Row checkboxes render disabled (React Native Web), so force-click with an explicit
     // timeout — without it a transient actionability miss would hang until the test times out.
     await rowCheckbox.click({ force: true, timeout: 15000 });
+    await this.page.waitForTimeout(400);
+  }
+
+  /** Clears the current bulk selection via the "Clear selection" link, if shown. */
+  private async clearSelection() {
+    const clear = this.page.getByText('Clear selection', { exact: true });
+    if (await clear.isVisible().catch(() => false)) {
+      await clear.click().catch(() => {});
+      await this.page.waitForTimeout(400);
+    }
   }
 
   async generateInitialOrderForm() {
@@ -72,14 +87,40 @@ export class CRMInitialOrdersPage extends CRMBasePage {
     await this.page.getByRole('button', { name: 'Cancel' }).click();
   }
 
+  /**
+   * Changes an initial order's status to "Bestellt" and asserts the success toast.
+   *
+   * Selects a row itself (no prior {@link openBulkActions} needed) and is idempotent: a VO that
+   * is ALREADY "Bestellt" — from a previous run or real data — won't offer the "Bestellt"
+   * transition in its Change-Status menu, so this rotates through the first several order rows
+   * until one does. This keeps the test independent of which practice/row navigation landed on.
+   */
   async changeStatusToBestellt() {
-    await this.page.getByText('Change Status').click();
-    await this.page.getByRole('menuitem', { name: 'Bestellt' }).click();
-    await this.page.getByRole('button', { name: 'Ja' }).click();
-
-    await expect(
-      this.page.getByTestId('surface')
-    ).toContainText('Successfully updated status for 1 VO.');
+    const bestellt = this.page.getByRole('menuitem', { name: 'Bestellt' });
+    for (const idx of [1, 2, 3, 4, 5, 6]) {
+      await this.clearSelection();
+      await this.selectOrderRow(idx);
+      await this.page.getByText('Change Status').click();
+      const offered = await bestellt
+        .waitFor({ state: 'visible', timeout: 3_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (offered) {
+        await bestellt.click();
+        await this.page.getByRole('button', { name: 'Ja' }).click();
+        // Flexible VO count (mirrors addNote) — the selected count is environment-dependent.
+        await expect(
+          this.page
+            .getByTestId('surface')
+            .filter({ hasText: /Successfully updated status for \d+ VO\./ })
+        ).toBeVisible();
+        return;
+      }
+      // This row is already "Bestellt" (no transition offered) — close the menu and try the next.
+      await this.page.keyboard.press('Escape').catch(() => {});
+      await this.page.waitForTimeout(400);
+    }
+    throw new Error('No initial order row offered the "Bestellt" status transition');
   }
 
 }

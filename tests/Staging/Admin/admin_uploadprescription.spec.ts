@@ -48,7 +48,16 @@ test.describe('Admin Upload Prescription', () => {
     // In-Prüfung view, so the row (View-button) count drops by one.
     const rowCount = () => page.getByRole('button', { name: 'View' }).count();
     await expect.poll(rowCount, { timeout: 15000 }).toBeGreaterThan(0);
-    const before = await rowCount();
+    // The row list streams in, so capture the baseline only once the count settles (two equal
+    // reads). A too-early baseline is the flake source: rows that finish loading after the
+    // status change keep the count at/above `before`, so the "< before" check races and fails.
+    let before = await rowCount();
+    for (let i = 0; i < 10; i++) {
+      await page.waitForTimeout(700);
+      const c = await rowCount();
+      if (c === before) break;
+      before = c;
+    }
     await page.getByRole('button', { name: 'View' }).first().click({ force: true });
     // Clicking the status field opens a dropdown (rendered in a portal OUTSIDE
     // modal-surface). "Nicht lesbar" is unique on the page, so target it directly.
@@ -56,6 +65,6 @@ test.describe('Admin Upload Prescription', () => {
     await page.getByText('Nicht lesbar', { exact: true }).first().click({ force: true });
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     // The marked row drops out of the In-Prüfung view.
-    await expect.poll(rowCount, { timeout: 15000 }).toBeLessThan(before);
+    await expect.poll(rowCount, { timeout: 20000 }).toBeLessThan(before);
     });
 });

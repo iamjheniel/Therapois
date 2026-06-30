@@ -29,20 +29,19 @@ test.describe('Super Admin Announcements', () => {
     // 2. Locate the toggle *inside this card only*
     const toggle = card.locator('input[role="switch"]');
 
-    // Debug counts (optional)
-    console.log('toggle count inside card:', await toggle.count());
-
-    // 3. Click the toggle safely
+    // 3. Click the toggle safely to publish the announcement
     await toggle.scrollIntoViewIfNeeded();
     await expect(toggle).toBeVisible({ timeout: 5000 });
     await toggle.click({ force: true });
-    await page.getByText('').nth(1).click();
-    await page.getByText('SJSA JhenSuper Admin').click();
-    await page.getByRole('button', { name: ' Admin Board' }).click();
-    await page.getByText('').first().click();
-    await expect(page.locator('#root')).toContainText(/General Announcement|Allgemeine Ankündigung/i);
+
+    // 4. Navigate to the Admin Board and verify the published announcement banner shows there.
+    //    (The previous version relied on empty-text `getByText('')` icon clicks — brittle
+    //    Codegen artifacts that matched multiple icon <div>s and threw a strict-mode violation.)
+    await app.navTo(/Admin Board/);
+    await expect(page.locator('#root')).toContainText(
+      /General Announcement|Allgemeine Ankündigung/i,
+      { timeout: 15000 },
+    );
     await expect(page.locator('#root')).toContainText('test automation');
-    await page.getByText('Notifications').click();
-    await page.getByText('').click();
     });
 });

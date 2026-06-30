@@ -4,6 +4,10 @@ import { CRMListPage } from '../../../Pages/crm/crm.list.page';
 import { CRMInitialOrdersPage } from '../../../Pages/crm/crm.initial-orders.page';
 
 test.describe('Admin CRM Practice Info', () => {
+  // Both tests walk the same practice list and select/mutate initial orders, so they must not
+  // run in parallel with each other (shared backend state).
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
     // Walking practice rows for one with initial orders can be slow (and exhausts the full
     // walk on environments with no such data), so allow more than the default 90s.
@@ -40,7 +44,8 @@ test.describe('Admin CRM Practice Info', () => {
 
     const found = await crmList.openPracticeViewWithOrders();
     test.skip(!found, 'No practice with initial orders (Bestellung) available in this environment');
-    await initialOrders.openBulkActions();
+    // changeStatusToBestellt() selects an eligible row itself (rotating past already-"Bestellt"
+    // rows), so no separate openBulkActions() call is needed here.
     await initialOrders.changeStatusToBestellt();
 
     }

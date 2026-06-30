@@ -41,7 +41,8 @@ test.describe('Super Admin CRM Initial Orders', () => {
 
       const found = await crmList.openPracticeViewWithOrders();
       test.skip(!found, 'No practice with initial orders (Bestellung) available in this environment');
-      await initialOrders.openBulkActions();
+      // changeStatusToBestellt() selects an eligible row itself (rotating past already-"Bestellt"
+      // rows), so no separate openBulkActions() call is needed here.
       await initialOrders.changeStatusToBestellt();
     }
   );

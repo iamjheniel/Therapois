@@ -38,7 +38,8 @@ test.describe('Super Admin CRM Follow-up Orders', () => {
 
       const found = await crmList.openPracticeViewWithFollowUpOrders();
       test.skip(!found, 'No practice with follow-up orders (Nachverfolgung) available in this environment');
-      await followUpOrders.openBulkActions();
+      // changeStatusToBestellt() selects an eligible row itself (rotating past already-"Bestellt"
+      // rows), so no separate openBulkActions() call is needed here.
       await followUpOrders.changeStatusToBestellt();
     }
   );

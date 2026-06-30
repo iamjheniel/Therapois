@@ -4,6 +4,13 @@ import { CRMListPage } from '../../../Pages/crm/crm.list.page';
 import { CRMFollowUpOrdersPage } from '../../../Pages/crm/crm.follow-up-orders.page';
 
 test.describe('Admin CRM Practice Info', () => {
+  // These tests walk the same practice list and select/mutate follow-up orders, so they must
+  // not run in parallel with each other (shared backend state). Serial + a generous per-test
+  // timeout: scanning up to a dozen practices for one with follow-up orders is inherently slow
+  // and can otherwise exhaust the default 90s budget before the action even runs.
+  test.describe.configure({ mode: 'serial' });
+  test.setTimeout(180_000);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
@@ -40,7 +47,8 @@ test.describe('Admin CRM Practice Info', () => {
 
     const found = await crmList.openPracticeViewWithFollowUpOrders();
     test.skip(!found, 'No practice with follow-up orders (Nachverfolgung) available in this environment');
-    await followUpOrders.openBulkActions();
+    // changeStatusToBestellt() selects an eligible row itself (rotating past already-"Bestellt"
+    // rows), so no separate openBulkActions() call is needed here.
     await followUpOrders.changeStatusToBestellt();
    
     }

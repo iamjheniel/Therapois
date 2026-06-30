@@ -20,6 +20,11 @@ function makeArztData() {
 }
 
 test.describe('Admin Dashboard', () => {
+  // "Search Arzt" and "Update Arzt last name only" rely on the "Jhen" Arzt that "Create Arzt"
+  // adds, so the tests are order-dependent and share backend state. Run them serially (and in
+  // declaration order) rather than in parallel across workers, which made them flaky.
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });

@@ -54,9 +54,18 @@ test.describe('Super Admin Copayment', () => {
     // drops by one — a reliable signal the status change took effect.
     const rowCount = () => page.getByRole('button', { name: 'View' }).count();
     await expect.poll(rowCount, { timeout: 15000 }).toBeGreaterThan(0);
-    const before = await rowCount();
+    // The row list streams in, so capture the baseline only once the count settles (two equal
+    // reads). A too-early baseline is the flake source: rows that finish loading after the click
+    // keep the count at/above `before`, so the post-click "< before" check races and fails.
+    let before = await rowCount();
+    for (let i = 0; i < 10; i++) {
+      await page.waitForTimeout(700);
+      const c = await rowCount();
+      if (c === before) break;
+      before = c;
+    }
     await page.getByTestId('button-text').filter({ hasText: 'Nicht lesbar' }).first().click({ force: true });
-    await expect.poll(rowCount, { timeout: 15000 }).toBeLessThan(before);
+    await expect.poll(rowCount, { timeout: 20000 }).toBeLessThan(before);
     });
 
 });
