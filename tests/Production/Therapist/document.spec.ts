@@ -84,7 +84,7 @@ test.describe('Therapist Upload Documents', () => {
     const app = new AppPage(page);
     await app.navTo(/Dokument/);
     await page.getByRole('button', { name: '󰩎 Dokument hochladen' }).click();
-    await page.getByText('Andere', { exact: true }).click();
+    await page.getByTestId('modal-surface').getByText('Andere', { exact: true }).click();
      const filePath = path.join(__dirname, "../../Staging/Therapist/sampleprescription.png");
      console.log("FILE PATH:", filePath);  // debug
  
