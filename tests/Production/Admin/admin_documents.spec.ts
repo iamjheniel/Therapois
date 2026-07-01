@@ -15,7 +15,9 @@ test.describe('Admin Documents', () => {
     await expect(page.locator('#root')).toContainText('Dokument Upload');
     await page.getByRole('button', { name: 'View' }).first().click({force: true});
     await expect(page.getByTestId('modal-surface')).toContainText('Dokumentdetails');
-    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('automation test');
+    // The details modal can render two inputs (Dokumentbezeichnung + Notiz);
+    // target the note field explicitly to avoid a strict-mode match.
+    await page.getByTestId('modal-surface').getByPlaceholder('Geben Sie Ihre Notiz hier ein').fill('automation test');
     await page.getByRole('button', { name: 'Änderungen speichern' }).click();
     await expect(page.getByTestId('modal-surface')).toContainText('automation test');
    
