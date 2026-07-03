@@ -49,23 +49,28 @@ test.describe('Super Admin Copayment', () => {
     // sits off-screen to the right — so click with force. Clicking sets the status
     // immediately (no confirmation dialog). The status filter ("In Prüfung (N)") shows a
     // live count; marking a row "Nicht lesbar" drops the In-Prüfung count by one.
-    // The default view is filtered to "In Prüfung"; marking a row "Nicht lesbar" moves
-    // that document out of the view, so the number of rows (one View button per row)
-    // drops by one — a reliable signal the status change took effect.
-    const rowCount = () => page.getByRole('button', { name: 'View' }).count();
-    await expect.poll(rowCount, { timeout: 15000 }).toBeGreaterThan(0);
-    // The row list streams in, so capture the baseline only once the count settles (two equal
-    // reads). A too-early baseline is the flake source: rows that finish loading after the click
-    // keep the count at/above `before`, so the post-click "< before" check races and fails.
-    let before = await rowCount();
+    // The default view is filtered to "In Prüfung". Counting visible "View" buttons can't
+    // detect a single status change: the list is paginated at 25 rows/page (e.g. "1-25 of 54"),
+    // so removing one row just backfills the next row into view and the visible count stays
+    // pinned at the page size. Instead read the authoritative "In Prüfung (N)" filter-tab
+    // counter, which reflects the true backend total; marking a row "Nicht lesbar" moves that
+    // document out of "In Prüfung", dropping N by one — a reliable signal the change took effect.
+    const inPruefungCount = async () => {
+      const txt = (await page.locator('#root').textContent()) ?? '';
+      const m = txt.match(/In Prüfung\s*\((\d+)\)/);
+      return m ? Number(m[1]) : NaN;
+    };
+    await expect.poll(inPruefungCount, { timeout: 15000 }).toBeGreaterThan(0);
+    // The count streams in, so capture the baseline only once it settles (two equal reads).
+    let before = await inPruefungCount();
     for (let i = 0; i < 10; i++) {
       await page.waitForTimeout(700);
-      const c = await rowCount();
+      const c = await inPruefungCount();
       if (c === before) break;
       before = c;
     }
     await page.getByTestId('button-text').filter({ hasText: 'Nicht lesbar' }).first().click({ force: true });
-    await expect.poll(rowCount, { timeout: 20000 }).toBeLessThan(before);
+    await expect.poll(inPruefungCount, { timeout: 20000 }).toBeLessThan(before);
     });
 
 });

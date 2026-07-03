@@ -33,13 +33,13 @@ test.describe('Therapist Upload Documents', () => {
     const app = new AppPage(page);
     await app.navTo(/Dokument/);
     await page.getByRole('button', { name: '󰩎 Dokument hochladen' }).click();
-    await page.getByText('Zuzahlungsdokumente hochladen').click();
+    await page.getByTestId('modal-surface').getByText('Zuzahlungsbefreiung').click();
      const filePath = path.join(__dirname, "../../Staging/Therapist/sampleprescription.png");
      console.log("FILE PATH:", filePath);  // debug
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);
@@ -56,7 +56,7 @@ test.describe('Therapist Upload Documents', () => {
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);
@@ -73,7 +73,7 @@ test.describe('Therapist Upload Documents', () => {
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);
@@ -90,7 +90,7 @@ test.describe('Therapist Upload Documents', () => {
  
      const [fileChooser] = await Promise.all([
        page.waitForEvent("filechooser"),
-       page.getByText("Wählen Sie ein Bild zum").click(),
+       page.getByText("Wählen Sie eine Datei").click(),
      ]);
  
     await fileChooser.setFiles(filePath);
