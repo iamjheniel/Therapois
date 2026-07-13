@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test } from '../../fixtures/crm-serial';
 import { CRMBasePage } from '../../../Pages/crm/crm.base.page';
 import { CRMListPage } from '../../../Pages/crm/crm.list.page';
 

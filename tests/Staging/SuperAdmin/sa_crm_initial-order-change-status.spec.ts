@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test } from '../../fixtures/crm-serial';
 import { CRMBasePage } from '../../../Pages/crm/crm.base.page';
 import { CRMListPage } from '../../../Pages/crm/crm.list.page';
 import { CRMInitialOrdersPage } from '../../../Pages/crm/crm.initial-orders.page';
@@ -7,9 +7,8 @@ test.describe('Super Admin CRM Initial Orders', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
-    // Walking practice rows for one with initial orders can be slow (and exhausts the full
-    // walk on environments with no such data), so allow more than the default 90s.
-    test.setTimeout(180000);
+    // Walking practice rows for one with initial orders is slow, but the CRM timeout is owned by the
+    // crm-serial fixture (a spec-level test.setTimeout here would clobber the lock-wait allowance).
     await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 

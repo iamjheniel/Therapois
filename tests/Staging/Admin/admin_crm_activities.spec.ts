@@ -1,9 +1,11 @@
-import { test } from '@playwright/test';
+import { test } from '../../fixtures/crm-serial';
 import { CRMBasePage } from '../../../Pages/crm/crm.base.page';
 import { CRMListPage } from '../../../Pages/crm/crm.list.page';
 import { CRMActivities } from '../../../Pages/crm/crm.activities.page';
 
 test.describe('Admin CRM Activities', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });

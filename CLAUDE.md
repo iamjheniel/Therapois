@@ -131,7 +131,10 @@ playwright.config.ts
 | `calendar.spec.ts` | `@Therapist @calendar @editcalendar` | Calendar view and edit |
 | `notification.spec.ts` | `@Therapist @notification @bellnotification @markasread` | Banner notification, bell notification, mark as read |
 | `share_patient.spec.ts` | `@Therapist @sharepatient @removesharedpatient` | Share patient with another therapist and remove shared access |
+| `transfer_patient.spec.ts` | `@Therapist @transferpatient` | Transfer patient action: opens the "Patient transferieren" modal, verifies VO-confirmation details + target-therapist picker/selection; cancels without committing (transfer is irreversible) |
+| `dashboard_actions.spec.ts` | `@Therapist @reviewbanner @bestelltvon` | Dashboard reminder banners ("Überprüfen" for 14+ Tage / TB fällig / VOs laufen aus) open a patient review popover; "Bestellt von" action-bar dropdown offers Therapeut/Admin (opens options without committing the follow-up-VO order). Both data-gated: skip when nothing is due |
 | `VO_termination.spec.ts` | `@KFvo` | Non-immediate VO termination (Keine Folge-VO bestellen) |
+| `assessment_ib.spec.ts` | `@Therapist @assessment @IB` | Dashboard BF (Befund/Assessment) and IB (Initialbefund) columns: presence + per-row status/add-control; opens the assessment/Initialbefund modal (skips when the control is inert for the patient state) |
 
 ### SuperAdmin (Staging) — `tests/Staging/SuperAdmin/`
 
@@ -185,6 +188,7 @@ Understanding these German terms is essential when reading selectors, test steps
 - **Selectors**: The app is built with React Native Web — most elements are `div`-based with no semantic roles. Prefer `data-testid` where present; fall back to visible text or ARIA labels.
 - **Tags**: Every test must carry a role tag (`@Admin`, `@Therapist`, `@SuperAdmin`) plus a feature tag. Use `--grep` to run subsets without running the full suite.
 - **Serial mode**: Tests that share mutable backend state (same patient, same VO, same record) must use `test.describe.configure({ mode: 'serial' })` to prevent worker conflicts.
+- **Cross-file serialization (CRM)**: `test.describe.configure({ mode: 'serial' })` only serializes tests *within one file*. The CRM specs all drive the same shared practice (`CRMListPage.openPracticeView()` opens the first practice) across multiple files and both the Admin and SuperAdmin projects, so they need cross-file/cross-project serialization. They import `test`/`expect` from `tests/fixtures/crm-serial.ts` — an auto fixture that takes an exclusive OS-level lock so only one CRM test runs at a time suite-wide. That fixture **owns the CRM timeout** (grants a fixed body budget from lock-acquisition and keeps the deadline ahead during the wait); CRM specs must therefore NOT call `test.setTimeout()` themselves (it runs after the fixture and would clobber the lock-wait allowance, reintroducing "timeout … while running beforeEach hook" failures).
 - **Page Objects**: For any flow touched by multiple tests, extract selectors/actions into `Pages/`. Follow the existing CRM pattern in `Pages/crm/`.
 - **Timeouts**: Default per-test timeout is 90 s. Extend with `test.setTimeout()` only when a test requires long setup/teardown. `actionTimeout` is disabled — rely on `expect` timeouts instead.
 - **Language**: All UI text, field labels, and status values are in German. Use exact German strings in selectors and assertions.
