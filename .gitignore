@@ -7,6 +7,12 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 
+# Saved session state (bearer tokens for the test accounts). auth.setup.ts writes these to
+# /.auth, NOT /playwright/.auth — the rule above never covered them, so they were tracked and
+# published. Never commit these: regenerate with `npx playwright test --project=setup` (or
+# `setup-prod`) instead.
+/.auth/
+
 # Downloaded test artifacts (not source)
 tests/Staging/SuperAdmin/Therapios/
 .DS_Store
