@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { boardSearchBox } from '../base/app.page';
 
 /**
  * Page Object for the Therapist "Patient transferieren" (Transfer Patients) flow.
@@ -21,7 +22,7 @@ export class TherapistTransferPage {
   constructor(private page: Page) {}
 
   private searchBox(): Locator {
-    return this.page.getByTestId('text-input-outlined').first();
+    return boardSearchBox(this.page);
   }
 
   modal(): Locator {
@@ -68,20 +69,53 @@ export class TherapistTransferPage {
    * Asserts the transfer modal is the expected form: the "übertragen" heading, the irreversible-
    * transfer warning, the selected-patient VO detail labels, and the target-therapist search.
    */
+  /** The table headers the confirmation lists, in their `textContent` (not rendered) casing. */
+  static readonly CONFIRMATION_COLUMNS = ['Patient', 'VO Nr.', 'Einrichtung', 'Arzt'] as const;
+
+  /**
+   * Asserts the confirmation the therapist sees before committing an irreversible transfer.
+   *
+   * The modal is fully German now — "Patienten übertragen" over "N Einträge ausgewählt", an
+   * immediacy warning, an "Ausgewählte Patient/en - VO/s *" table, then "Übertragen zu Therapeut *"
+   * with a "Therapeuten suchen" picker and Abbrechen / Übertragen.
+   *
+   * Two traps: the table headers are CSS-uppercased, so they arrive as "VO NR." in `innerText` while
+   * `textContent` — what Playwright matches — stays "VO Nr."; and the rows arrive asynchronously
+   * behind a "Wird geladen …" placeholder, so the table has to be waited for rather than read.
+   */
   async assertTransferModalStructure(): Promise<void> {
     const modal = this.modal();
     await expect(modal).toBeVisible();
-    const text = await modal.innerText();
-    expect(text).toMatch(/übertragen|Transfer Patients/i);
+    await expect(modal, 'the modal must name the action').toContainText(/übertragen|Transfer Patients/i);
+
+    // The rows load asynchronously; asserting through the placeholder reads an empty table.
+    await expect(modal.getByText('Wird geladen', { exact: false })).toBeHidden({ timeout: 30_000 });
+
+    // The transfer is immediate and irreversible, so the warning saying so is part of the contract.
+    await expect(
+      modal.getByText(/wird sofort auf den neuen Therapeuten übertragen/),
+      'the modal must warn that the transfer takes effect immediately',
+    ).toBeVisible();
+
     // The VO detail table the therapist confirms before transferring.
-    for (const label of ['VO Nr.', 'Current Therapist']) {
-      expect(text, `transfer modal should list "${label}"`).toContain(label);
+    for (const label of TherapistTransferPage.CONFIRMATION_COLUMNS) {
+      await expect(
+        modal.getByText(label, { exact: true }).first(),
+        `transfer modal should list a "${label}" column`,
+      ).toBeVisible();
     }
     await expect(modal.getByText('Therapeuten suchen', { exact: true })).toBeVisible();
   }
 
+  /**
+   * The open target-therapist picker.
+   *
+   * It is a `[role="dialog"]` over the transfer modal now — the `data-testid*="flatlist"` list it
+   * used to render is gone, so keying off that testid made the picker look permanently unavailable
+   * and silently skipped the test that depends on it.
+   */
   private pickerList(): Locator {
-    return this.page.locator('[data-testid*="flatlist"]').first();
+    return this.page.locator('[role="dialog"]').last();
   }
 
   /**
@@ -90,10 +124,15 @@ export class TherapistTransferPage {
    * the name regex. Returns [] when the picker never renders.
    */
   async openTherapistPicker(): Promise<string[]> {
-    await this.modal().getByText('Therapeuten suchen', { exact: true }).click({ force: true });
-    if (!(await this.pickerList().waitFor({ state: 'visible', timeout: 8_000 }).then(() => true).catch(() => false))) {
+    await this.page
+      .getByRole('button', { name: 'Therapeuten suchen' })
+      .or(this.modal().getByText('Therapeuten suchen', { exact: true }))
+      .first()
+      .click({ force: true });
+    if (!(await this.pickerList().waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false))) {
       return [];
     }
+    await this.page.waitForTimeout(1500);
     return (await this.pickerList().innerText())
       .split('\n')
       .map((s) => s.trim())
@@ -103,13 +142,18 @@ export class TherapistTransferPage {
   /** Picks a therapist by exact name from the open picker. */
   async selectTherapist(name: string): Promise<void> {
     await this.pickerList().getByText(name, { exact: true }).first().click({ force: true });
-    await this.page.waitForTimeout(500);
+    await this.page.waitForTimeout(1500);
   }
 
   /** Closes the modal via Cancel WITHOUT committing the transfer. */
   async cancel(): Promise<void> {
-    const cancel = this.modal().locator('div').filter({ hasText: /^Cancel$/ }).first();
-    await cancel.click({ timeout: 3000 }).catch(() => {});
+    // "Abbrechen" is a real button now; the old English text pressable is gone. Never click
+    // "Übertragen" — that commits an irreversible transfer.
+    const cancel = this.page
+      .getByRole('button', { name: 'Abbrechen', exact: true })
+      .or(this.modal().locator('div').filter({ hasText: /^Cancel$/ }))
+      .first();
+    await cancel.click({ timeout: 5000, force: true }).catch(() => {});
     await this.page.keyboard.press('Escape').catch(() => {});
     await this.modal().waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {});
   }

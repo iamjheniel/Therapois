@@ -20,9 +20,20 @@ test.describe('VO Termination', () => {
     test.skip(!(await abbrechen.isVisible({ timeout: 8000 }).catch(() => false)), 'Resolved patient has no cancellable VO');
     await abbrechen.click();
     await page.getByText('Keine Folge-VO Bestellen').click();
-    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').click();
-    await page.getByTestId('modal-surface').getByTestId('text-input-outlined').fill('keine folge- VO termination automation');
-    await page.getByRole('button', { name: 'Confirm' }).click();
+    // The redesign swapped the modals' `text-input-outlined` inputs for plain textareas and
+    // localised their buttons, so accept either shape rather than pinning one build.
+    const modal = page.getByTestId('modal-surface');
+    const reason = modal
+      .getByTestId('text-input-outlined')
+      .or(modal.locator('textarea'))
+      .first();
+    await reason.click();
+    await reason.fill('keine folge- VO termination automation');
+    await page
+      .getByRole('button', { name: 'Confirm', exact: true })
+      .or(page.getByRole('button', { name: 'Bestätigen', exact: true }))
+      .first()
+      .click();
     await expect(page.locator('#root')).toContainText('Keine Folge-VO');
 });
 });

@@ -33,7 +33,10 @@ export class CRMBasePage {
   async expectHeaderStats() {
     const root = this.page.locator('#root');
 
-    await expect(root).toContainText(/Pending Bestellen/);
+    // v3.9.0 (#2937) translated the CRM summary cards to German
+    // ("Pending Bestellen" → "Ausstehende Bestellungen"). Accept both so this
+    // shared smoke check works on Staging (German) and Production (may still lag).
+    await expect(root).toContainText(/Ausstehende Bestellungen|Pending Bestellen/);
     await expect(root).toContainText(/Ausstehende Folge-VOs/);
     await expect(root).toContainText(/Aktive Probleme/);
   }

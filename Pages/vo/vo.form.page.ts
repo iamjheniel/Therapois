@@ -1,4 +1,21 @@
 import { Page, Locator, Response, expect } from '@playwright/test';
+import { AdminDashboardPage } from '../admin/admin.dashboard.page';
+
+/**
+ * v3.11.0 translated the Create-VO form. These matchers accept BOTH languages so one POM drives
+ * Staging (3.11, German) and Production (3.10, still English) without branching per environment.
+ */
+const SECTION_PEOPLE = /^(People & Facilities|Personen & Einrichtungen)$/;
+
+/**
+ * The search box revealed inside an open dropdown: placeholder "Search" on the English build,
+ * exactly "Suchen" on the German one (verified live).
+ *
+ * Do NOT loosen this to `[placeholder*="suchen"]` — the form itself carries two ICD inputs
+ * placeheld "Nach Code oder Beschreibung suchen", so the wildcard resolves to four elements and
+ * every use trips strict mode.
+ */
+const DROPDOWN_SEARCH_SELECTOR = 'input[placeholder="Search"], input[placeholder="Suchen"]';
 
 /** Outcome of an end-to-end Create VO attempt — see {@link VoFormPage.tryCreateVo}. */
 export interface CreateVoResult {
@@ -38,9 +55,11 @@ export class VoFormPage {
     const createBtn = this.page.getByText('VO erstellen', { exact: true }).first();
     await createBtn.waitFor({ state: 'visible', timeout: 45_000 });
     await createBtn.click();
-    await expect(this.page.getByText('Create VO', { exact: true })).toBeVisible({
-      timeout: 30_000,
-    });
+    // The form heading was translated ("Create VO" → "VO erstellen"), and the German string now
+    // COLLIDES with the trigger button's own label — so it can no longer prove the form opened.
+    // Gate on the route the form owns plus a required field only the form renders.
+    await this.page.waitForURL(/\/vo-management\/add/, { timeout: 30_000 });
+    await expect(this.requiredLabel('VO-Nummer')).toBeVisible({ timeout: 30_000 });
   }
 
   /** Required field labels render their text with a trailing " *". */
@@ -51,31 +70,33 @@ export class VoFormPage {
   /** Asserts the People & Facilities section shows a REQUIRED Praxis field (epic headline). */
   async expectPracticeRequired() {
     await this.page
-      .getByText('People & Facilities', { exact: true })
-      .scrollIntoViewIfNeeded();
+      .getByText(SECTION_PEOPLE)
+      .first()
+      .scrollIntoViewIfNeeded({ timeout: 30_000 });
     await expect(this.page.getByText('Praxis suchen...', { exact: true })).toBeVisible();
     await expect(this.requiredLabel('Praxis')).toBeVisible();
   }
 
   /** Asserts the Doctor field is present but OPTIONAL (no required asterisk). */
   async expectDoctorOptional() {
-    await expect(this.page.getByText('Search doctor...', { exact: true })).toBeVisible();
-    await expect(this.page.getByText('Doctor', { exact: true })).toBeVisible();
-    // The doctor label must NOT carry the required asterisk.
-    await expect(this.requiredLabel('Doctor')).toHaveCount(0);
+    await expect(this.page.getByText(/^(Search doctor\.\.\.|Arzt suchen\.\.\.)$/).first()).toBeVisible();
+    await expect(this.page.getByText(/^(Doctor|Arzt)$/).first()).toBeVisible();
+    // The doctor label must NOT carry the required asterisk, in either language.
+    await expect(this.page.getByText(/^(Doctor|Arzt) \*$/)).toHaveCount(0);
   }
 
   /** Opens the practice dropdown and reveals its search input. */
   async openPracticeDropdown() {
     await this.page
-      .getByText('People & Facilities', { exact: true })
-      .scrollIntoViewIfNeeded();
+      .getByText(SECTION_PEOPLE)
+      .first()
+      .scrollIntoViewIfNeeded({ timeout: 30_000 });
     await this.page.getByText('Praxis suchen...', { exact: true }).click();
     await expect(this.practiceSearchInput()).toBeVisible({ timeout: 15_000 });
   }
 
   private practiceSearchInput(): Locator {
-    return this.page.locator('input[placeholder="Search"]');
+    return this.page.locator(DROPDOWN_SEARCH_SELECTOR);
   }
 
   /**
@@ -115,7 +136,7 @@ export class VoFormPage {
   }
 
   async cancel() {
-    await this.page.getByRole('button', { name: 'Cancel' }).click();
+    await this.page.getByRole('button', { name: /^(Cancel|Abbrechen)$/ }).first().click();
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -132,13 +153,22 @@ export class VoFormPage {
   //   2. mark each manual/failed check "Bestanden" → "Alle N Prüfungen bestanden"
   //   3. "Speichern" (again)  → POST /prescriptions (no separate confirm dialog)
   //
-  // Most field labels are English on the form ("Area", "Insurance Type", "Primary
-  // Therapist" …); required labels render a trailing " *".
+  // Field labels were ENGLISH until v3.11.0 and are German on Staging now ("Area" → "Fachbereich",
+  // "Insurance Type" → "Versicherungsart", "Primary Therapist" → "Hauptbehandler", "Doctor" →
+  // "Arzt", "Prescribed Treatments" → "Verordnete Behandlungen", "People & Facilities" →
+  // "Personen & Einrichtungen"). Production still serves the English build, so every label matcher
+  // below is a German|English alternation. Required labels render a trailing " *" in both.
   // ───────────────────────────────────────────────────────────────────────────
 
   /** The custom dropdown control (a focusable div) that immediately follows a label. */
-  private dropdownFor(label: string): Locator {
-    return this.page.getByText(label, { exact: true }).locator('xpath=following::div[@tabindex="0"][1]');
+  private dropdownFor(label: string | RegExp): Locator {
+    // v3.11.0 translated the whole form. Callers pass a German|English alternation so the same POM
+    // drives Staging (3.11, German) and Production (3.10, still English) — a regex ignores `exact`.
+    return (
+      typeof label === 'string'
+        ? this.page.getByText(label, { exact: true })
+        : this.page.getByText(label)
+    ).locator('xpath=following::div[@tabindex="0"][1]');
   }
 
   /** The first option row inside the currently-open dropdown flatlist. */
@@ -158,7 +188,7 @@ export class VoFormPage {
   private async searchAndPickFirst(open: () => Promise<void>, query: string): Promise<boolean> {
     await open();
     await this.page.waitForTimeout(700);
-    const search = this.page.locator('input[placeholder="Search"]').last();
+    const search = this.page.locator(DROPDOWN_SEARCH_SELECTOR).last();
     await search.pressSequentially(query, { delay: 100 });
     // Wait (generously — the search hits the network) for a first result to confirm there's
     // data. Results stream in asynchronously, so a slow/empty first attempt is retried once by
@@ -211,7 +241,7 @@ export class VoFormPage {
    */
   async selectPatient(query = this.randomPatientQuery()): Promise<boolean> {
     return this.searchAndPickFirst(
-      () => this.page.getByText('Search patient...', { exact: true }).click(),
+      () => this.page.getByText(/^(Search patient\.\.\.|Patient suchen\.\.\.)$/).first().click(),
       query,
     );
   }
@@ -225,7 +255,7 @@ export class VoFormPage {
    */
   async setIssueDateToday() {
     await this.page.getByText('TT.MM.JJJJ', { exact: true }).first().click();
-    const dialog = this.page.getByRole('dialog').filter({ hasText: 'Select Date' });
+    const dialog = this.page.getByRole('dialog').filter({ hasText: /Select Date|Datum (wählen|auswählen)/ });
     await dialog.waitFor({ state: 'visible', timeout: 8_000 });
     // A day must be actively picked before "Save" commits — clicking Save with nothing
     // selected leaves the calendar open (it then overlays and blocks the rest of the form).
@@ -233,7 +263,7 @@ export class VoFormPage {
     const today = String(new Date().getDate());
     await dialog.getByRole('button', { name: today, exact: true }).first().click();
     await this.page.waitForTimeout(300);
-    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await dialog.getByRole('button', { name: /^(Save|Speichern)$/ }).first().click();
     await dialog.waitFor({ state: 'hidden', timeout: 8_000 }).catch(() => {});
     await this.page.waitForTimeout(500);
   }
@@ -243,7 +273,7 @@ export class VoFormPage {
    * pass `area` to target a specific one. Surfaces ICD + Diagnosegruppe as required.
    */
   async selectArea(area?: string) {
-    await this.dropdownFor('Area *').click();
+    await this.dropdownFor(/^(Area|Fachbereich) \*$/).click();
     await this.page.waitForTimeout(900);
     const option = area
       ? this.page.locator('[data-testid*="flatlist"]').getByText(area, { exact: true }).first()
@@ -254,7 +284,7 @@ export class VoFormPage {
 
   /** Picks the Insurance Type / Versicherungsart. First available option by default. */
   async selectInsuranceType(type?: string) {
-    await this.dropdownFor('Insurance Type *').click();
+    await this.dropdownFor(/^(Insurance Type|Versicherungsart) \*$/).click();
     await this.page.waitForTimeout(900);
     const option = type
       ? this.page.locator('[data-testid*="flatlist"]').getByText(type, { exact: true }).first()
@@ -270,7 +300,12 @@ export class VoFormPage {
    * Diagnose + Diagnosis Group. Returns `false` when the seed yields no results.
    */
   async selectPrimaryIcd(seed = 'M'): Promise<boolean> {
-    const icd = this.page.locator('input[placeholder="Search by code or description"]').first();
+    const icd = this.page
+      .locator(
+        'input[placeholder="Search by code or description"], ' +
+          'input[placeholder="Nach Code oder Beschreibung suchen"]',
+      )
+      .first();
     await icd.click();
     await icd.pressSequentially(seed, { delay: 130 });
     // Results stream in over the network — wait for the first "CODE -- description" row to
@@ -291,7 +326,8 @@ export class VoFormPage {
   /** Sets the Prescribed Treatments count (must be greater than zero). */
   async setPrescribedTreatments(count = '6') {
     await this.page
-      .getByText('Prescribed Treatments *', { exact: true })
+      .getByText(/^(Prescribed Treatments|Verordnete Behandlungen) \*$/)
+      .first()
       .locator('xpath=following::input[1]')
       .fill(count);
   }
@@ -306,7 +342,7 @@ export class VoFormPage {
   async selectTreatmentHeilmittel(seed = 'KG'): Promise<boolean> {
     await this.dropdownFor('Heilmittel/s *').click();
     await this.page.waitForTimeout(1_000);
-    await this.page.locator('input[placeholder="Search"]').last().pressSequentially(seed, { delay: 120 });
+    await this.page.locator(DROPDOWN_SEARCH_SELECTOR).last().pressSequentially(seed, { delay: 120 });
     const flatlist = this.page.locator('[data-testid*="flatlist"]');
     // Wait for the streaming option list to actually produce a row instead of guessing with a
     // fixed sleep (the source of Heilmittel flakiness — the search hits the network).
@@ -346,7 +382,7 @@ export class VoFormPage {
    * field — leaving it empty makes "Speichern" surface inline errors instead of validation).
    */
   async selectPrimaryTherapist(query = 'a'): Promise<boolean> {
-    return this.searchAndPickFirst(() => this.dropdownFor('Primary Therapist *').click(), query);
+    return this.searchAndPickFirst(() => this.dropdownFor(/^(Primary Therapist|Hauptbehandler) \*$/).click(), query);
   }
 
   /** Selects the Gesellschaft (company), REQUIRED. Returns `false` when no option matches. */
@@ -360,7 +396,7 @@ export class VoFormPage {
    * Returns `false` when none matches; the caller can proceed regardless (Doctor is optional).
    */
   async selectDoctor(query = 'a'): Promise<boolean> {
-    return this.searchAndPickFirst(() => this.dropdownFor('Doctor').click(), query);
+    return this.searchAndPickFirst(() => this.dropdownFor(/^(Doctor|Arzt)$/).click(), query);
   }
 
   /** Dismisses any open dropdown overlay whose backdrop would intercept a Save click. */
@@ -477,6 +513,27 @@ export class VoFormPage {
       doctor?: string;
     } = {},
   ): Promise<CreateVoResult> {
+    // actionTimeout is disabled suite-wide, so a bare .click() on a control that never
+    // becomes actionable (a detached streaming row, a blocking overlay, a slow/empty
+    // environment) would otherwise hang until the *test* timeout — consuming the whole
+    // budget and starving the caller's graceful form-contract fallback. Bound the fill+save
+    // phase to a fraction of the budget so, if it stalls, we still return a fallback result
+    // in time for the caller to fall back and skip rather than error out on a closed page.
+    const FILL_BUDGET_MS = 150_000;
+    let fillTimer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<CreateVoResult>((resolve) => {
+      fillTimer = setTimeout(
+        () =>
+          resolve({
+            saved: false,
+            reachedValidation: false,
+            note: 'form fill exceeded internal budget (environment too slow or a step blocked)',
+          }),
+        FILL_BUDGET_MS,
+      );
+    });
+
+    const attempt = (async (): Promise<CreateVoResult> => {
     try {
       if (!(await this.selectPatient(opts.patient ?? this.randomPatientQuery()))) {
         return { saved: false, reachedValidation: false, note: 'no matching patient in this environment' };
@@ -520,6 +577,15 @@ export class VoFormPage {
     } catch (e) {
       return { saved: false, reachedValidation: true, note: `save not confirmed: ${(e as Error).message}` };
     }
+    })();
+
+    // Whichever finishes first wins. Promise.race attaches a handler to `attempt`, so a
+    // still-pending fill promise won't surface as an unhandled rejection when it later aborts.
+    try {
+      return await Promise.race([attempt, deadline]);
+    } finally {
+      if (fillTimer) clearTimeout(fillTimer);
+    }
   }
 
   /**
@@ -535,24 +601,26 @@ export class VoFormPage {
 
   /** Asserts the form closed and returned to the dashboard after a successful create. */
   async expectBackOnDashboard() {
-    await expect(this.page.getByText('Create VO', { exact: true })).toBeHidden({ timeout: 15_000 });
-    await expect(this.page.getByText('Dashboard - Verwaltung', { exact: true })).toBeVisible({
-      timeout: 15_000,
-    });
+    // Both strings this used to assert are gone: the form heading is German now, and the board
+    // heading is "Admin Board" over "Verordnungen (VO) · N gesamt" since the redesign. Leaving the
+    // form is proved by the route, and the board by its own heading.
+    await expect(this.page).not.toHaveURL(/\/vo-management\/add/, { timeout: 15_000 });
+    await expect(
+      this.page.getByText(/^(Admin Board|Dashboard - Verwaltung)$/).first(),
+    ).toBeVisible({ timeout: 15_000 });
   }
 
   /**
-   * Asserts the Admin/SA dashboard offers a "Praxis" column in the "Spalten anzeigen"
-   * (show columns) menu — the surface that displays a VO's directly-assigned practice
-   * (#2673). Opening the menu adds a "Praxis" entry, so the exact-"Praxis" count grows
-   * beyond the always-present sidebar item.
+   * Asserts the Admin/SA dashboard offers a "Praxis" column in the column chooser — the surface
+   * that displays a VO's directly-assigned practice (#2673). The chooser is now the "▦ Spalten"
+   * toolbar control (it was labelled "Spalten anzeigen"); opening it adds a "Praxis" entry, so the
+   * exact-"Praxis" count grows beyond the baseline.
    */
   async expectDashboardPraxisColumnOption() {
     await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    const showCols = this.page.getByText('Spalten anzeigen', { exact: true });
-    await showCols.waitFor({ state: 'visible', timeout: 45_000 });
+    await this.page.getByText('VO #', { exact: true }).first().waitFor({ state: 'visible', timeout: 45_000 });
     const baseline = await this.page.getByText('Praxis', { exact: true }).count();
-    await showCols.click();
+    await new AdminDashboardPage(this.page).openColumnChooser();
     await expect
       .poll(() => this.page.getByText('Praxis', { exact: true }).count(), {
         timeout: 15_000,

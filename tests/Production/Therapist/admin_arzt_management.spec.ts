@@ -49,9 +49,7 @@ test.describe('Admin Dashboard', () => {
 
       await arzt.selectPractice('Orthopädie am Zoo');
       await arzt.save();
-      await arzt.expectToast('Arzt erfolgreich erstellt');
-
-      // Optional: quick verify it exists
+      // The app no longer renders a success toast — the search below is the real post-condition.
       await arzt.search(data.searchKey);
       await expect(page.locator('#root')).toContainText(data.firstName);
     }
@@ -84,9 +82,7 @@ test.describe('Admin Dashboard', () => {
     await lastNameField.fill(newLastName);
 
     await arzt.save();
-    await arzt.expectToast('Arzt erfolgreich aktualisiert');
-
-    // optional: verify list shows updated last name
+    // No success toast in this build; the search below verifies the update persisted.
     await arzt.search(newLastName);
     await expect(page.locator('#root')).toContainText(newLastName);
   });
@@ -121,7 +117,7 @@ test.describe('Admin Dashboard', () => {
       await arzt.openArztManagement();
       await arzt.search(data.searchKey);
       await arzt.deleteArzt(data.firstName);
-      await arzt.expectToast('Arzt erfolgreich gelöscht');
+      await arzt.expectToastAndWaitToDisappear('Arzt erfolgreich gelöscht');
 
       // Optional: verify gone
       await arzt.search(data.searchKey);

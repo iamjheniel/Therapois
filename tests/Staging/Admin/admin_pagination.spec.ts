@@ -1,77 +1,60 @@
-import {test , expect} from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { AdminDashboardPage } from '../../../Pages/admin/admin.dashboard.page';
 
-//test.use({ storageState: undefined });
-
+/**
+ * Pagination on the Admin Board.
+ *
+ * The pager reads "Zeilen pro Seite [30 ▾]   1–30 von 7.432   ‹ 1 2 3 4 5 ›". The old
+ * first/prev/next/last icon buttons (`data-testid="icon-button-container"`) are long gone: the page
+ * numbers and the "‹"/"›" arrows are plain `div[tabindex="0"]` pressables, while the page-size
+ * selector beside them is a real button carrying its size in its `aria-label`
+ * ("Zeilen pro Seite: 30").
+ */
 test.describe('Admin Pagination', () => {
+  test('Pagination works correctly on Flow page', { tag: ['@Admin', '@pagination'] }, async ({ page }) => {
+    test.setTimeout(180_000);
+    const dash = new AdminDashboardPage(page);
+    // The page size is a sticky preference; start from the shipped 30 so the ranges are predictable.
+    await dash.open({ resetPreferences: true });
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
-  });
-
-    test('Pagination works correctly on Flow page', { tag: ['@Admin', '@pagination'] }, async ({ page }) => {
-    // Wait until a row is rendered, so we know the list is loaded
-    await page.getByRole('checkbox').first().waitFor();
-
-    // Locate the range text: e.g. "1-10 of 13642" or "11-20 of 13642"
-    const range = page.getByText(/of\s+\d+$/).first(); // regex: "of <number>"
+    const range = dash.totalRange();
     await expect(range).toBeVisible();
+    // Wait for real data (avoid capturing a transient "0 von 0").
+    await expect(range).toHaveText(/von\s+[1-9]/, { timeout: 30_000 });
 
-    // Wait for real data to load (total > 0), so we don't capture "1-0 of 0"
-    await expect(range).toHaveText(/of\s+[1-9]/, { timeout: 30000 });
-
-    // Go up to the container that also holds the pagination buttons
-    // (span -> parent div -> row container)
-    const paginationRow = range.locator('xpath=../..');
-
-    // Find the icon buttons inside this row only (<<, <, >, >>)
-    const buttons = paginationRow.locator('[data-testid="icon-button-container"]');
-    const firstBtn = buttons.nth(0); // <<
-    const prevBtn  = buttons.nth(1); // <
-    const nextBtn  = buttons.nth(2); // >
-    const lastBtn  = buttons.nth(3); // >>
-
-    // Read current page range
     const firstPageRange = (await range.textContent())?.trim() || '';
-    console.log('First page:', firstPageRange);
+    expect(firstPageRange).toMatch(/^1\s*[–-]/);
 
-    // 👉 NEXT PAGE
-    await expect(nextBtn).toBeVisible({ timeout: 10_000 });
-    await nextBtn.click();
-    await page.waitForTimeout(2000);
-
+    // ── next page
+    await dash.nextPage();
     const secondPageRange = (await range.textContent())?.trim() || '';
-    console.log('Second page:', secondPageRange);
+    expect(secondPageRange, 'the "›" arrow must advance a page').not.toBe(firstPageRange);
 
-    expect(secondPageRange).not.toBe(firstPageRange);
+    // ── and back again
+    await dash.prevPage();
+    await expect(range, 'the "‹" arrow must step back').toHaveText(/^1\s*[–-]/, { timeout: 15_000 });
 
-    // 👉 LAST PAGE
-    await lastBtn.click();
-    await page.waitForTimeout(3000);
+    // ── jump to a later page via its number, then back to page 1
+    await dash.gotoPage(3);
+    const thirdPageRange = (await range.textContent())?.trim() || '';
+    expect(thirdPageRange).not.toBe(secondPageRange);
+    expect(thirdPageRange).not.toBe(firstPageRange);
 
-    const lastPageRange = (await range.textContent())?.trim() || '';
-    console.log('Last page:', lastPageRange);
+    await dash.gotoPage(1);
+    await expect(range).toHaveText(/^1\s*[–-]/, { timeout: 15_000 });
 
-    // 👉 BACK TO FIRST PAGE
-    await firstBtn.click();
-    await expect(range).toHaveText(/^1\s*[-\u2013]/, { timeout: 15000 });
-
-    const backToFirstRange = (await range.textContent())?.trim() || '';
-    console.log('Back to first:', backToFirstRange);
-
-    // // Validate only that it returned to page 1
-    // expect(backToFirstRange).toMatch(/^1\s*[-–]\s*\d+\s+of\s+\d+$/);
-    const text = backToFirstRange.replace(/\u00A0/g, ' ').trim(); // normalize NBSP
-    const m = text.match(/^(\d+)\s*[-–]\s*(\d+)\s+of\s+(\d+)$/);
-
-    expect(m, `Unexpected pagination text: "${text}"`).not.toBeNull();
+    const backToFirst = ((await range.textContent()) || '').replace(/ /g, ' ').trim();
+    const m = backToFirst.match(/^(\d+)\s*[–-]\s*(\d+)\s+von\s+([\d.,]+)$/);
+    expect(m, `Unexpected pagination text: "${backToFirst}"`).not.toBeNull();
 
     const start = Number(m![1]);
     const end = Number(m![2]);
-    const total = Number(m![3]);
+    const total = Number(m![3].replace(/[.,]/g, ''));
 
     expect(start).toBe(1);
     expect(end).toBeGreaterThan(0);
     expect(end).toBeLessThanOrEqual(total);
-    
-    });
+    expect(end, 'a full first page holds one page-size worth of rows').toBe(await dash.rowsPerPage());
+    expect(await dash.renderedRowCount(), 'and the table paints exactly that many rows').toBe(end);
+  });
 });

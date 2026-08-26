@@ -6,22 +6,9 @@ export class PatientManagementPage {
 
   async openPatientManagement() {
     await this.page.waitForLoadState('domcontentloaded');
-    const navButton = this.page
-      .locator('button')
-      .filter({ hasText: /Patient(en)? Management/ })
-      .last();
-    const found = await navButton
-      .waitFor({ state: 'attached', timeout: 5_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!found) {
-      await new AppPage(this.page).openSideMenu();
-      await navButton.waitFor({ state: 'attached', timeout: 10_000 });
-    }
-    await navButton.evaluate((el) => {
-      el.scrollIntoView({ block: 'center', inline: 'center' });
-      el.click();
-    });
+    // Nested under the "Admin" sidebar submenu; AppPage.navTo expands it. Nav entries expose no
+    // <button>/role=button in this build.
+    await new AppPage(this.page).navTo(/Patient(en)? Management/);
     // Wait for the patient table to render at least one row
     await this.page
       .getByText(/^(Frau|Herrn|Herr) \S/)

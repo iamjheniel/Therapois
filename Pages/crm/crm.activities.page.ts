@@ -94,8 +94,11 @@ export class CRMActivities {
   }
 
   async completeActivity(note: string) {
-    // There is one "Complete" button per pending next activity; complete the first one.
-    await this.page.getByText('Complete', { exact: true }).first().click();
+    // There is one complete button per pending next activity; complete the first one.
+    // v3.9.x (#2937) translated this action to German ("Complete" → "Abschließen"); the
+    // completion modal ("Confirm" / "(Optional) Completion note...") is still English.
+    // Match either label so the flow works across environments/versions.
+    await this.page.getByText(/^(Abschließen|Complete)$/).first().click();
     const noteInput = this.page.getByRole('textbox', {
       name: '(Optional) Completion note...',
     });

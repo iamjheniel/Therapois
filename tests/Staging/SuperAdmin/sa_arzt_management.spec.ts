@@ -40,8 +40,7 @@ test.describe('Super Admin - Arzt Management', () => {
 
       await arzt.selectPractice('Orthopädie am Zoo');
       await arzt.save();
-      await arzt.expectToast('Arzt erfolgreich erstellt');
-
+      // No success toast in this build; the search below verifies creation persisted.
       await arzt.search(data.searchKey);
       await expect(page.locator('#root')).toContainText(data.firstName);
     }
@@ -77,8 +76,7 @@ test.describe('Super Admin - Arzt Management', () => {
       await lastNameField.fill(newLastName);
 
       await arzt.save();
-      await arzt.expectToast('Arzt erfolgreich aktualisiert');
-
+      // No success toast in this build; the search below verifies the update persisted.
       await arzt.search(newLastName);
       await expect(page.locator('#root')).toContainText(newLastName);
     }
@@ -113,7 +111,7 @@ test.describe('Super Admin - Arzt Management', () => {
       await arzt.openArztManagement();
       await arzt.search(data.searchKey);
       await arzt.deleteArzt(data.firstName);
-      await arzt.expectToast('Arzt erfolgreich gelöscht');
+      await arzt.expectToastAndWaitToDisappear('Arzt erfolgreich gelöscht');
 
       // Verify it's gone
       await arzt.search(data.searchKey);

@@ -1,63 +1,53 @@
-import {test , expect} from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { AdminDashboardPage } from '../../../Pages/admin/admin.dashboard.page';
 
-//test.use({ storageState: undefined });
-
+/**
+ * Pagination on the Super Admin board. Mirrors `admin_pagination`.
+ *
+ * The pager was redesigned: the range label reads "1–30 von 15.617" (was "1-10 of 13642"), and the
+ * old first/prev/next/last icon buttons (`data-testid="icon-button-container"`) are gone — there are
+ * now windowed page-number pressables plus "‹"/"›" arrows, alongside a "Zeilen pro Seite" selector.
+ */
 test.describe('Super Admin Pagination', () => {
-
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
+    await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
 
-    test('Pagination works correctly on Flow page', { tag: ['@SuperAdmin', '@pagination'] }, async ({ page }) => {
-    // Wait until a row is rendered, so we know the list is loaded
-    await page.getByRole('checkbox').first().waitFor();
+  test('Pagination works correctly on Flow page', { tag: ['@SuperAdmin', '@pagination'] }, async ({ page }) => {
+    const dash = new AdminDashboardPage(page);
+    // Row-selection cells are plain divs now (no role=checkbox), so key off the table header.
+    await page.getByText('VO #', { exact: true }).first().waitFor({ timeout: 30_000 });
 
-    // Locate the range text: e.g. "1-10 of 13642" or "11-20 of 13642"
-    const range = page.getByText(/of\s+\d+$/).first(); // regex: "of <number>"
+    const range = dash.totalRange();
     await expect(range).toBeVisible();
+    // Wait for real data (avoid capturing a transient "0 von 0").
+    await expect(range).toHaveText(/von\s+[1-9]/, { timeout: 30_000 });
 
-    // Wait for real data to load (total > 0), so we don't capture "1-0 of 0"
-    await expect(range).toHaveText(/of\s+[1-9]/, { timeout: 30000 });
-
-    // Go up to the container that also holds the pagination buttons
-    // (span -> parent div -> row container)
-    const paginationRow = range.locator('xpath=../..');
-
-    // Find the icon buttons inside this row only (<<, <, >, >>)
-    const buttons = paginationRow.locator('[data-testid="icon-button-container"]');
-    const firstBtn = buttons.nth(0); // <<
-    const prevBtn  = buttons.nth(1); // <
-    const nextBtn  = buttons.nth(2); // >
-    const lastBtn  = buttons.nth(3); // >>
-
-    // Read current page range
     const firstPageRange = (await range.textContent())?.trim() || '';
-    console.log('First page:', firstPageRange);
+    expect(firstPageRange).toMatch(/^1\s*[–-]/);
 
-    // 👉 NEXT PAGE
-    await nextBtn.click();
-    await page.waitForTimeout(1200); // allow React Native list to re-render
-
+    // ── next page
+    await dash.nextPage();
     const secondPageRange = (await range.textContent())?.trim() || '';
-    console.log('Second page:', secondPageRange);
-
     expect(secondPageRange).not.toBe(firstPageRange);
 
-    // 👉 LAST PAGE
-    await lastBtn.click();
-    await page.waitForTimeout(1500);
+    // ── jump to a later page via its number, then back to page 1
+    await dash.gotoPage(3);
+    expect((await range.textContent())?.trim()).not.toBe(secondPageRange);
 
-    const lastPageRange = (await range.textContent())?.trim() || '';
-   console.log('Last page:', lastPageRange);
+    await dash.gotoPage(1);
+    await expect(range).toHaveText(/^1\s*[–-]/, { timeout: 15_000 });
 
-    // 👉 BACK TO FIRST PAGE
-    await firstBtn.click();
-    await page.waitForTimeout(1500);
+    const backToFirst = ((await range.textContent()) || '').replace(/ /g, ' ').trim();
+    const m = backToFirst.match(/^(\d+)\s*[–-]\s*(\d+)\s+von\s+([\d.,]+)$/);
+    expect(m, `Unexpected pagination text: "${backToFirst}"`).not.toBeNull();
 
-    const backToFirstRange = (await range.textContent())?.trim() || '';
-    console.log('Back to first:', backToFirstRange);
+    const start = Number(m![1]);
+    const end = Number(m![2]);
+    const total = Number(m![3].replace(/[.,]/g, ''));
 
-    // Validate only that it returned to page 1
-    expect(backToFirstRange).toMatch(/^1\s*[-–]\s*\d+/);
-    });
+    expect(start).toBe(1);
+    expect(end).toBeGreaterThan(0);
+    expect(end).toBeLessThanOrEqual(total);
+  });
 });

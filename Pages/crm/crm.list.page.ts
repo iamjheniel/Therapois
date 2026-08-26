@@ -14,7 +14,13 @@ export class CRMListPage extends CRMBasePage {
   }
 
   async filterTodayOverdue() {
-    await this.page.getByText(/^Heute(\s*\(\d+\))?$/).click();
+    // v3.9 (#2932) split the single "Heute" tab into "Heute bestellen" (ordering) and
+    // "Heute nachverfolgen" (follow-up/overdue). Exercise the follow-up view; fall back to
+    // the legacy standalone "Heute" tab so this works on pre-3.9 environments too.
+    const followUp = this.page.getByText(/^Heute nachverfolgen(\s*\(\d+\))?$/);
+    const legacy = this.page.getByText(/^Heute(\s*\(\d+\))?$/);
+    const tab = (await followUp.count()) > 0 ? followUp : legacy;
+    await tab.first().click();
     await expect(this.page.locator('#root')).toContainText(/\d/);
   }
 
@@ -169,11 +175,15 @@ export class CRMListPage extends CRMBasePage {
   async expectPracticeInfo() {
     const root = this.page.locator('#root');
 
+    // v3.9 (#2937) translated the practice-detail panel to German. Section headers render
+    // upper-cased via CSS text-transform, so match case-insensitively:
+    //   "Contact Information" → "Kontaktinformationen" (Email/Fax block),
+    //   "Opening Hours" → "Öffnungszeiten", "Doctors" → "Ärzte", plus the unchanged "Urlaubsplan".
     await expect(root).toContainText('Praxis-Infos');
-    await expect(root).toContainText('Contact Information');
-    await expect(root).toContainText('Opening Hours');
-    await expect(root).toContainText('Doctors');
-    await expect(root).toContainText('Urlaubsplan');
+    await expect(root).toContainText(/Kontaktinformationen|Fax/i);
+    await expect(root).toContainText(/Öffnungszeiten/i);
+    await expect(root).toContainText(/Ärzte/i);
+    await expect(root).toContainText(/Urlaubsplan/i);
   }
 
   async closePracticeView() {

@@ -40,14 +40,20 @@ test.describe('Calendar', () => {
     // Wait for calendar to finish loading
     await page.waitForTimeout(5000);
 
-    // Helper: check if any time-formatted appointment card is visible
+    // Appointment cards no longer carry a clock time. They read "<sessions> / <total> (N mins)" under
+    // the patient's name, grouped under day headers ("Mo 17.08." · "Beh: 5h 35m · Akt: 0m"), so the
+    // old /\d{1,2}:\d{2}/ matcher finds nothing at all.
     const appointmentLocator = () =>
-      page.locator('div[tabindex="0"]').filter({ hasText: /\d{1,2}:\d{2}/ }).first();
+      page.locator('div[tabindex="0"]').filter({ hasText: /\(\d+\s*mins?\)/ }).first();
 
-    // If no appointments today, navigate to previous period (repeat up to 3 times)
+    // If nothing is scheduled this period, step back (up to 3 times). "Vorh." is gone — the arrows
+    // are icon-only buttons now, labelled "Vorherige Woche" / "Nächste Woche" / "Heute".
     for (let i = 0; i < 3; i++) {
       if (await appointmentLocator().isVisible({ timeout: 2000 }).catch(() => false)) break;
-      await page.getByText('Vorh.', { exact: true }).click();
+      await page
+        .getByRole('button', { name: /Vorherige (Woche|Tag)/ })
+        .first()
+        .click({ timeout: 15_000 });
       await page.waitForTimeout(3000);
     }
 
@@ -76,12 +82,14 @@ test.describe('Calendar', () => {
     await notes.fill('');
     await notes.fill(`automation update ${Date.now()}`);
 
-    // Save
-    await expect(page.getByRole('button', { name: 'Save' })).toBeEnabled();
-    await page.getByRole('button', { name: 'Save' }).click();
+    // Save — the button is "Speichern" now (was "Save").
+    const save = page.getByRole('button', { name: 'Speichern', exact: true });
+    await expect(save).toBeEnabled();
+    await save.click();
 
-    // Verify success toast
-    await expect(page.getByText(/Activity updated/i).first()).toBeVisible({ timeout: 15_000 });
+    // The app renders no success snackbar any more, so the observable outcome is the edit modal
+    // closing — the note field going away is the signal.
+    await expect(notes, 'saving must close the appointment editor').toBeHidden({ timeout: 20_000 });
 
   });
 

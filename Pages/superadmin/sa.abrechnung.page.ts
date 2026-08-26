@@ -1,33 +1,41 @@
 import { Page, expect } from '@playwright/test';
+import { AppPage } from '../base/app.page';
 
 export class AbrechnungPage {
   constructor(private page: Page) {}
 
   async openAbrechnung() {
     await this.page.waitForLoadState('domcontentloaded');
-    const navButton = this.page
-      .locator('button')
-      .filter({ hasText: /Abrechnung/ })
-      .last();
-    const found = await navButton
-      .waitFor({ state: 'attached', timeout: 5_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!found) {
-      await this.page.getByText('\uf451').first().click();
-      await navButton.waitFor({ state: 'attached', timeout: 10_000 });
-    }
-    await navButton.evaluate((el) => {
-      el.scrollIntoView({ block: 'center', inline: 'center' });
-      el.click();
-    });
+    // "Abrechnung" is nested under the "Admin" sidebar submenu; AppPage.navTo expands it. The app
+    // exposes no <button>/role=button for nav entries, so don't try to locate one here.
+    await new AppPage(this.page).navTo(/Abrechnung/);
   }
 
   // ── Tabs ──────────────────────────────────────────────
+  /**
+   * The status tabs were translated in v3.11.0 — they read "Alle" / "Kein Status" /
+   * "Zur Korrektur" (plus a fourth, "Alle inkl. Geschlossene"). Callers still name them in
+   * English, so the mapping lives here rather than in every spec.
+   */
+  static readonly TAB_LABELS = {
+    All: 'Alle',
+    'No Status': 'Kein Status',
+    'For Fixing': 'Zur Korrektur',
+  } as const;
+
+  /** A status tab, matched tolerantly: the label renders with its count appended, e.g. "Alle(4428)". */
+  tab(name: 'All' | 'No Status' | 'For Fixing') {
+    const label = AbrechnungPage.TAB_LABELS[name];
+    // "Alle" is a prefix of "Alle inkl. Geschlossene", so anchor on an optional "(N)" and nothing else.
+    return this.page
+      .getByText(new RegExp(`^${label}\\s*(\\(\\d[\\d.,]*\\))?$`))
+      .filter({ visible: true })
+      .first();
+  }
+
   async clickTab(name: 'All' | 'No Status' | 'For Fixing') {
-    // Tabs are plain div elements (no role="tab"). "All" is labelled "Alle" in the UI.
-    const tabText = name === 'All' ? 'Alle' : name;
-    await this.page.getByText(tabText, { exact: true }).first().click();
+    // Tabs are plain div elements (no role="tab").
+    await this.tab(name).click({ timeout: 30_000 });
   }
 
   // ── Filters ───────────────────────────────────────────
@@ -77,7 +85,7 @@ export class AbrechnungPage {
 
   async markAsForFixing() {
     await this.page
-      .getByRole('button', { name: /For Fixing|Korrigieren/i })
+      .getByRole('button', { name: /For Fixing|Korrigieren|Zur Korrektur/i })
       .first()
       .click();
   }
@@ -112,9 +120,11 @@ export class AbrechnungPage {
     });
   }
 
-  async expectTabActive(name: string) {
+  async expectTabActive(name: 'All' | 'No Status' | 'For Fixing' | string) {
+    const label =
+      (AbrechnungPage.TAB_LABELS as Record<string, string>)[name] ?? name;
     await expect(this.page.locator('#root')).toContainText(
-      new RegExp(name, 'i'),
+      new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
       { timeout: 10_000 }
     );
   }

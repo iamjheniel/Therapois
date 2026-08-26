@@ -13,6 +13,9 @@ test.describe('Therapist Upload Prescription', () => {
     await app.navTo(/Rezept/);
     await expect(page.locator('#root')).toContainText('VO Upload');
     await page.getByRole('button', { name: '󰩎 Rezept hochladen' }).click();
+    // Step 1 of the modal reserves an Upload ID; wait for it to mount before advancing. Clicking
+    // "Continue" too early leaves the wizard in a state where step 2's drop zone never renders.
+    await expect(page.getByText(/Bitte notieren Sie diese Nummer/)).toBeVisible({ timeout: 20000 });
     await page.getByRole('button', { name: 'Continue' }).click();
     const filePath = path.join(__dirname, "sampleprescription.png");
 

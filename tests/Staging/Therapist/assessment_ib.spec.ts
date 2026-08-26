@@ -2,11 +2,14 @@ import { test, expect } from '@playwright/test';
 import { TherapistAssessmentPage } from '../../../Pages/therapist/therapist.assessment.page';
 
 /**
- * Coverage for two new therapist-dashboard features, both surfaced as columns immediately after
- * the existing TB (T-Board) column on "Meine VOs":
+ * Coverage for two therapist-dashboard features, both surfaced as columns on "Meine VOs":
  *
  *   - Assessment (BF column) — a Befund status per VO row; the chip opens an assessment modal.
  *   - Initialbefund (IB column) — a "+ IB" control per active row that opens an Initialbefund modal.
+ *
+ * **BF and IB are both opt-in now.** Each is one of the nine columns the board's "Spalten" picker
+ * leaves unchecked, so both sets of tests turn their column on first — the feature is reachable,
+ * not on by default. (IB used to ship in the default set; v3.11.0 moved it out, alongside HM.)
  *
  * The column *presence + per-row status/affordance* is asserted directly (stable, non-data-gated).
  * The modal-open flow is data-gated: the control is inert for patient states that don't currently
@@ -27,11 +30,22 @@ test.describe('Therapist Assessment (BF) & Initialbefund (IB)', () => {
 
   // --------------------------------------------------------------------- Assessment (BF)
 
-  test('Assessment (BF) column is present on the dashboard', { tag: ['@Therapist', '@assessment'] }, async () => {
-    await expect(dashboard.columnHeader('BF')).toBeVisible({ timeout: 15_000 });
+  test('Assessment (BF) column is offered by the Spalten picker', { tag: ['@Therapist', '@assessment'] }, async () => {
+    // Off by default: the column must not be in the table until it is asked for.
+    await expect(dashboard.columnHeader('BF'), 'BF ships opt-in').toHaveCount(0);
+
+    await dashboard.enableColumn('BF');
+    await expect(dashboard.columnHeader('BF'), 'enabling BF must put it in the table').toBeVisible({
+      timeout: 15_000,
+    });
+    // And every row gets a Befund cell, whether or not it has a Befund.
+    await expect
+      .poll(async () => dashboard.columnCells('BF').count(), { timeout: 15_000 })
+      .toBeGreaterThan(0);
   });
 
   test('Open Assessment (BF) modal from a patient row', { tag: ['@Therapist', '@assessment'] }, async () => {
+    await dashboard.enableColumn('BF');
     await expect(dashboard.columnHeader('BF')).toBeVisible({ timeout: 15_000 });
 
     const opened = await dashboard.openModalFromFirstRow('BF');
@@ -44,7 +58,13 @@ test.describe('Therapist Assessment (BF) & Initialbefund (IB)', () => {
   // --------------------------------------------------------------------- Initialbefund (IB)
 
   test('Initialbefund (IB) column exposes an add control for active patients', { tag: ['@Therapist', '@IB'] }, async () => {
-    await expect(dashboard.columnHeader('IB')).toBeVisible({ timeout: 15_000 });
+    // Off by default: the column must not be in the table until it is asked for.
+    await expect(dashboard.columnHeader('IB'), 'IB ships opt-in').toHaveCount(0);
+
+    await dashboard.enableColumn('IB');
+    await expect(dashboard.columnHeader('IB'), 'enabling IB must put it in the table').toBeVisible({
+      timeout: 15_000,
+    });
     // Every active VO row carries a "+ IB" add-Initialbefund control.
     await expect
       .poll(async () => dashboard.ibAddControl().count(), { timeout: 15_000 })
@@ -53,6 +73,7 @@ test.describe('Therapist Assessment (BF) & Initialbefund (IB)', () => {
   });
 
   test('Open Initialbefund (IB) modal from a patient row', { tag: ['@Therapist', '@IB'] }, async () => {
+    await dashboard.enableColumn('IB');
     await expect(dashboard.columnHeader('IB')).toBeVisible({ timeout: 15_000 });
 
     const opened = await dashboard.openModalFromFirstRow('IB');

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { boardSearchBox } from '../../../Pages/base/app.page';
 import { TherapistListPage } from '../../../Pages/therapist/therapist.list.page';
 
 // ---------------------------------------------------------------------------
@@ -20,8 +21,8 @@ async function cleanupTreatments(page: Page, patientName: string) {
   // here carries an explicit timeout: actionTimeout is disabled globally, so an unclickable /
   // unstable target would otherwise hang this defensive cleanup until the whole 150s test budget
   // is gone (which then kills the entire serial block via the beforeEach).
-  await page.getByTestId('text-input-outlined').first().fill(patientName, { timeout: 8000 });
-  await page.getByTestId('text-input-outlined').first().press('Enter', { timeout: 8000 });
+  await boardSearchBox(page).fill(patientName, { timeout: 8000 });
+  await boardSearchBox(page).press('Enter', { timeout: 8000 });
   await page.waitForTimeout(2000);
 
   // If the patient isn't visible, nothing to clean up
@@ -118,28 +119,31 @@ async function cleanupTreatments(page: Page, patientName: string) {
 async function createTreatment(page: Page, patientName: string, note: string) {
   await page.waitForTimeout(1500);
 
-  await page.getByTestId('text-input-outlined').first().fill(patientName);
-  await page.getByTestId('text-input-outlined').first().press('Enter');
+  await boardSearchBox(page).fill(patientName);
+  await boardSearchBox(page).press('Enter');
   await page.waitForTimeout(2000);
 
   // nth(1) = per-row checkbox for the single filtered patient
   await page.getByRole('checkbox').nth(1).click({ force: true });
   await page.getByRole('button', { name: 'Doku erfassen (1)' }).click();
 
-  await expect(page.getByTestId('surface')).toContainText('Mark as Treated (1)', { timeout: 15000 });
+  // The modal is "Doku erfassen (N)" on `modal-surface` now (was "Mark as Treated" on `surface`),
+  // its note is a textarea placeheld "Doku eingeben" (the `text-input-outlined` testid is gone from
+  // this modal) and its save button reads "Speichern".
+  await expect(page.getByTestId('modal-surface')).toContainText('Doku erfassen (1)', { timeout: 15000 });
 
-  // document_treatment.spec.ts pattern: click then fill, plain radio click, plain save
-  await page.getByTestId('surface').getByTestId('text-input-outlined').click();
-  await page.getByTestId('surface').getByTestId('text-input-outlined').fill(note);
+  const note_field = page.getByRole('textbox', { name: 'Doku eingeben' });
+  await note_field.click();
+  await note_field.fill(note);
   await page.getByRole('radio').first().click();
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
 
-  // Wait for the Mark-as-Treated modal to close (indicates successful save).
+  // Wait for the Doku modal to close (indicates successful save).
   // With conflict warnings the modal may stay open briefly after backend save;
   // we wait up to 20 s then force-close it so subsequent steps aren't blocked.
   await page.waitForTimeout(1000);
 
-  const surface = page.getByTestId('surface').filter({ hasText: 'Mark as Treated' });
+  const surface = page.getByTestId('modal-surface').filter({ hasText: 'Doku erfassen' });
   if (await surface.isVisible({ timeout: 1000 }).catch(() => false)) {
     // Modal still open — close it manually via the × button.
     await page.getByRole('button', { name: '󰅖' }).first().click({ force: true }).catch(() => {});
@@ -170,8 +174,8 @@ async function openDokuPanel(page: Page, patientName: string) {
   await page.goto('https://staging.therapios.de/therapist/', { waitUntil: 'domcontentloaded' });
 
   // Search for the patient.
-  await page.getByTestId('text-input-outlined').first().fill(patientName);
-  await page.getByTestId('text-input-outlined').first().press('Enter');
+  await boardSearchBox(page).fill(patientName);
+  await boardSearchBox(page).press('Enter');
   await page.waitForTimeout(2000);
 
   // Expand the patient row.

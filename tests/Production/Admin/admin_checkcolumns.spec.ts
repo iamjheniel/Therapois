@@ -21,7 +21,7 @@ test.describe('Admin Dashboard', () => {
     await expect(page.locator('#root')).toContainText('Arzt');
     await expect(page.locator('#root')).toContainText('TB');
     await expect(page.locator('#root')).toContainText('Folge-VO Status');
-    await expect(page.locator('#root')).toContainText('Bestellen Date');
+    await expect(page.locator('#root')).toContainText('Bestelldatum');
     await expect(page.locator('#root')).toContainText('Bestellt Datum');
     await expect(page.locator('#root')).toContainText('Nachverfolgen Datum');
     await expect(page.locator('#root')).toContainText('Erhalten Datum');

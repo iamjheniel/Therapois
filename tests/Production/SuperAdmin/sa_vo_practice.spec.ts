@@ -33,8 +33,11 @@ test.describe('Super Admin — VO Direct Practice Assignment', () => {
       const requestPromise = page.waitForRequest(
         (r) =>
           r.url().includes('/practices?') &&
-          r.url().includes('search%5Bname%5D') &&
-          r.url().includes('search%5BpracticeId%5D'),
+          // Match the request carrying the COMPLETE query — pressSequentially fires a
+          // request per keystroke, so matching a bare param would resolve on an early
+          // partial ("O"/"Ort") and fail the full-value assertions below.
+          r.url().includes('search%5Bname%5D=Ortho') &&
+          r.url().includes('search%5BpracticeId%5D=Ortho'),
         { timeout: 20_000 }
       );
       await voForm.searchPractice('Ortho');

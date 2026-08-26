@@ -23,10 +23,11 @@ test.describe('Super Admin - Abrechnung (VO Validation)', () => {
       await ab.openAbrechnung();
       await ab.expectTableVisible();
 
-      // Verify all three tabs are present
-      await expect(page.locator('#root')).toContainText(/All/i);
-      await expect(page.locator('#root')).toContainText(/No Status/i);
-      await expect(page.locator('#root')).toContainText(/For Fixing/i);
+      // Verify all three tabs are present. They were translated in v3.11.0:
+      // "All" → "Alle", "No Status" → "Kein Status", "For Fixing" → "Zur Korrektur".
+      await expect(page.locator('#root')).toContainText(/Alle/i);
+      await expect(page.locator('#root')).toContainText(/Kein Status/i);
+      await expect(page.locator('#root')).toContainText(/Zur Korrektur/i);
     }
   );
 
@@ -224,7 +225,7 @@ test.describe('Super Admin - Abrechnung (VO Validation)', () => {
 
       await ab.markAsForFixing();
       await ab.confirmStatusChange();
-      await ab.expectToast(/For Fixing|Korrigieren/i);
+      await ab.expectToast(/For Fixing|Korrigieren|Zur Korrektur/i);
     }
   );
 

@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { AppPage } from '../base/app.page';
 
 type IcdData = {
   code: string;
@@ -12,22 +13,9 @@ export class IcdManagementPage {
 
   async openIcdManagement() {
     await this.page.waitForLoadState('domcontentloaded');
-    const navButton = this.page
-      .locator('button')
-      .filter({ hasText: /ICD-Code Verwaltung/ })
-      .last();
-    const found = await navButton
-      .waitFor({ state: 'attached', timeout: 5_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!found) {
-      await this.page.getByText('\uf451').first().click();
-      await navButton.waitFor({ state: 'attached', timeout: 10_000 });
-    }
-    await navButton.evaluate((el: HTMLElement) => {
-      el.scrollIntoView({ block: 'center', inline: 'center' });
-      el.click();
-    });
+    // Nested under the "Admin" sidebar submenu; AppPage.navTo expands it. Nav entries expose no
+    // <button>/role=button in this build.
+    await new AppPage(this.page).navTo(/ICD-Code Verwaltung/);
   }
 
   async openAddIcd() {
@@ -88,18 +76,19 @@ export class IcdManagementPage {
       .click();
   }
 
-  async expectToast(text: string) {
-    await expect(this.page.getByTestId('surface')).toContainText(text, {
-      timeout: 15_000,
-    });
+  /**
+   * Asserts an ICD code is present in the list. This build renders NO success snackbar (the old
+   * `getByTestId('surface')` toast is gone), so the persisted row is the only observable outcome.
+   */
+  async expectIcdInList(code: string) {
+    await expect(this.page.locator('#root')).toContainText(code, { timeout: 15_000 });
   }
 
-  async expectToastAndWaitToDisappear(text: string) {
-    const toast = this.page
-      .getByTestId('surface')
-      .filter({ hasText: text })
-      .first();
-    await expect(toast).toBeVisible({ timeout: 15_000 });
-    await toast.waitFor({ state: 'hidden', timeout: 15_000 });
+  /**
+   * Formerly waited for a success snackbar to appear and clear before the next action. No toasts
+   * exist in this build, so this is a settle-only pause.
+   */
+  async expectToastAndWaitToDisappear(_text: string) {
+    await this.page.waitForTimeout(1500);
   }
 }

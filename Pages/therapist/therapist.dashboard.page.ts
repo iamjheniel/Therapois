@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { boardSearchBox } from '../base/app.page';
 
 /**
  * Page Object for two previously-untested Therapist dashboard controls:
@@ -24,7 +25,9 @@ export class TherapistDashboardPage {
   constructor(private page: Page) {}
 
   private searchBox(): Locator {
-    return this.page.getByTestId('text-input-outlined').first();
+    // The redesigned board dropped the `text-input-outlined` testid on this surface in favour of a
+    // placeholder ("Patient, VO Nr. …"); Production still serves the older build, so accept either.
+    return boardSearchBox(this.page);
   }
 
   /** Loads the therapist landing page and lets the reminder banners paint. */
