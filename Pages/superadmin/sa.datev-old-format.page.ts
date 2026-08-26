@@ -378,4 +378,38 @@ export class DatevOldFormatPage {
       .map((l) => l.trim())
       .filter((l) => l && !/^DATEV:/.test(l));
   }
+  // ───────────────────── #3499: the false-match collision surface ────────────
+  //
+  // #3499 fixes the payment matcher accepting a cleared bank item on a loose reference/amount match
+  // without also confirming the DEBTOR. The debtor account itself is not exposed anywhere on the API
+  // (no /datev_debtors, /debtors, /accounts_receivable or /bank_items resource; the invoice payload
+  // carries no debtor field and the patient only an `insuranceNumber`), so the matching RULE cannot
+  // be observed from a client in any environment. What can be measured is the collision surface the
+  // rule has to survive — which is what makes the fix necessary and what these helpers expose.
+
+  /**
+   * Amounts shared by more than one invoice in a set, as `amount -> ["number/patient", …]`.
+   *
+   * A shared amount is exactly the coincidence the pre-fix matcher could act on.
+   */
+  static amountCollisionsWithin(invoices: ScopedInvoice[]): Map<number, string[]> {
+    const round = (n: number) => Math.round(n * 100) / 100;
+    const byAmount = new Map<number, string[]>();
+    for (const i of invoices) {
+      const key = round(i.amount);
+      byAmount.set(key, [...(byAmount.get(key) ?? []), `${i.number}/${i.patient}`]);
+    }
+    return new Map([...byAmount.entries()].filter(([, who]) => who.length > 1));
+  }
+
+  /**
+   * How many times each invoice's amount occurs across the WHOLE invoice book — the real exposure,
+   * since a colliding booking need not itself be an old-format invoice.
+   */
+  static amountFrequency(subject: ScopedInvoice[], book: InvoiceRow[]): Map<string, number> {
+    const round = (n: number) => Math.round(n * 100) / 100;
+    const freq = new Map<number, number>();
+    for (const i of book) freq.set(round(i.amount), (freq.get(round(i.amount)) ?? 0) + 1);
+    return new Map(subject.map((i) => [i.number, freq.get(round(i.amount)) ?? 0]));
+  }
 }
