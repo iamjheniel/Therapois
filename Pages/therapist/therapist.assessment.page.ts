@@ -40,8 +40,13 @@ export class TherapistAssessmentPage {
     await this.page.goto(`${baseUrl}/therapist/`, { waitUntil: 'domcontentloaded' });
     // The checked-column set is a sticky localStorage preference; clear it so "BF is off by default"
     // is a statement about the product rather than about whatever ran here last.
-    await this.page.evaluate(() => localStorage.removeItem('column-select-therapist-board-v2'));
-    await this.page.reload({ waitUntil: 'domcontentloaded' });
+    // Reload only when a preference was actually stored — see the note in TherapistBoardV2Page.open.
+    const hadStoredPref = await this.page.evaluate(() => {
+      const had = localStorage.getItem('column-select-therapist-board-v2') !== null;
+      localStorage.removeItem('column-select-therapist-board-v2');
+      return had;
+    });
+    if (hadStoredPref) await this.page.reload({ waitUntil: 'domcontentloaded' });
     await this.searchBox().waitFor({ state: 'visible', timeout: 45_000 });
     await this.page
       .locator('[data-testid="v2-table-scroll-port"]')
@@ -75,7 +80,11 @@ export class TherapistAssessmentPage {
     const close = this.page.getByRole('button', { name: 'Schließen', exact: true });
     if (await close.isVisible().catch(() => false)) await close.click();
     else await this.page.keyboard.press('Escape').catch(() => {});
-    await this.page.waitForTimeout(2500);
+    await this.page
+      .locator('[role="dialog"][aria-modal="true"]')
+      .first()
+      .waitFor({ state: 'detached', timeout: 8_000 })
+      .catch(() => {});
   }
 
   /** Filters the list to surface patient rows (the unfiltered "today" list is often empty). */
@@ -133,7 +142,11 @@ export class TherapistAssessmentPage {
     const cell = this.columnCells(column).first();
     if (!(await cell.isVisible().catch(() => false))) return false;
     await cell.click({ force: true });
-    await this.page.waitForTimeout(2500);
+    await this.page
+      .locator('[role="dialog"][aria-modal="true"], [data-testid="modal-surface"]')
+      .first()
+      .waitFor({ state: 'visible', timeout: 8_000 })
+      .catch(() => {});
     return this.isModalOpen();
   }
 

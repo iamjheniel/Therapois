@@ -73,14 +73,19 @@ export class AdminDashboardPage {
     const { baseUrl = 'https://staging.therapios.de', resetPreferences = false } = opts;
     await this.page.goto(`${baseUrl}/dashboard`, { waitUntil: 'domcontentloaded' });
     if (resetPreferences) {
-      await this.page.evaluate(
+      // Reload only when a preference was actually stored. (The Admin storageState DOES ship
+      // `hidden_column_admin:dashboard`, so this usually still reloads — the guard just stops it
+      // being unconditional.)
+      const hadStoredPrefs = await this.page.evaluate(
         ([col, per]) => {
+          const had = localStorage.getItem(col) !== null || localStorage.getItem(per) !== null;
           localStorage.removeItem(col);
           localStorage.removeItem(per);
+          return had;
         },
         [AdminDashboardPage.COLUMN_PREF_KEY, AdminDashboardPage.PER_PAGE_PREF_KEY],
       );
-      await this.page.reload({ waitUntil: 'domcontentloaded' });
+      if (hadStoredPrefs) await this.page.reload({ waitUntil: 'domcontentloaded' });
     }
     await this.page.getByText('VO #', { exact: true }).first().waitFor({ timeout: 30_000 });
     await expect(this.totalRange()).toHaveText(/von\s+[1-9]/, { timeout: 30_000 });

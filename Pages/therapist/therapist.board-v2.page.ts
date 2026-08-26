@@ -129,8 +129,20 @@ export class TherapistBoardV2Page extends AppPage {
   async open(width = 1440, height = 900) {
     await this.page.setViewportSize({ width, height });
     await this.page.goto('/therapist/', { waitUntil: 'domcontentloaded' });
-    await this.page.evaluate((k) => localStorage.removeItem(k), TherapistBoardV2Page.COLUMN_PREF_KEY);
-    await this.page.reload({ waitUntil: 'domcontentloaded' });
+    // Clear the preference, and reload ONLY if one was actually stored. The reload is there so the
+    // board re-renders without a pref it has already read — meaningless when there was none, which
+    // is the common case: the therapist storageState carries no column preference, so all 60+
+    // `open()` calls in the suite were paying for a second full page load of a slow RNW app to
+    // un-see a key that was never there.
+    //
+    // NOT done with `addInitScript`: that runs on EVERY navigation, so it would also wipe the
+    // preference the AC3 persistence test reloads specifically to prove survives.
+    const hadStoredPref = await this.page.evaluate((k) => {
+      const had = localStorage.getItem(k) !== null;
+      localStorage.removeItem(k);
+      return had;
+    }, TherapistBoardV2Page.COLUMN_PREF_KEY);
+    if (hadStoredPref) await this.page.reload({ waitUntil: 'domcontentloaded' });
     // Below ~900px the board renders the card list, which has no table to wait for.
     await this.waitForBoardReady(width >= 900);
   }
@@ -346,7 +358,24 @@ export class TherapistBoardV2Page extends AppPage {
     const close = this.page.getByRole('button', { name: 'Schließen', exact: true });
     if (await close.isVisible().catch(() => false)) await close.click();
     else await this.page.keyboard.press('Escape').catch(() => {});
-    await this.page.waitForTimeout(3000);
+    await this.waitForModal('closed');
+  }
+
+
+  /**
+   * Waits for the single modal panel to reach a state, instead of sleeping a flat interval.
+   *
+   * Only safe for DOM STATE transitions (a panel mounting or unmounting). Do NOT use this shape to
+   * settle a NUMERIC read after a filter/search click: the table is momentarily unchanged while the
+   * request is still in flight, so a "has it stopped moving" check is satisfied before the action
+   * has taken effect at all — that reads the pre-click value and fails as a product bug.
+   */
+  private async waitForModal(state: 'open' | 'closed', maxMs = 8_000): Promise<void> {
+    await this.page
+      .locator('[role="dialog"][aria-modal="true"]')
+      .first()
+      .waitFor({ state: state === 'open' ? 'visible' : 'detached', timeout: maxMs })
+      .catch(() => {});
   }
 
   /** Every column the picker offers, in order, with its checked state. */
@@ -408,7 +437,7 @@ export class TherapistBoardV2Page extends AppPage {
   async closeFilterPanel() {
     const close = this.page.getByRole('button', { name: 'Schließen', exact: true });
     if (await close.isVisible().catch(() => false)) await close.click();
-    await this.page.waitForTimeout(3000);
+    await this.waitForModal('closed');
   }
 
   /** The live "Ergebnis: N VOs" preview the panel shows for the current filter set. */
@@ -571,7 +600,7 @@ export class TherapistBoardV2Page extends AppPage {
    */
   async openHinweise() {
     await this.hinweise().click();
-    await this.page.waitForTimeout(3000);
+    await this.waitForModal('open', 10_000);
     await expect(this.panel(), 'the Hinweise panel must open').toBeVisible({ timeout: 15_000 });
   }
 
@@ -676,7 +705,7 @@ export class TherapistBoardV2Page extends AppPage {
       document.querySelectorAll('*').forEach((e) => e.setAttribute('data-qa-seen', '1')),
     );
     await this.page.getByText('Bestellt von', { exact: true }).first().click();
-    await this.page.waitForTimeout(2500);
+    await this.waitForModal('open');
     return await this.page.evaluate(() =>
       [...document.querySelectorAll('*:not([data-qa-seen])')]
         .filter((e) => e.children.length === 0 && e.getBoundingClientRect().width > 0)
@@ -690,7 +719,7 @@ export class TherapistBoardV2Page extends AppPage {
     const cancel = this.page.getByText('Abbrechen', { exact: true }).filter({ visible: true }).first();
     if (await cancel.isVisible().catch(() => false)) await cancel.click({ force: true });
     else await this.page.keyboard.press('Escape').catch(() => {});
-    await this.page.waitForTimeout(2000);
+    await this.waitForModal('closed');
   }
 
   // ─────────────────────────────── expanded row ──────────────────────────────
@@ -705,7 +734,6 @@ export class TherapistBoardV2Page extends AppPage {
     // Explicit timeout: `actionTimeout` is 0 project-wide, so a click on a cell that never resolves
     // hangs the worker instead of failing.
     await this.page.getByText(cellText, { exact: true }).first().click({ timeout: 30_000 });
-    await this.page.waitForTimeout(4000);
     await expect(
       this.page.getByText('Doku erfassen', { exact: true }).filter({ visible: true }).first(),
       'the expanded row detail must render its action bar',
@@ -737,7 +765,6 @@ export class TherapistBoardV2Page extends AppPage {
       );
     }
     await cell.click({ timeout: 30_000 });
-    await this.page.waitForTimeout(4000);
     await expect(
       this.page.getByText('Doku erfassen', { exact: true }).filter({ visible: true }).first(),
       'the expanded row detail must render its action bar',
@@ -765,7 +792,7 @@ export class TherapistBoardV2Page extends AppPage {
       document.querySelectorAll('*').forEach((e) => e.setAttribute('data-qa-seen', '1')),
     );
     await this.page.getByText('Weitere', { exact: false }).filter({ visible: true }).first().click();
-    await this.page.waitForTimeout(3000);
+    await this.waitForModal('open');
     return await this.page.evaluate(() =>
       [...document.querySelectorAll('*:not([data-qa-seen])')]
         .filter((e) => e.children.length === 0 && e.getBoundingClientRect().width > 0)
