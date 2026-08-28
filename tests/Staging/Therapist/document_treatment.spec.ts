@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { boardSearchBox } from '../../../Pages/base/app.page';
 import { TherapistListPage } from '../../../Pages/therapist/therapist.list.page';
 import { DokuModalPage } from '../../../Pages/therapist/therapist.doku-modal.page';
@@ -23,6 +23,30 @@ const SAVE_OUTCOMES = ['saved', 'conflict', 'rejected', 'blocked'];
  * erfasst. Datum ändern oder Patient entfernen." — which is the expected non-idempotent result when
  * the patient already has an activity for that date, so both are accepted.
  */
+/**
+ * Clicks the Doku modal's "Speichern", with an explicit timeout and a message that says why not.
+ *
+ * `actionTimeout` is 0 project-wide, so a bare `.click()` on a button that is `disabled` never
+ * fails - Playwright retries actionability forever and the whole 90 s test budget is spent before
+ * reporting a generic "Test timeout of 90000ms exceeded" that names only the line number.
+ *
+ * That is not hypothetical: "Document reject treatment" picks a row by INDEX (nth(7)), so which
+ * patient it lands on depends on what the board is holding that day. When that patient's state
+ * leaves Speichern disabled after "Patient:in hat die Behandlung verweigert" is ticked, the test
+ * burned 90 s to say nothing. (Verified pre-existing - it does the same on the code from before
+ * this change.) Asserting the button is enabled first turns that into a ~10 s, self-describing
+ * failure instead.
+ */
+async function clickSave(page: Page): Promise<void> {
+  const save = page.getByRole('button', { name: 'Speichern', exact: true });
+  await expect(
+    save,
+    'the Doku modal must enable "Speichern" once its required fields are filled - a disabled save ' +
+      'here means the chosen row is in a state this flow cannot document',
+  ).toBeEnabled({ timeout: 10_000 });
+  await save.click({ timeout: 10_000 });
+}
+
 async function expectSaved(page: import('@playwright/test').Page) {
   const surfaces = page.getByTestId('modal-surface');
   const conflict = page.getByText(/bereits erfasst|Validation failed|Conflicting activity/i).first();
@@ -71,7 +95,7 @@ test.describe('Document Treatment', () => {
   await page.getByRole('textbox', { name: 'Doku eingeben' }).fill(treatmentNote);
 
   await page.getByRole('radio').first().click();
-  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await clickSave(page);
 
   // backend + UI stabilize
   await page.waitForTimeout(500);
@@ -144,7 +168,7 @@ test.describe('Document Treatment', () => {
     } else {
       console.log('no Heilmittel selector on this VO — the modal no longer requires one');
     }
-    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await clickSave(page);
     // Wait for backend + UI to stabilize
     await page.waitForTimeout(500);
     // The app renders no success snackbar any more, so a save is observed by the modal closing —
@@ -226,7 +250,7 @@ test.describe('Document Treatment', () => {
     await page.getByRole('textbox', { name: 'Doku eingeben' }).click();
     await page.getByRole('textbox', { name: 'Doku eingeben' }).fill('reject automation test');
     await page.getByText('Patient:in hat die Behandlung verweigert').click();
-    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await clickSave(page);
     // Wait for backend + UI to stabilize
     await page.waitForTimeout(500);
     // The app renders no success snackbar any more, so a save is observed by the modal closing —

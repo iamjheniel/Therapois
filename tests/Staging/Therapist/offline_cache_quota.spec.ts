@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import {
   cacheSnapshot,
   installBallast,
@@ -35,6 +35,26 @@ import {
 /** Free characters left for the persister in the "moderate pressure" case (W2). */
 const MODERATE_HEADROOM = 140_000;
 
+/**
+ * Waits for the persister to have written a cache, instead of sleeping a flat guess at it.
+ *
+ * Note which sleeps in this file are converted and which are deliberately NOT. These two are
+ * READINESS waits — the test cannot read a baseline (or an evicted result) until a write has
+ * landed, and the moment it has, waiting longer adds nothing. The 45 s and 60 s sleeps further
+ * down are a different thing: they are OBSERVATION WINDOWS. Those tests assert "at most one Sentry
+ * event per session" against a pre-fix build that emitted one per ~3 s throttle tick, so the length
+ * of the window IS the strength of the assertion. Shortening those would buy time by weakening the
+ * test, so they are left exactly as they are.
+ */
+async function waitForCacheWrite(page: Page, budgetMs = 15_000): Promise<void> {
+  await expect
+    .poll(() => cacheSnapshot(page).then((c) => c.chars), {
+      timeout: budgetMs,
+      intervals: [250, 500, 1_000],
+    })
+    .toBeGreaterThan(0);
+}
+
 test.describe('Offline cache — localStorage quota recovery', () => {
   test(
     'AC1/W2 — under storage pressure the persister evicts and keeps persisting',
@@ -45,7 +65,7 @@ test.describe('Offline cache — localStorage quota recovery', () => {
       sentry.attach(page);
 
       await page.goto('/therapist/', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(12_000);
+      await waitForCacheWrite(page);
       const baseline = await cacheSnapshot(page);
       console.log(`unconstrained cache: ${JSON.stringify(baseline)}`);
       expect(baseline.chars, 'the board must persist a cache before pressure is applied').toBeGreaterThan(0);
@@ -57,7 +77,7 @@ test.describe('Offline cache — localStorage quota recovery', () => {
       let snapshot = baseline;
       for (const path of ['/dashboard', '/therapist/', '/dashboard']) {
         await page.goto(path, { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(9_000);
+        await waitForCacheWrite(page);
         snapshot = await cacheSnapshot(page);
         console.log(`after ${path}: ${JSON.stringify(snapshot)}`);
       }

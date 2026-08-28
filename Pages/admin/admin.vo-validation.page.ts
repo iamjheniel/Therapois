@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { settleAfter } from '../util/settle';
 
 /**
  * The VO edit form's Validierung panel — RC 3.11 #3339 (Home Visit check vs. the Hausbesuch toggle).
@@ -61,7 +62,12 @@ export class VoValidationPage {
   async open(): Promise<void> {
     await this.page.setViewportSize({ width: 1920, height: 1080 });
     await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    await this.page.waitForTimeout(6000);
+    // `auth-state` is written into localStorage from the .auth storageState BEFORE the page loads,
+    // so the token is readable as soon as the document exists. The flat sleep this replaces was
+    // waiting for nothing — it just delayed reading a value that was already there.
+    await this.page
+      .waitForFunction(() => !!localStorage.getItem('auth-state'), null, { timeout: 30_000 })
+      .catch(() => {});
     this.token = await this.page.evaluate(() => {
       try {
         const state = JSON.parse(localStorage.getItem('auth-state') || '');
@@ -198,6 +204,16 @@ export class VoValidationPage {
    * (which is what fires `PrescriptionValidationListener`) and is trivially restorable. Re-PATCHing a
    * field to its current value would change nothing and therefore fire nothing.
    */
+  /**
+   * Runs an interaction and waits for the requests it fires to come back, rather than sleeping a
+   * flat guess. `fallbackMs` is the sleep this replaced, kept only as the upper bound — see
+   * `Pages/util/settle.ts`. A purely client-side interaction issues no request and returns as soon
+   * as the DOM stops changing, which is where most of the saving comes from.
+   */
+  private async settle<T>(action: () => Promise<T>, fallbackMs: number): Promise<T> {
+    return await settleAfter(this.page, action, { budgetMs: Math.max(fallbackMs, 10_000) });
+  }
+
   async triggerRecompute(prescriptionId: number, currentActionRequired: boolean): Promise<void> {
     expect(await this.patch(prescriptionId, { actionRequired: !currentActionRequired }), 'recompute trigger').toBe(200);
     await this.page.waitForTimeout(1500);
@@ -220,10 +236,15 @@ export class VoValidationPage {
   // ─────────────────────────────── the edit form ─────────────────────────────
 
   async openForm(prescriptionId: number): Promise<void> {
-    await this.page.goto(`/vo-management/${prescriptionId}/edit?id=${prescriptionId}`, {
-      waitUntil: 'domcontentloaded',
-    });
-    await this.page.waitForTimeout(13_000);
+    // The goto is inside `settle` so the form's own data fetches are counted: attaching the
+    // listeners afterwards would race the requests the navigation itself kicks off.
+    await this.settle(
+      () =>
+        this.page.goto(`/vo-management/${prescriptionId}/edit?id=${prescriptionId}`, {
+          waitUntil: 'domcontentloaded',
+        }),
+      13_000,
+    );
     await expect(
       this.page.getByText('Validierung', { exact: true }).filter({ visible: true }).first(),
       'the VO edit form must render its Validierung panel',
@@ -290,8 +311,7 @@ export class VoValidationPage {
    */
   async openSaveDialog(button: string): Promise<string | null> {
     const control = this.page.getByText(button, { exact: true }).filter({ visible: true }).last();
-    await control.click({ force: true }).catch(() => {});
-    await this.page.waitForTimeout(5000);
+    await this.settle(() => control.click({ force: true }).catch(() => {}), 5000);
     const text = (await this.page.locator('#root').innerText()) || '';
     const at = text.indexOf('bestätigen');
     if (at < 0) return null;
@@ -347,8 +367,7 @@ export class VoValidationPage {
   async expandAllChecks(): Promise<string> {
     const expander = this.page.getByText('Alle Prüfungen anzeigen', { exact: false }).filter({ visible: true }).first();
     if (await expander.count()) {
-      await expander.click({ force: true }).catch(() => {});
-      await this.page.waitForTimeout(4000);
+      await this.settle(() => expander.click({ force: true }).catch(() => {}), 4000);
     }
     const text = (await this.page.locator('#root').innerText()) || '';
     const start = text.indexOf('Validierung');

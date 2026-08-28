@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { settleAfter, waitForOpen, waitForStable } from '../util/settle';
 import { boardSearchBox } from '../base/app.page';
 
 /**
@@ -35,7 +36,9 @@ export class TherapistDashboardPage {
     await this.page.setViewportSize({ width: 1920, height: 1080 });
     await this.page.goto(`${baseUrl}/therapist/`, { waitUntil: 'domcontentloaded' });
     await this.searchBox().waitFor({ state: 'visible', timeout: 45_000 });
-    await this.page.waitForTimeout(2500);
+    // The search box paints ahead of the board rows and the Hinweise panel behind it, and every
+    // caller reads those. Wait for the row set to stop changing instead of sleeping 2.5 s at it.
+    await waitForStable(this.page.getByRole('checkbox'));
   }
 
   // ─────────────────────────── Überprüfen review banners ───────────────────────────
@@ -50,7 +53,7 @@ export class TherapistDashboardPage {
     for (;;) {
       const banners = await this.reviewBannerTexts();
       if (banners.length > 0 || Date.now() > deadline) return banners;
-      await this.page.waitForTimeout(1000);
+      await this.page.waitForTimeout(300);
     }
   }
 
@@ -88,8 +91,7 @@ export class TherapistDashboardPage {
       .last();
     const link = banner.getByText('Überprüfen', { exact: true }).first();
     if (!(await link.count())) return false;
-    await link.click({ force: true });
-    await this.page.waitForTimeout(2000);
+    await settleAfter(this.page, () => link.click({ force: true }), { budgetMs: 12_000 });
     return this.page.getByText(/Zuletzt:/).first().isVisible().catch(() => false);
   }
 
@@ -114,8 +116,10 @@ export class TherapistDashboardPage {
     const box = this.searchBox();
     await box.click();
     await box.fill(term);
-    await box.press('Enter');
-    await this.page.waitForTimeout(2500);
+    // Searching refetches the board; settle on that rather than the flat 2.5 s, which was both
+    // slower than the common case and too short whenever staging lagged (the checkbox count below
+    // would then read the PREVIOUS result set and the method would wrongly report "no rows").
+    await settleAfter(this.page, () => box.press('Enter'), { budgetMs: 15_000 });
     if ((await this.page.getByRole('checkbox').count()) < 2) return false;
     await this.page.getByRole('checkbox').nth(1).click({ force: true });
     await this.page.waitForTimeout(600);
@@ -135,7 +139,8 @@ export class TherapistDashboardPage {
     const trigger = this.page.getByText('Bestellt von', { exact: true }).filter({ visible: true }).first();
     if (!(await trigger.count())) return false;
     await trigger.click({ force: true });
-    await this.page.waitForTimeout(1200);
+    // The dropdown's own options are the readiness signal the return value reads.
+    await waitForOpen(this.option('Therapeut'), 6_000);
     return (await this.option('Therapeut').count()) > 0 && (await this.option('Admin').count()) > 0;
   }
 

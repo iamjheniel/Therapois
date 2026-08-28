@@ -116,7 +116,12 @@ export class BoardFiltersPage {
 
   async open(): Promise<void> {
     await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    await this.page.waitForTimeout(6000);
+    // `auth-state` is written into localStorage from the .auth storageState BEFORE the page loads,
+    // so the token is readable as soon as the document exists. The flat sleep this replaces was
+    // waiting for nothing — it just delayed reading a value that was already there.
+    await this.page
+      .waitForFunction(() => !!localStorage.getItem('auth-state'), null, { timeout: 30_000 })
+      .catch(() => {});
     this.token = await this.page.evaluate(() => {
       try {
         const state = JSON.parse(localStorage.getItem('auth-state') || '');

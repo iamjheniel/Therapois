@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TreatmentPricesPage, DocumentedTreatment } from '../../../Pages/superadmin/sa.treatment-prices.page';
+import { waitForAuthState } from '../../../Pages/util/settle';
 
 /**
  * RC 3.11 — Retroactively Entered Prices Are Not Applied to Already-Documented Treatments (#3378).
@@ -53,7 +54,7 @@ test.describe('Retroactive price changes reprice already-documented treatments',
     const page = await browser.newPage({ storageState: '.auth/SuperAdmin.json' });
     const prices = new TreatmentPricesPage(page);
     await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(5000);
+    await waitForAuthState(page);
     for (const id of [...created]) {
       const res = await prices.deletePrice(id);
       console.log(`cleanup: DELETE /treatment_price_histories/${id} → ${res.status}`);
@@ -68,7 +69,7 @@ test.describe('Retroactive price changes reprice already-documented treatments',
       test.setTimeout(600_000);
       const prices = new TreatmentPricesPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       const treatment = await prices.treatmentByCode(CODE);
       const rows = await prices.documentedTreatments(CODE, WINDOW.from, WINDOW.to, 15);
@@ -144,7 +145,7 @@ test.describe('Retroactive price changes reprice already-documented treatments',
       test.setTimeout(600_000);
       const prices = new TreatmentPricesPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       const entryId = created[0];
       test.skip(!entryId, 'The previous test did not create a price entry, so there is none to delete.');
@@ -193,7 +194,7 @@ test.describe('Retroactive price changes reprice already-documented treatments',
       test.setTimeout(900_000);
       const prices = new TreatmentPricesPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       // The whole point of AC4 is that the recompute carries no billing-status filter, so the fixture
       // has to be a treatment whose VO is ALREADY in a batch. Those sit further back than the window
@@ -254,7 +255,7 @@ test.describe('Retroactive price changes reprice already-documented treatments',
       test.setTimeout(600_000);
       const prices = new TreatmentPricesPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       const treatment = await prices.treatmentByCode(CODE);
       const rows = await prices.documentedTreatments(CODE, WINDOW.from, WINDOW.to, 15);

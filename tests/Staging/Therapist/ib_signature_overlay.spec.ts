@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page';
+import { DataGate } from '../../fixtures/data-gate';
 
 /**
  * Ticket #2962 — IB · Full-Screen Signature Overlay (RC 3.9.0).
@@ -15,6 +16,13 @@ import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page'
  * SAFETY: no IB is ever submitted — strokes are always discarded and the wizard is closed.
  * Staging only (per scope); mirror to Production later.
  */
+/**
+ * The IB flow is reachable only when the board holds a patient in an IB-capable state. That is a
+ * fact about the staging DATA, identical for every test here — so prove it once and let the rest of
+ * the file skip before paying for a navigation and a board search. See `tests/fixtures/data-gate.ts`.
+ */
+const ibGate = new DataGate('IB flow not reachable for the available patient state');
+
 test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -23,6 +31,8 @@ test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
   test.beforeEach(async ({ page }) => {
     // Opening the signer dialog → wizard → overlay is a multi-step flow beyond the 90s default.
     test.setTimeout(150_000);
+    // Before the navigation, not after: this is the whole point of the gate.
+    ibGate.skipIfKnownClosed();
     ib = new IbWizardPage(page);
     await ib.open();
     await ib.filterAndExpand('Test');
@@ -31,8 +41,8 @@ test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
   test('Sign opens a full-screen overlay with baseline and Undo/Clear/Done controls', {
     tag: ['@Therapist', '@IBSignatureOverlay'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
-    test.skip(!(await ib.openSignatureOverlay()), 'Signature overlay did not open');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
+    ibGate.apply(await ib.openSignatureOverlay(), 'signature overlay did not open');
 
     // AC3: dashed "sign here" baseline prompt.
     await expect(ib.baselinePrompt()).toBeVisible();
@@ -52,8 +62,8 @@ test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
   test('Cancel on an empty canvas closes the overlay immediately (no confirmation)', {
     tag: ['@Therapist', '@IBSignatureOverlay'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
-    test.skip(!(await ib.openSignatureOverlay()), 'Signature overlay did not open');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
+    ibGate.apply(await ib.openSignatureOverlay(), 'signature overlay did not open');
 
     await ib.cancelOverlay();
     // AC11: no "Unterschrift verwerfen?" prompt; overlay closes back to the wizard.
@@ -65,8 +75,8 @@ test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
   test('Drawing enables Done; Undo then Clear return to the empty state', {
     tag: ['@Therapist', '@IBSignatureOverlay'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
-    test.skip(!(await ib.openSignatureOverlay()), 'Signature overlay did not open');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
+    ibGate.apply(await ib.openSignatureOverlay(), 'signature overlay did not open');
 
     // AC4/AC9: after a stroke, Done + Undo + Clear become enabled. Synthetic drawing on the web
     // signature pad is intermittently dropped, so skip (don't fail) when it can't be registered.
@@ -92,8 +102,8 @@ test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
   test('Cancel with strokes raises a discard confirmation; "keep signing" preserves the drawing', {
     tag: ['@Therapist', '@IBSignatureOverlay'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
-    test.skip(!(await ib.openSignatureOverlay()), 'Signature overlay did not open');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
+    ibGate.apply(await ib.openSignatureOverlay(), 'signature overlay did not open');
 
     test.skip(!(await ib.drawSignature()), 'Synthetic drawing did not register on the web signature pad');
 
@@ -119,7 +129,7 @@ test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
   test('Both signature steps (DSGVO and Behandlung) use the same overlay', {
     tag: ['@Therapist', '@IBSignatureOverlay'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
 
     // AC12: the wizard has two signature steps.
     await expect(ib.stepHeading('Datenschutzerklärung')).toBeVisible();
@@ -129,7 +139,7 @@ test.describe('Therapist IB — Full-Screen Signature Overlay', () => {
     // (Verifying step 2's overlay identically requires first capturing a step-1 signature to unlock
     // "Weiter"; synthetic drawing is too flaky to gate a step-2 assertion on, so step 2 is covered
     // structurally via its stepper heading above.)
-    test.skip(!(await ib.openSignatureOverlay()), 'Step 1 signature overlay did not open');
+    ibGate.apply(await ib.openSignatureOverlay(), 'signature overlay did not open');
     await expect(ib.overlayUndo()).toBeVisible();
     await expect(ib.overlayClear()).toBeVisible();
     await expect(ib.baselinePrompt()).toBeVisible();

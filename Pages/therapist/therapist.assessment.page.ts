@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { settleAfter, waitForStable } from '../util/settle';
 import { boardSearchBox } from '../base/app.page';
 
 /**
@@ -52,7 +53,8 @@ export class TherapistAssessmentPage {
       .locator('[data-testid="v2-table-scroll-port"]')
       .waitFor({ state: 'visible', timeout: 45_000 })
       .catch(() => {});
-    await this.page.waitForTimeout(1500);
+    // The scroll port mounts before its rows arrive, and every caller reads rows.
+    await waitForStable(this.page.getByRole('checkbox'));
   }
 
   /**
@@ -75,7 +77,16 @@ export class TherapistAssessmentPage {
         .filter({ has: checkbox })
         .first()
         .click();
-      await this.page.waitForTimeout(2000);
+      // Enabling a column is a client-side preference write plus a re-render, so the completion
+      // signal is the checkbox itself showing the tick — not a fixed 2 s.
+      // `textContent()` resolves to null for an empty node, and `toContain` on null throws rather
+      // than retrying — so normalise to a string inside the poll.
+      await expect
+        .poll(() => checkbox.first().textContent().then((t) => t ?? '').catch(() => ''), {
+          timeout: 8_000,
+          intervals: [100, 150, 250, 400],
+        })
+        .toContain('✓');
     }
     const close = this.page.getByRole('button', { name: 'Schließen', exact: true });
     if (await close.isVisible().catch(() => false)) await close.click();
@@ -92,8 +103,8 @@ export class TherapistAssessmentPage {
     const box = this.searchBox();
     await box.click();
     await box.fill(term);
-    await box.press('Enter');
-    await this.page.waitForTimeout(3000);
+    // Searching refetches the board; settle on the request rather than guessing 3 s.
+    await settleAfter(this.page, () => box.press('Enter'), { budgetMs: 15_000 });
   }
 
   /**

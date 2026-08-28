@@ -11,10 +11,40 @@ test.describe('Therapist Share Patient', () => {
     await page.goto('https://staging.therapios.de/therapist/', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
 
+  /**
+   * Drops any current row selection so the next tick leaves exactly one patient selected.
+   *
+   * This used to be done by re-running `list.searchPatient('Test')`, which RELOADS the whole page
+   * and waits for the board to repaint — and it ran once per candidate row. Across the two tests
+   * that is up to 22 full reloads, and it dominated the file: 229 s, for two tests that both end in
+   * `test.skip` because staging has no shareable combination. The board offers "Auswahl aufheben"
+   * for exactly this, so use it and keep the reload as the fallback for a build that does not.
+   */
+  async function clearRowSelection(page: Page, list: TherapistListPage): Promise<void> {
+    // Some paths above leave the share modal open (they press Escape without confirming it closed).
+    // The reload used to absorb that; now that we stay on the page, the overlay has to be gone or
+    // the "Auswahl aufheben" click below would land on it instead.
+    const modal = page.getByTestId('modal-surface');
+    if (await modal.first().isVisible().catch(() => false)) {
+      await page.keyboard.press('Escape').catch(() => {});
+      await modal.first().waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {});
+    }
+
+    const clear = page.getByRole('button', { name: 'Auswahl aufheben' });
+    if (await clear.first().isVisible().catch(() => false)) {
+      await clear.first().click({ force: true, timeout: 8_000 }).catch(() => {});
+      // The action bar disappears with the selection; that is the confirmation it took effect.
+      await clear.first().waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {});
+      if (!(await clear.first().isVisible().catch(() => false))) return;
+    }
+    // Nothing selected yet (the first row of a test), or the control did not clear it: fall back to
+    // the reload, which is also what puts the broad 'Test' result set on screen to begin with.
+    await list.searchPatient('Test');
+  }
+
   /** Selects only the given patient row and opens its share modal. Returns false if it can't. */
   async function openShareModalForRow(page: Page, list: TherapistListPage, rowIdx: number): Promise<boolean> {
-    // A fresh broad search resets any prior row selection so exactly one patient ends up selected.
-    await list.searchPatient('Test');
+    await clearRowSelection(page, list);
     if ((await list.selectableRowCount()) < rowIdx) return false;
     // nth(0) = select-all header checkbox; nth(rowIdx) = a patient row.
     await page.getByRole('checkbox').nth(rowIdx).click({ force: true });

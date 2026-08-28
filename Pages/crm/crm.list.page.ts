@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { CRMBasePage } from './crm.base.page';
+import { settleAfter, waitForStable } from '../util/settle';
 
 export class CRMListPage extends CRMBasePage {
   constructor(page: Page) {
@@ -52,8 +53,11 @@ export class CRMListPage extends CRMBasePage {
     await this.page.goto('/crm', { waitUntil: 'domcontentloaded' });
     const anzeigen = this.page.getByText('Anzeigen', { exact: true });
     await anzeigen.first().waitFor({ state: 'visible', timeout: 30000 });
-    // small settle so row order is stable before we index into it
-    await this.page.waitForTimeout(1200);
+    // The first row being visible does not mean the list has finished arriving, and callers index
+    // into it by position — so wait for the row set to stop changing rather than sleeping 1.2 s and
+    // hoping that covered it. A list that has already finished costs ~450 ms here; one still
+    // streaming gets up to the helper's budget, which the flat sleep could not give it.
+    await waitForStable(anzeigen);
     return anzeigen;
   }
 
@@ -107,10 +111,14 @@ export class CRMListPage extends CRMBasePage {
     for (let i = 0; i < maxTries; i++) {
       const anzeigen = await this.loadPracticeRows();
       if ((await anzeigen.count()) <= i) break;
-      await anzeigen.nth(i).click();
-      await this.page.waitForTimeout(2500);
-      await this.page.getByText(tab, { exact: true }).click({ force: true });
-      await this.page.waitForTimeout(2500);
+      // Both the panel open and the tab switch are server-driven, so settle on their requests
+      // instead of charging 2.5 s each on every iteration of this retry loop.
+      await settleAfter(this.page, () => anzeigen.nth(i).click(), { budgetMs: 12_000 });
+      await settleAfter(
+        this.page,
+        () => this.page.getByText(tab, { exact: true }).click({ force: true }),
+        { budgetMs: 12_000 },
+      );
 
       if (tab === 'Bestellung') {
         // When switching practices the panel transiently shows the *previous* practice's
@@ -151,7 +159,9 @@ export class CRMListPage extends CRMBasePage {
       consecutive = consistent && count === lastCount ? consecutive + 1 : consistent ? 1 : 0;
       if (consecutive >= 2) return true;
       lastCount = count;
-      await this.page.waitForTimeout(900);
+      // 400 ms, not 900: this loop needs two consecutive consistent reads before it can return, so
+      // the interval is paid at least twice on the success path.
+      await this.page.waitForTimeout(400);
     }
     return false;
   }
@@ -163,7 +173,7 @@ export class CRMListPage extends CRMBasePage {
   private async waitForFollowUpCheckboxes(maxPolls = 8): Promise<boolean> {
     for (let i = 0; i < maxPolls; i++) {
       if ((await this.page.getByRole('checkbox').count()) > 3) return true;
-      await this.page.waitForTimeout(900);
+      await this.page.waitForTimeout(400);
     }
     return false;
   }

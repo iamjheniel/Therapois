@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { settleAfter } from '../util/settle';
 
 /**
  * Page Object for the admin CRM dashboard's RC 3.9 improvements (epic #2929): the 5-tab structure
@@ -65,8 +66,7 @@ export class CRMDashboardPage {
   }
 
   async openTab(name: string): Promise<void> {
-    await this.tab(name).click({ force: true });
-    await this.page.waitForTimeout(2000);
+    await settleAfter(this.page, () => this.tab(name).click({ force: true }), { budgetMs: 12_000 });
   }
 
   // ------------------------------------------------------------------ summary cards (#2931)
@@ -105,7 +105,16 @@ export class CRMDashboardPage {
     const box = await this.filterBox(label).boundingBox();
     if (!box) return [];
     await this.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-    await this.page.waitForTimeout(1500);
+    // The options are read as "text that was not on the page before", so the read has to happen
+    // after the dropdown has finished painting. Poll for the body text to differ instead of
+    // sleeping 1.5 s at every filter open.
+    await expect
+      .poll(() => this.page.locator('body').innerText().catch(() => ''), {
+        timeout: 6_000,
+        intervals: [100, 150, 250, 400],
+      })
+      .not.toBe(before)
+      .catch(() => {});
     const after = await this.page.locator('body').innerText().catch(() => '');
     return after
       .split('\n')
@@ -127,14 +136,16 @@ export class CRMDashboardPage {
       await this.closeFilter();
       return false;
     }
-    await opt.click({ force: true });
-    await this.page.waitForTimeout(2500);
+    await settleAfter(this.page, () => opt.click({ force: true }), { budgetMs: 15_000 });
     return true;
   }
 
   async clearFilters(): Promise<void> {
-    await this.page.getByText('Filter löschen', { exact: true }).click({ force: true }).catch(() => {});
-    await this.page.waitForTimeout(2000);
+    await settleAfter(
+      this.page,
+      () => this.page.getByText('Filter löschen', { exact: true }).click({ force: true }).catch(() => {}),
+      { budgetMs: 15_000 },
+    );
   }
 
   // ------------------------------------------------------------------ table columns (#2933/#2934)

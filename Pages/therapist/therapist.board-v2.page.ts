@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { AppPage } from '../base/app.page';
+import { settleAfter } from '../util/settle';
 
 export type ColumnOption = { label: string; checked: boolean };
 
@@ -180,6 +181,17 @@ export class TherapistBoardV2Page extends AppPage {
     await this.page.waitForTimeout(1500);
   }
 
+  /**
+   * Runs a board interaction and waits for the refetch it triggers, rather than sleeping a guess.
+   *
+   * `fallbackMs` is the flat sleep this call used to perform, kept only as the shape of the upper
+   * bound — see `Pages/util/settle.ts`. Passing a no-op action is legitimate: it waits out a repaint
+   * that no request backs, which is most of the picker and selection interactions here.
+   */
+  private async settle<T>(action: () => Promise<T>, fallbackMs: number): Promise<T> {
+    return await settleAfter(this.page, action, { budgetMs: Math.max(fallbackMs, 10_000) });
+  }
+
   /** The persisted column preference, or null while the board is still on its default set. */
   async storedColumnKeys(): Promise<string[] | null> {
     const raw = await this.page.evaluate(
@@ -224,8 +236,7 @@ export class TherapistBoardV2Page extends AppPage {
   }
 
   async openTab(label: string) {
-    await this.tab(label).click();
-    await this.page.waitForTimeout(5000);
+    await this.settle(() => this.tab(label).click(), 5000);
   }
 
   /** The "Hinweise" reminder button, with its own badge count. */
@@ -406,7 +417,9 @@ export class TherapistBoardV2Page extends AppPage {
       .filter({ has: this.page.locator(`[role="checkbox"][aria-label="${label}"]`) })
       .first()
       .click();
-    await this.page.waitForTimeout(2000);
+    // Toggling a column repaints from data already held, so this normally costs a paint, not a
+    // refetch — `settle` returns as soon as it sees that rather than sitting out the old 2 s.
+    await this.settle(async () => {}, 2000);
   }
 
   /** Turns a column on (or off) and closes the picker so the table can be asserted. */
@@ -465,15 +478,16 @@ export class TherapistBoardV2Page extends AppPage {
   /** Applies one filter option and closes the panel so the table underneath can be asserted. */
   async applyFilter(label: string) {
     await this.openFilterPanel();
-    await this.filterOption(label).click();
-    await this.page.waitForTimeout(3000);
+    await this.settle(() => this.filterOption(label).click(), 3000);
     await this.closeFilterPanel();
   }
 
   async clearFilters() {
     await this.openFilterPanel();
-    await this.page.getByRole('button', { name: 'Alle löschen', exact: true }).click();
-    await this.page.waitForTimeout(2500);
+    await this.settle(
+      () => this.page.getByRole('button', { name: 'Alle löschen', exact: true }).click(),
+      2500,
+    );
     await this.closeFilterPanel();
   }
 
@@ -513,8 +527,7 @@ export class TherapistBoardV2Page extends AppPage {
     const box = this.searchBox();
     await box.click();
     await box.fill(query);
-    await box.press('Enter');
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => box.press('Enter'), 4000);
   }
 
   /**
@@ -525,9 +538,10 @@ export class TherapistBoardV2Page extends AppPage {
    */
   async clearSearch() {
     const clear = this.page.getByText('✕', { exact: true }).filter({ visible: true }).first();
-    if (await clear.isVisible().catch(() => false)) await clear.click({ force: true });
-    else await this.searchBox().fill('');
-    await this.page.waitForTimeout(4000);
+    await this.settle(async () => {
+      if (await clear.isVisible().catch(() => false)) await clear.click({ force: true });
+      else await this.searchBox().fill('');
+    }, 4000);
   }
 
   // ──────────────────────────────── rows / groups ────────────────────────────
@@ -630,15 +644,39 @@ export class TherapistBoardV2Page extends AppPage {
     return this.panel().getByRole('button', { name: 'Diese anzeigen', exact: true }).nth(index);
   }
 
-  /** The patient/VO entries a reminder section lists under its headline. */
-  async hinweiseEntries(): Promise<string[]> {
-    return await this.panel()
+  /**
+   * The patient/VO entries listed under ONE reminder section, by its index in
+   * {@link hinweiseHeadlines}.
+   *
+   * The panel stacks all three reminders and every entry in all of them is a `<button>`, so a flat
+   * scrape returns the union — 9 entries on a typical board (3 sections previewing 3 each) no matter
+   * which reminder the caller meant. Comparing that against a single headline's count compares two
+   * different things, and that is exactly how the 14-day assertion came to fail against a perfectly
+   * healthy panel: 9 scraped entries against the 14-day section's count of 6.
+   *
+   * Each section opens with its own "Diese anzeigen" control, so those buttons are the section
+   * boundaries — everything between boundary n and boundary n+1 belongs to reminder n.
+   *
+   * Note the boundary match must stay case-insensitive: the label is CSS-uppercased and `innerText`
+   * (unlike `textContent`) reflects that, so it arrives here as "DIESE ANZEIGEN".
+   */
+  async hinweiseEntries(sectionIndex = 0): Promise<string[]> {
+    const all = await this.panel()
       .locator('button')
       .evaluateAll((els) =>
-        els
-          .map((e) => ((e as HTMLElement).innerText || '').trim().replace(/\n/g, ' · '))
-          .filter((t) => t && !/^Diese anzeigen$/i.test(t)),
+        els.map((e) => ((e as HTMLElement).innerText || '').trim().replace(/\n/g, ' · ')),
       );
+
+    const boundaries = all.reduce<number[]>((acc, text, i) => {
+      if (/^Diese anzeigen$/i.test(text)) acc.push(i);
+      return acc;
+    }, []);
+    if (boundaries.length === 0) return all.filter(Boolean);
+
+    const start = boundaries[sectionIndex];
+    if (start === undefined) return [];
+    const end = boundaries[sectionIndex + 1] ?? all.length;
+    return all.slice(start + 1, end).filter(Boolean);
   }
 
   // ─────────────────────────── row selection action bar ──────────────────────
@@ -651,7 +689,7 @@ export class TherapistBoardV2Page extends AppPage {
   /** Ticks a row and waits for the bulk action bar to appear. */
   async selectRow(index = 0) {
     await this.rowCheckbox(index).click({ force: true });
-    await this.page.waitForTimeout(2500);
+    // No settle: the assertion below IS the wait, and it retries for 15 s on its own.
     await expect(
       this.page.getByText(/^\d+ ausgewählt$/).first(),
       'ticking a row must raise the selection action bar',
@@ -685,8 +723,10 @@ export class TherapistBoardV2Page extends AppPage {
 
   /** Drops the selection again via "Auswahl aufheben". */
   async clearSelection() {
-    await this.page.getByText('Auswahl aufheben', { exact: true }).first().click();
-    await this.page.waitForTimeout(2000);
+    await this.settle(
+      () => this.page.getByText('Auswahl aufheben', { exact: true }).first().click(),
+      2000,
+    );
   }
 
   /**

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { LettersPage } from '../../../Pages/admin/admin.letters.page';
+import { waitForAuthState } from '../../../Pages/util/settle';
 
 /**
  * RC 3.11 — Letter Addresses: Remove Stray Country Marker "D" (#3370).
@@ -61,7 +62,7 @@ test.describe('Letter addresses — stray country marker', () => {
       test.setTimeout(240_000);
       const letters = new LettersPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       // Precondition: the stored address still carries the marker before the postal code. The fix is
       // a rendering fix — if the stored text had been cleaned instead, this test would pass for the
@@ -110,7 +111,7 @@ test.describe('Letter addresses — stray country marker', () => {
       test.setTimeout(240_000);
       const letters = new LettersPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       // The archive is the before-picture: a letter rendered BEFORE the fix shipped still carries the
       // marker, which is what makes the assertion above a real before/after rather than a template
@@ -162,7 +163,7 @@ test.describe('Letter addresses — stray country marker', () => {
       test.setTimeout(300_000);
       const letters = new LettersPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       // AC1 row 3: the normalizer must strip a standalone marker without touching a house number
       // that legitimately ends in "D". Staging happens to hold the ticket's own example verbatim —
@@ -229,7 +230,7 @@ test.describe('Letter addresses — stray country marker', () => {
       );
       const letters = new LettersPage(page);
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await waitForAuthState(page);
 
       const fixture = { id: 7605, patientNumber: 8839, street: 'Essener Straße 13 D' };
       const created = await letters.generateNotice(fixture.id, 'physiotherapy', 'regular');
@@ -250,7 +251,7 @@ test.describe('Letter addresses — stray country marker', () => {
       await page.setViewportSize({ width: 1920, height: 1200 });
       await page.goto('/billing', { waitUntil: 'domcontentloaded' });
       await expect(page.getByText('GKV-Abrechnung', { exact: true })).toBeVisible({ timeout: 30_000 });
-      await page.waitForTimeout(8000);
+      await waitForAuthState(page);
 
       // Optica stripped nothing at all before this ticket, in any position — so the export is the one
       // surface where the marker is plain readable text rather than a PDF.

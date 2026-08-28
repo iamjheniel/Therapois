@@ -62,7 +62,12 @@ export class TherapistPerformancePage extends AppPage {
 
   async open(): Promise<void> {
     await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    await this.page.waitForTimeout(6_000);
+    // Nothing here reads the screen — `json()` calls the API with the token from localStorage,
+    // which the .auth storageState puts there before the page loads. Waiting for the app to be
+    // booted enough to hold that token is the whole requirement.
+    await this.page
+      .waitForFunction(() => !!localStorage.getItem('auth-state'), null, { timeout: 30_000 })
+      .catch(() => {});
   }
 
   private async json(path: string): Promise<{ status: number; json: any }> {
@@ -105,10 +110,19 @@ export class TherapistPerformancePage extends AppPage {
   /** The four Auslastung header counts, read off the rendered screen. */
   async healthCounts(): Promise<Record<string, number | null>> {
     await this.page.goto('/to-management', { waitUntil: 'domcontentloaded' });
-    await this.page.waitForTimeout(15_000);
-    const t = await this.page.locator('#root').innerText();
+    // The four counts ARE the readiness signal, so poll for them instead of sleeping out a flat
+    // 15 s. Reading early is the failure this guards: the labels paint before their numbers do, so
+    // an early read returns four nulls that look exactly like #3233's silent-empty defect.
+    const LABELS = ['Red Therapists', 'Yellow Therapists', 'Green Therapists', 'Gray Therapists'];
+    const deadline = Date.now() + 20_000;
+    let t = '';
+    while (Date.now() < deadline) {
+      t = (await this.page.locator('#root').innerText().catch(() => '')) || '';
+      if (LABELS.every((l) => new RegExp(`${l}\\s*\\n\\s*\\d+`).test(t))) break;
+      await this.page.waitForTimeout(400);
+    }
     const out: Record<string, number | null> = {};
-    for (const label of ['Red Therapists', 'Yellow Therapists', 'Green Therapists', 'Gray Therapists']) {
+    for (const label of LABELS) {
       const m = t.match(new RegExp(`${label}\\s*\\n\\s*(\\d+)`));
       out[label] = m ? Number(m[1]) : null;
     }

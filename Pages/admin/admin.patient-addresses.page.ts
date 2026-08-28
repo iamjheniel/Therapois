@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { AppPage } from '../base/app.page';
+import { settleAfter, waitForStable } from '../util/settle';
 
 /**
  * Guardian Contacts — patient address form (RC 3.10, epic #3187 / #3188).
@@ -65,7 +66,10 @@ export class PatientAddressesPage extends AppPage {
     // the DOM text is "Adressen". Playwright matches text content, not the rendered transform, so
     // `getByText('ADRESSEN', { exact: true })` finds nothing at all.
     await expect(this.page.getByText(/^Adressen$/i).first()).toBeVisible({ timeout: 30_000 });
-    await this.page.waitForTimeout(2500);
+    // The heading paints before the cards under it finish arriving, and every accessor here indexes
+    // cards by position. Waiting for the switch set (one per card) to stop growing is that
+    // condition; the flat 2.5 s was only ever a guess at it.
+    await waitForStable(this.page.locator('input[role="switch"]'));
   }
 
   /** Text of the ADRESSEN section only — the scope every visibility assertion is made against. */
@@ -122,8 +126,7 @@ export class PatientAddressesPage extends AppPage {
     const el = (await this.typeTriggerHandle(index)).asElement();
     if (!el) throw new Error(`openTypeDropdown: no Adresstyp trigger for card #${index}`);
     await el.click({ force: true });
-    await this.page.waitForTimeout(2000);
-    return await this.freshOptions();
+    return await this.pollFreshOptions();
   }
 
   async setType(type: string, index = 0) {
@@ -131,8 +134,9 @@ export class PatientAddressesPage extends AppPage {
     if (!options.includes(type)) {
       throw new Error(`Adresstyp "${type}" not on offer for card #${index}; got ${JSON.stringify(options)}`);
     }
-    await this.page.getByText(type, { exact: true }).last().click();
-    await this.page.waitForTimeout(2500);
+    await settleAfter(this.page, () => this.page.getByText(type, { exact: true }).last().click(), {
+      budgetMs: 12_000,
+    });
   }
 
   // ─────────────────────────────── Anrede ────────────────────────────────
@@ -148,8 +152,7 @@ export class PatientAddressesPage extends AppPage {
       .filter({ visible: true })
       .last()
       .click({ force: true });
-    await this.page.waitForTimeout(2000);
-    return await this.freshOptions();
+    return await this.pollFreshOptions();
   }
 
   async setAnrede(value: 'Herr' | 'Frau') {
@@ -157,8 +160,9 @@ export class PatientAddressesPage extends AppPage {
     if (!options.includes(value)) {
       throw new Error(`Anrede "${value}" not on offer; got ${JSON.stringify(options)}`);
     }
-    await this.page.getByText(value, { exact: true }).last().click();
-    await this.page.waitForTimeout(1500);
+    await settleAfter(this.page, () => this.page.getByText(value, { exact: true }).last().click(), {
+      budgetMs: 10_000,
+    });
   }
 
   // ─────────────────────────── text fields ───────────────────────────────
@@ -236,15 +240,24 @@ export class PatientAddressesPage extends AppPage {
   }
 
   async enableBilling(index: number) {
-    await this.billingSwitch(index).click({ force: true });
-    await this.page.waitForTimeout(2500);
+    // Toggling billing re-derives the other cards' switches server-side (only one address may be
+    // the billing one), so settle on that round trip.
+    await settleAfter(this.page, () => this.billingSwitch(index).click({ force: true }), {
+      budgetMs: 12_000,
+    });
   }
 
   // ───────────────────────── add / save / delete ─────────────────────────
 
   async addAddress() {
+    // A new card carries a new billing switch, so the switch count going up is the completion
+    // signal — a far better contract than a flat sleep, which was both slower on the common path
+    // and silently short whenever staging lagged.
+    const before = await this.cardCount();
     await this.page.getByText('+ Adresse hinzufügen', { exact: true }).click();
-    await this.page.waitForTimeout(2500);
+    await expect
+      .poll(() => this.cardCount(), { timeout: 10_000, intervals: [100, 200, 300, 500] })
+      .toBeGreaterThan(before);
   }
 
   saveButton(): Locator {
@@ -252,8 +265,11 @@ export class PatientAddressesPage extends AppPage {
   }
 
   async save() {
-    await this.saveButton().click({ force: true });
-    await this.page.waitForTimeout(6000);
+    // The save is a PUT plus the re-read that follows it. `settleAfter` waits for exactly those and
+    // returns as soon as they land, instead of always paying the 6 s worst case this used to sleep.
+    await settleAfter(this.page, () => this.saveButton().click({ force: true }), {
+      budgetMs: 20_000,
+    });
   }
 
   /**
@@ -363,6 +379,27 @@ export class PatientAddressesPage extends AppPage {
   // ──────────────────────────────── helpers ──────────────────────────────
 
   /** Option labels of a portalled dropdown that has just been opened (see class docs). */
+  /**
+   * `freshOptions` read after a bounded poll.
+   *
+   * The dropdown paints asynchronously, which is what the flat 2 s sleeps at the two call sites
+   * were covering. Polling returns as soon as the list has options - typically one or two
+   * intervals - and keeps waiting when staging is slower than the old guess.
+   *
+   * The `data-qa-seen` marking the callers do before clicking is deliberately not repeated here:
+   * the fresh-node set must accumulate across polls, or a re-read would mark the options seen and
+   * then find nothing.
+   */
+  private async pollFreshOptions(budgetMs = 6_000): Promise<string[]> {
+    const deadline = Date.now() + budgetMs;
+    let options = await this.freshOptions();
+    while (options.length === 0 && Date.now() < deadline) {
+      await this.page.waitForTimeout(150);
+      options = await this.freshOptions();
+    }
+    return options;
+  }
+
   private async freshOptions(): Promise<string[]> {
     return await this.page.evaluate(() => {
       const ICON_ONLY = /^[-\s]+$/;

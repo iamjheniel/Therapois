@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { PatientAddressesPage } from '../../../Pages/admin/admin.patient-addresses.page';
+import { waitForAuthState } from '../../../Pages/util/settle';
 
 /**
  * RC 3.10 — Guardian Addresses on the Patient Form (#3188, epic #3187).
@@ -261,7 +262,7 @@ test.describe('Guardian Contacts — patient address form', () => {
 
       // discard: navigate away without saving so the patient keeps its original billing address
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(2000);
+      await waitForAuthState(page);
       const persisted = await form.apiAddresses(QA_PATIENT_ID);
       expect(
         persisted.filter((a) => a.isBilling).length,

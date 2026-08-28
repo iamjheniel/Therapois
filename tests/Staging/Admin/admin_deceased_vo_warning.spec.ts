@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { DeceasedPage, DECEASED_PATIENT } from '../../../Pages/admin/admin.deceased.page';
+import { DeceasedPage } from '../../../Pages/admin/admin.deceased.page';
 
 /**
  * Ticket #2998 (AC1) — VO Creation Warning for a deceased patient (RC 3.9, epic #2995).

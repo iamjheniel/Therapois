@@ -1,4 +1,5 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
+import { settleAfter, waitForStable } from '../util/settle';
 import { boardSearchBox } from '../base/app.page';
 
 /**
@@ -30,7 +31,9 @@ export class IbWizardPage {
     await this.page.setViewportSize({ width: 2400, height: 900 });
     await this.page.goto(`${baseUrl}/therapist/`, { waitUntil: 'domcontentloaded' });
     await this.searchBox().waitFor({ state: 'visible', timeout: 45_000 });
-    await this.page.waitForTimeout(1500);
+    // The search box paints before the rows behind it; every caller goes on to read those rows, so
+    // wait for the row set to stop changing rather than sleeping 1.5 s at it.
+    await waitForStable(this.page.getByRole('checkbox'));
   }
 
   /** Filters the list and expands "Aktive Patienten" so "+ IB" controls render. */
@@ -38,8 +41,8 @@ export class IbWizardPage {
     const box = this.searchBox();
     await box.click();
     await box.fill(term);
-    await box.press('Enter');
-    await this.page.waitForTimeout(3000);
+    // Searching refetches the board, so settle on that request rather than the flat 3 s.
+    await settleAfter(this.page, () => box.press('Enter'), { budgetMs: 15_000 });
     for (let i = 0; i < 4; i++) {
       if ((await this.page.getByRole('checkbox').count()) > 1) break;
       await this.page.getByText(/^Aktive Patienten$/).first().click({ force: true }).catch(() => {});
@@ -164,8 +167,7 @@ export class IbWizardPage {
 
   /** Advances to the next wizard step (step 2). */
   async nextStep(): Promise<void> {
-    await this.tap('Weiter');
-    await this.page.waitForTimeout(1500);
+    await settleAfter(this.page, () => this.tap('Weiter'), { budgetMs: 10_000 });
   }
 
   /** Opens the full-screen signature overlay for the current step. Returns whether it opened. */

@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { settleAfter, waitForStable } from '../util/settle';
 import { AppPage } from '../base/app.page';
 
 export type PriceEntry = {
@@ -329,7 +330,10 @@ export class TreatmentPricesPage extends AppPage {
     await expect(this.page.getByText('Heilmittelverwaltung', { exact: true }).first()).toBeVisible({
       timeout: 30_000,
     });
-    await this.page.waitForTimeout(4000);
+    // The heading paints well before the price table under it. Wait for that table to stop growing
+    // rather than sleeping a flat 4 s that was neither necessary on a warm page nor sufficient on a
+    // cold one.
+    await waitForStable(this.page.locator('tr, [role="row"]'));
   }
 
   /**
@@ -340,7 +344,11 @@ export class TreatmentPricesPage extends AppPage {
    * actions with "Save All Changes" / "Discard".
    */
   async enterEditMode() {
-    await this.page.getByText('Bearbeitungsmodus', { exact: true }).first().click();
-    await this.page.waitForTimeout(3500);
+    // Entering the editor re-renders every row with its Effective Date column; settle on that.
+    await settleAfter(
+      this.page,
+      () => this.page.getByText('Bearbeitungsmodus', { exact: true }).first().click(),
+      { budgetMs: 15_000 },
+    );
   }
 }

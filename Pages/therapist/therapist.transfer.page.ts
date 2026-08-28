@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { settleAfter, waitForStable } from '../util/settle';
 import { boardSearchBox } from '../base/app.page';
 
 /**
@@ -33,7 +34,8 @@ export class TherapistTransferPage {
   async open(baseUrl = 'https://staging.therapios.de'): Promise<void> {
     await this.page.goto(`${baseUrl}/therapist/`, { waitUntil: 'domcontentloaded' });
     await this.searchBox().waitFor({ state: 'visible', timeout: 45_000 });
-    await this.page.waitForTimeout(1500);
+    // The search box paints ahead of the rows the caller then selects from.
+    await waitForStable(this.page.getByRole('checkbox'));
   }
 
   /**
@@ -45,8 +47,9 @@ export class TherapistTransferPage {
     const box = this.searchBox();
     await box.click();
     await box.fill(term);
-    await box.press('Enter');
-    await this.page.waitForTimeout(2500);
+    // Searching refetches the board; settle on that instead of the flat 2.5 s, which could expire
+    // mid-request and make the row count below read the previous result set.
+    await settleAfter(this.page, () => box.press('Enter'), { budgetMs: 15_000 });
     // nth(0) is the select-all header checkbox; a real patient row starts at nth(1).
     if ((await this.page.getByRole('checkbox').count()) < 2) return false;
     await this.page.getByRole('checkbox').nth(1).click({ force: true });
@@ -132,7 +135,8 @@ export class TherapistTransferPage {
     if (!(await this.pickerList().waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false))) {
       return [];
     }
-    await this.page.waitForTimeout(1500);
+    // The picker list is read as raw text below, so it must have stopped streaming first.
+    await waitForStable(this.pickerList());
     return (await this.pickerList().innerText())
       .split('\n')
       .map((s) => s.trim())
@@ -141,8 +145,11 @@ export class TherapistTransferPage {
 
   /** Picks a therapist by exact name from the open picker. */
   async selectTherapist(name: string): Promise<void> {
-    await this.pickerList().getByText(name, { exact: true }).first().click({ force: true });
-    await this.page.waitForTimeout(1500);
+    await settleAfter(
+      this.page,
+      () => this.pickerList().getByText(name, { exact: true }).first().click({ force: true }),
+      { budgetMs: 10_000 },
+    );
   }
 
   /** Closes the modal via Cancel WITHOUT committing the transfer. */

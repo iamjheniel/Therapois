@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import {
-  FollowUpChange,
   MAX_PULL_FORWARD_DAYS,
   ORDER_STATUS,
   OrderingLeadTimePage,

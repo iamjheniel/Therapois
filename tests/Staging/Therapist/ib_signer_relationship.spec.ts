@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page';
+import { DataGate } from '../../fixtures/data-gate';
 
 /**
  * Ticket #2964 — IB · Relative Relationship Selection (RC 3.9.0).
@@ -15,6 +16,13 @@ import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page'
  * post-commit). Data-gated: skips when the signer dialog can't be opened.
  * Staging only (per scope); mirror to Production later.
  */
+/**
+ * The IB flow is reachable only when the board holds a patient in an IB-capable state. That is a
+ * fact about the staging DATA, identical for every test here — so prove it once and let the rest of
+ * the file skip before paying for a navigation and a board search. See `tests/fixtures/data-gate.ts`.
+ */
+const ibGate = new DataGate('IB flow not reachable for the available patient state');
+
 test.describe('Therapist IB — Signer Relationship Selection', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -22,6 +30,8 @@ test.describe('Therapist IB — Signer Relationship Selection', () => {
 
   test.beforeEach(async ({ page }) => {
     test.setTimeout(120_000);
+    // Before the navigation, not after: this is the whole point of the gate.
+    ibGate.skipIfKnownClosed();
     ib = new IbWizardPage(page);
     await ib.open();
     await ib.filterAndExpand('Test');
@@ -30,7 +40,7 @@ test.describe('Therapist IB — Signer Relationship Selection', () => {
   test('Signer dialog offers Patient and relationship options as single-choice radios', {
     tag: ['@Therapist', '@IBSignerRelationship'],
   }, async ({ page }) => {
-    test.skip(!(await ib.openSignerDialog()), 'IB signer dialog not reachable for the available patient state');
+    ibGate.apply(await ib.openSignerDialog(), 'signer dialog not reachable');
 
     await expect(ib.signerDialogTitle()).toBeVisible();
     // AC1: the patient option plus the combined relationship option (guardian / authorised rep).
@@ -49,7 +59,7 @@ test.describe('Therapist IB — Signer Relationship Selection', () => {
   test('Continue is disabled until a signer is selected', {
     tag: ['@Therapist', '@IBSignerRelationship'],
   }, async () => {
-    test.skip(!(await ib.openSignerDialog()), 'IB signer dialog not reachable for the available patient state');
+    ibGate.apply(await ib.openSignerDialog(), 'signer dialog not reachable');
 
     // AC2: with nothing selected, "Weiter" is disabled.
     expect(await ib.isTextControlDisabled('Weiter')).toBeTruthy();
@@ -65,7 +75,7 @@ test.describe('Therapist IB — Signer Relationship Selection', () => {
     tag: ['@Therapist', '@IBSignerRelationship'],
   }, async () => {
     // AC3: pick the relative option and continue → the two-step wizard opens.
-    test.skip(!(await ib.enterWizard('Bevollmächtigte/r / Betreuer/in')), 'IB wizard not reachable for the available patient state');
+    ibGate.apply(await ib.enterWizard('Bevollmächtigte/r / Betreuer/in'), 'wizard not reachable for the relative signer');
     await expect(ib.stepHeading('Datenschutzerklärung')).toBeVisible();
     await ib.closeWizard();
   });
@@ -74,7 +84,7 @@ test.describe('Therapist IB — Signer Relationship Selection', () => {
     tag: ['@Therapist', '@IBSignerRelationship'],
   }, async () => {
     // AC4: the patient-signs-in-person path is unchanged.
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
     await expect(ib.stepHeading('Datenschutzerklärung')).toBeVisible();
     await expect(ib.stepHeading('Therapie-Einverständnis')).toBeVisible();
     await ib.closeWizard();

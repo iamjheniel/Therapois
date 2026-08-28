@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { AppPage } from '../base/app.page';
+import { settleAfter } from '../util/settle';
 
 /**
  * Flow Boards — Management Board (RC 3.10, epic #3172 / sub-tickets #3173–#3183).
@@ -154,8 +155,7 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async openTab(name: string) {
-    await this.tab(name).click();
-    await this.page.waitForTimeout(1500);
+    await this.settle(() => this.tab(name).click(), 1500);
   }
 
   async expectAllBoardTabs() {
@@ -165,6 +165,19 @@ export class FlowBoardsPage extends AppPage {
   }
 
   // ─────────────────────────── readiness / values ────────────────────────
+
+  /**
+   * Runs a board interaction and waits for the requests it fires to come back, rather than sleeping.
+   *
+   * `fallbackMs` is the flat sleep this call used to perform. It is kept only as the shape of the
+   * upper bound — the wait itself ends as soon as the board's own aggregation requests have landed
+   * and the board has stopped repainting, which on a warm board is a fraction of the old sleep. The
+   * bound is floored at 10 s so a genuinely slow provider still gets its full run at the client's
+   * own 8 s abort, instead of being cut short the way the flat sleeps were.
+   */
+  private async settle<T>(action: () => Promise<T>, fallbackMs: number): Promise<T> {
+    return await settleAfter(this.page, action, { budgetMs: Math.max(fallbackMs, 10_000) });
+  }
 
   /** Whole-board text, newlines preserved — every value parser reads this. */
   async boardText(): Promise<string> {
@@ -228,7 +241,9 @@ export class FlowBoardsPage extends AppPage {
     while (Date.now() < deadline) {
       last = FlowBoardsPage.parseNumber(await this.valueUnder(label));
       if (last !== null) return last;
-      await this.page.waitForTimeout(1500);
+      // 400 ms, not 1500: this loop is entered precisely when the card is still on its empty
+      // state, so the interval is dead time on the way to the value, not a guard around it.
+      await this.page.waitForTimeout(400);
     }
     return null;
   }
@@ -315,19 +330,16 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async setPeriodMode(mode: 'Periode' | 'Zeitraum') {
-    await this.segment(mode).click();
-    await this.page.waitForTimeout(3000);
+    await this.settle(() => this.segment(mode).click(), 3000);
   }
 
   async setLevel(level: 'Tag' | 'Woche' | 'Monat') {
-    await this.segment(level).click();
-    await this.page.waitForTimeout(3500);
+    await this.settle(() => this.segment(level).click(), 3500);
   }
 
   /** Zeitraum-mode preset ("Last 7 Days", "This Month", "Last Month"). */
   async applyRangePreset(preset: string) {
-    await this.page.getByText(preset, { exact: true }).first().click();
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => this.page.getByText(preset, { exact: true }).first().click(), 4000);
   }
 
   /** "Zeitraum: 03.08.2026 - 09.08.2026" — the range label shown in Zeitraum mode. */
@@ -388,8 +400,7 @@ export class FlowBoardsPage extends AppPage {
   async stepPeriod(dir: 'back' | 'forward') {
     const el = (await this.stepperHandle(dir)).asElement();
     if (!el) throw new Error(`stepPeriod: no "${dir}" arrow found beside the period label`);
-    await el.click();
-    await this.page.waitForTimeout(3500);
+    await this.settle(() => el.click(), 3500);
   }
 
   /** True once the current period is reached — the forward arrow is really `disabled` (#3174 AC2). */
@@ -428,7 +439,24 @@ export class FlowBoardsPage extends AppPage {
       document.querySelectorAll('*').forEach((e) => e.setAttribute('data-qa-seen', '1')),
     );
     await this.page.getByText(triggerLabel, { exact: true }).first().click();
-    await this.page.waitForTimeout(2500);
+    // The list paints asynchronously, and the anchor option (the one carrying the trigger's own
+    // label) is already the caller's definition of "it really opened" — so poll for exactly that
+    // instead of sleeping 2.5 s on every open. An already-mounted list reads in ~150 ms; a slow one
+    // still gets the full budget, which the flat sleep could not give it.
+    //
+    // The `data-qa-seen` marking above is deliberately NOT repeated inside the loop: the fresh-node
+    // set has to keep accumulating across polls, or a re-read would mark the options as seen and
+    // then find nothing.
+    const deadline = Date.now() + 4_000;
+    let options = await this.readFreshColumn(triggerLabel);
+    while (!options.includes(triggerLabel) && Date.now() < deadline) {
+      await this.page.waitForTimeout(150);
+      options = await this.readFreshColumn(triggerLabel);
+    }
+    return options;
+  }
+
+  private async readFreshColumn(triggerLabel: string): Promise<string[]> {
     return await this.page.evaluate((trigger) => {
       const ICON_ONLY = /^[\uE000-\uF8FF\s]+$/;
       const fresh = [...document.querySelectorAll('*:not([data-qa-seen])')]
@@ -454,7 +482,14 @@ export class FlowBoardsPage extends AppPage {
 
   async closeDropdown() {
     await this.page.keyboard.press('Escape');
-    await this.page.waitForTimeout(1000);
+    // What the next click actually depends on is the overlay being GONE, so wait for that. When no
+    // dialog was open the `hidden` state is already satisfied (it covers "not in the DOM"), so the
+    // common case costs a single poll rather than the flat second this used to charge.
+    await this.page
+      .locator('[role="dialog"][aria-modal="true"]')
+      .first()
+      .waitFor({ state: 'hidden', timeout: 3_000 })
+      .catch(() => {});
   }
 
   /**
@@ -468,8 +503,7 @@ export class FlowBoardsPage extends AppPage {
     if (!label?.trim()) {
       throw new Error(`pickOption: refusing to pick an empty option label (got ${JSON.stringify(label)})`);
     }
-    await this.page.getByText(label, { exact: true }).last().click();
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => this.page.getByText(label, { exact: true }).last().click(), 4000);
   }
 
   /**
@@ -502,13 +536,11 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async setPatientType(type: 'Alle Patienten' | 'GKV' | 'PKV') {
-    await this.segment(type).click();
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => this.segment(type).click(), 4000);
   }
 
   async setLocationType(type: 'Alle Orte' | 'Einrichtung' | 'Praxis') {
-    await this.segment(type).click();
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => this.segment(type).click(), 4000);
   }
 
   // ───────────────────────── traffic-light buckets ───────────────────────
@@ -534,8 +566,7 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async clickBucket(label: string) {
-    await this.bucket(label).click();
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => this.bucket(label).click(), 4000);
   }
 
   // ───────────────────────── revenue waterfall ───────────────────────────
@@ -562,13 +593,11 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async selectTrendMetric(label: string) {
-    await this.trendControl(label).click();
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => this.trendControl(label).click(), 4000);
   }
 
   async selectTrendSeries(label: string) {
-    await this.trendControl(label).click();
-    await this.page.waitForTimeout(4000);
+    await this.settle(() => this.trendControl(label).click(), 4000);
   }
 
   /** Series buttons offered by the chart: Gesamt + one per TO team + Ohne TO-Team. */
@@ -611,7 +640,7 @@ export class FlowBoardsPage extends AppPage {
     const deadline = Date.now() + timeout;
     let labels = await this.readTrendPeriodLabels();
     while (labels.length === 0 && Date.now() < deadline) {
-      await this.page.waitForTimeout(1500);
+      await this.page.waitForTimeout(400);
       labels = await this.readTrendPeriodLabels();
     }
     return labels;
@@ -633,8 +662,7 @@ export class FlowBoardsPage extends AppPage {
   // ──────────────────────────── detail table ─────────────────────────────
 
   async setDetailView(view: 'Gruppen' | 'Therapeut:innen') {
-    await this.segment(view).click();
-    await this.page.waitForTimeout(6000);
+    await this.settle(() => this.segment(view).click(), 6000);
   }
 
   /**
@@ -658,8 +686,7 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async sortBy(label: string) {
-    await this.columnHeader(label).click();
-    await this.page.waitForTimeout(3500);
+    await this.settle(() => this.columnHeader(label).click(), 3500);
   }
 
   /**
@@ -703,8 +730,7 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async expandTeam(name: string) {
-    await this.row(name).click();
-    await this.page.waitForTimeout(5000);
+    await this.settle(() => this.row(name).click(), 5000);
   }
 
   timeRecordingWarnings(): Locator {
@@ -811,12 +837,14 @@ export class FlowBoardsPage extends AppPage {
   }
 
   async openBacklogDrilldown() {
-    await this.backlogBanner().click();
+    // The settle has to WRAP the click: its request listeners attach inside the call, so running it
+    // after the click would miss the very requests the drill-down fired and fall through to the
+    // client-side probe path.
+    await settleAfter(this.page, () => this.backlogBanner().click(), { budgetMs: 15_000 });
     // "Fertig seit" exists only inside the drill-down, so it is the unambiguous ready signal.
     // Matched case-insensitively: like the detail table's headers, it is uppercased by CSS, so the
     // DOM text is "Fertig seit" while the screen reads "FERTIG SEIT".
     await expect(this.headerText('FERTIG SEIT')).toBeVisible({ timeout: 30_000 });
-    await this.page.waitForTimeout(2500);
   }
 
   /** Text of the drill-down only (everything after its header row). */

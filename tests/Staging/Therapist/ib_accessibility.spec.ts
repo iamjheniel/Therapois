@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page';
+import { DataGate } from '../../fixtures/data-gate';
 
 /**
  * Ticket #2965 — IB · Accessibility Labels (RC 3.9.0).
@@ -17,6 +18,13 @@ import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page'
  * search for the labels and skip cleanly when the surface isn't reachable from here.
  * Data-gated + safe (no IB submitted). Staging only (per scope); mirror to Production later.
  */
+/**
+ * The IB flow is reachable only when the board holds a patient in an IB-capable state. That is a
+ * fact about the staging DATA, identical for every test here — so prove it once and let the rest of
+ * the file skip before paying for a navigation and a board search. See `tests/fixtures/data-gate.ts`.
+ */
+const ibGate = new DataGate('IB flow not reachable for the available patient state');
+
 test.describe('Therapist IB — Accessibility Labels', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -24,6 +32,8 @@ test.describe('Therapist IB — Accessibility Labels', () => {
 
   test.beforeEach(async ({ page }) => {
     test.setTimeout(150_000);
+    // Before the navigation, not after: this is the whole point of the gate.
+    ibGate.skipIfKnownClosed();
     ib = new IbWizardPage(page);
     await ib.open();
     await ib.filterAndExpand('Test');
@@ -32,7 +42,7 @@ test.describe('Therapist IB — Accessibility Labels', () => {
   test('Signer dialog options are announced by a meaningful name, not just "radio"', {
     tag: ['@Therapist', '@IBAccessibility'],
   }, async ({ page }) => {
-    test.skip(!(await ib.openSignerDialog()), 'IB signer dialog not reachable for the available patient state');
+    ibGate.apply(await ib.openSignerDialog(), 'signer dialog not reachable');
 
     // AC2, as far as it still holds: each option resolves by an accessible NAME that says what it
     // means, so a screen reader announces "Patient/in" rather than a bare "radio button". The name
@@ -68,7 +78,7 @@ test.describe('Therapist IB — Accessibility Labels', () => {
         'itself works). The test above asserts what survives; un-fixme this one once the labels and ' +
         'the radiogroup are restored.',
     );
-    test.skip(!(await ib.openSignerDialog()), 'IB signer dialog not reachable for the available patient state');
+    ibGate.apply(await ib.openSignerDialog(), 'signer dialog not reachable');
 
     await expect(page.locator('[role="radiogroup"]')).toBeVisible();
     const labels = (
@@ -86,7 +96,7 @@ test.describe('Therapist IB — Accessibility Labels', () => {
   test('Wizard modal traps focus (aria-modal) and the language toggle is labelled', {
     tag: ['@Therapist', '@IBAccessibility'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
 
     // AC6: the wizard modal enables focus trapping via aria-modal="true".
     await expect.poll(() => ib.wizardModal().count(), { timeout: 8000 }).toBeGreaterThan(0);
@@ -99,8 +109,8 @@ test.describe('Therapist IB — Accessibility Labels', () => {
   test('Signature field exposes an accessibility label', {
     tag: ['@Therapist', '@IBAccessibility'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
-    test.skip(!(await ib.openSignatureOverlay()), 'Signature overlay did not open');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
+    ibGate.apply(await ib.openSignatureOverlay(), 'signature overlay did not open');
 
     // AC1: the canvas/signature area has an aria-label describing its purpose ("Unterschriftenfeld").
     await expect(ib.signRegion()).toBeVisible();

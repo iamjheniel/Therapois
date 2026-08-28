@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TreatmentPricesPage } from '../../../Pages/superadmin/sa.treatment-prices.page';
+import { waitForAuthState } from '../../../Pages/util/settle';
 
 /**
  * RC 3.11 #3378 — "Retroactively Entered Prices Are Not Applied to Already-Documented Treatments",
@@ -49,7 +50,7 @@ test.describe('Retroactive price recompute — standing state (#3378, read-only)
   test.beforeEach(async ({ page }) => {
     prices = new TreatmentPricesPage(page);
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(6000);
+    await waitForAuthState(page);
   });
 
   test(

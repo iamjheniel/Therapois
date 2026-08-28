@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { AppPage } from '../base/app.page';
 import { DokuModalPage } from '../therapist/therapist.doku-modal.page';
+import { settleAfter, waitForStable } from '../util/settle';
 
 /**
  * The T Board "Doku erfassen" (document treatment) flow, as driven by Admin and Super Admin.
@@ -27,7 +28,19 @@ export class AdminTBoardPage {
   /** Opens the T Board. Navigating directly is more reliable than the (often off-screen) rail item. */
   async open(baseUrl = 'https://staging.therapios.de') {
     await new AppPage(this.page).goto(`${baseUrl}/therapist`);
-    await this.page.waitForTimeout(8000);
+    // The only thing this method owes its caller is a board that can accept a therapist choice, and
+    // the picker trigger appearing IS that condition - so wait for it instead of sleeping 8 s on
+    // every open. It also fails usefully: an 8 s sleep on a board that never painted handed the
+    // caller a dead page and the failure surfaced later, somewhere else.
+    await expect(this.therapistPickerTrigger()).toBeVisible({ timeout: 45_000 });
+  }
+
+  /** The Admin/SA therapist picker trigger. See {@link selectTherapist} for the label history. */
+  private therapistPickerTrigger() {
+    return this.page
+      .getByRole('button', { name: 'Therapeut:in wählen', exact: true })
+      .or(this.page.getByText('Therapist: (Select)'))
+      .first();
   }
 
   /**
@@ -40,10 +53,7 @@ export class AdminTBoardPage {
    * label is still accepted so the page object works against an environment that has not updated.
    */
   async selectTherapist(name: string) {
-    const trigger = this.page
-      .getByRole('button', { name: 'Therapeut:in wählen', exact: true })
-      .or(this.page.getByText('Therapist: (Select)'))
-      .first();
+    const trigger = this.therapistPickerTrigger();
     await trigger.click();
 
     const picker = this.page.locator('[role="dialog"]');
@@ -51,15 +61,19 @@ export class AdminTBoardPage {
     const search = picker.getByPlaceholder(/Therapeut:in suchen/i);
     if (await search.first().isVisible({ timeout: 5000 }).catch(() => false)) {
       await search.first().fill(name);
-      await this.page.waitForTimeout(1500);
+      // The filtered list is what the next step reads, so wait for it to stop changing rather than
+      // guessing at 1.5 s.
+      await waitForStable(picker.getByText(/\S/));
     }
 
     const option = (await picker.count())
       ? picker.getByText(name, { exact: true }).first()
       : this.page.getByText(name, { exact: true }).first();
     await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.click();
-    await this.page.waitForTimeout(6000); // let the therapist's board load
+    // Choosing a therapist refetches the whole board. Settle on those requests instead of the flat
+    // 6 s, which was simultaneously the single most expensive wait in this flow and no guarantee at
+    // all that the board had actually arrived.
+    await settleAfter(this.page, () => option.click(), { budgetMs: 20_000 });
   }
 
   /** Selects the first patient row (nth(0) is the header checkbox) and opens the Doku modal. */

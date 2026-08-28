@@ -61,12 +61,17 @@ test.describe('Therapist Hinweise reminders', () => {
 
       await board.openHinweise();
       const headlines = await board.hinweiseHeadlines();
-      const gap = headlines.find((h) => /seit 14\+ Tagen nicht behandelt/.test(h));
-      test.skip(!gap, 'No "seit 14+ Tagen nicht behandelt" reminder due in this environment');
+      // The section index matters: the panel stacks all three reminders and every entry in all of
+      // them is a button, so the entries have to be scoped to THIS reminder. Reading them unscoped
+      // compared the union of all three sections (9 on a typical board) against the 14-day
+      // section's own count (6) and failed on a perfectly healthy panel.
+      const gapIndex = headlines.findIndex((h) => /seit 14\+ Tagen nicht behandelt/.test(h));
+      test.skip(gapIndex < 0, 'No "seit 14+ Tagen nicht behandelt" reminder due in this environment');
+      const gap = headlines[gapIndex];
 
       // The headline counts the affected patients; the section names the worst few of them.
-      const total = parseInt(gap!.match(/^(\d+)/)![1], 10);
-      const entries = await board.hinweiseEntries();
+      const total = parseInt(gap.match(/^(\d+)/)![1], 10);
+      const entries = await board.hinweiseEntries(gapIndex);
       console.log(`"${gap}" → ${entries.length} entries listed: ${JSON.stringify(entries.slice(0, 5))}`);
       expect(entries.length, 'the reminder must name the patients behind its count').toBeGreaterThan(0);
       expect(

@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { settleAfter } from '../util/settle';
 
 /**
  * Old-format PKV invoices and the one-time DATEV push — RC 3.11.1 #3440.
@@ -202,7 +203,12 @@ export class DatevOldFormatPage {
 
   async open(): Promise<void> {
     await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    await this.page.waitForTimeout(6000);
+    // `auth-state` is written into localStorage from the .auth storageState BEFORE the page loads,
+    // so the token is readable as soon as the document exists. The flat sleep this replaces was
+    // waiting for nothing — it just delayed reading a value that was already there.
+    await this.page
+      .waitForFunction(() => !!localStorage.getItem('auth-state'), null, { timeout: 30_000 })
+      .catch(() => {});
     this.token = await this.page.evaluate(() => {
       try {
         const state = JSON.parse(localStorage.getItem('auth-state') || '');
@@ -356,12 +362,23 @@ export class DatevOldFormatPage {
     return Number(body.totalItems ?? 0);
   }
 
+  /**
+   * Runs a navigation/interaction and waits for the requests it fires to come back, instead of
+   * sleeping a flat guess. `fallbackMs` is the sleep this replaced, kept only as the upper bound.
+   * See `Pages/util/settle.ts` for why the network signal is what makes "the page has stopped
+   * changing" trustworthy.
+   */
+  private async settle<T>(action: () => Promise<T>, fallbackMs: number): Promise<T> {
+    return await settleAfter(this.page, action, { budgetMs: Math.max(fallbackMs, 12_000) });
+  }
+
   /** Opens `/billing` on the PKV-Abrechnung tab and returns the rendered table text. */
   async openPkvTab(): Promise<string> {
-    await this.page.goto('/billing', { waitUntil: 'domcontentloaded' });
-    await this.page.waitForTimeout(12_000);
-    await this.page.getByText('PKV-Abrechnung', { exact: false }).first().click();
-    await this.page.waitForTimeout(10_000);
+    await this.settle(() => this.page.goto('/billing', { waitUntil: 'domcontentloaded' }), 12_000);
+    await this.settle(
+      () => this.page.getByText('PKV-Abrechnung', { exact: false }).first().click(),
+      10_000,
+    );
     return await this.page.evaluate(() => (document.body as HTMLElement).innerText);
   }
 

@@ -7,7 +7,6 @@ import {
   PERIOD_TO,
   PROVIDERS,
   PROVIDER_KEYS,
-  ProviderKey,
   REVENUE_PROVIDERS,
 } from '../../../Pages/superadmin/sa.board-filters.page';
 

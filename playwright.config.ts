@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import path from 'path';
 
 export default defineConfig({
@@ -23,7 +23,14 @@ export default defineConfig({
   use: {
     baseURL: 'https://staging.therapios.de/',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure', // Only collect heavy traces on retries
-    video: 'retain-on-failure',
+    // `retain-on-failure` reads like "only pay for failures", but it does not: Playwright has to
+    // record EVERY test and then delete the artifact when the test passes. On a green run that is
+    // pure overhead — a screencast running for the whole of all ~460 tests — and it buys nothing,
+    // because a CI failure is retried (`retries: 1`) and the retry captures both video and trace.
+    // Locally the trace above is already the debugging surface and carries its own screenshots, so
+    // the video is redundant there too. `screenshot` is exempt: it is captured at the failure point
+    // only, not recorded continuously.
+    video: process.env.CI ? 'on-first-retry' : 'off',
     screenshot: 'only-on-failure',
     headless: true,
     actionTimeout: 0,           // disable low-level timeout
@@ -89,24 +96,12 @@ export default defineConfig({
       },
     },
 
-    // 👇 Browser configurations (desktop)
-    {
-      name: 'chromium',
-      dependencies: ['setup'],
-      use: {
-        ...devices['Desktop Chrome'],
-        permissions: ['clipboard-read'],
-      },
-    },
-    {
-      name: 'firefox',
-      dependencies: ['setup'],
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      dependencies: ['setup'],
-      use: { ...devices['Desktop Safari'] },
-    },
+    // NOTE: there are deliberately no bare `chromium` / `firefox` / `webkit` projects here.
+    // They carried no `testMatch`, so each of them matched EVERY spec in `testDir` — a bare
+    // `npx playwright test` scheduled 2,370 tests across 163 files instead of the 440 the six
+    // role projects hold. None of those extra runs could pass either: the browser projects
+    // declared no `storageState`, so every test landed on the login page. The role projects
+    // above already pin Desktop Chrome via the default channel; add a browser matrix back only
+    // with an explicit `testMatch` and a `storageState`.
   ],
 });

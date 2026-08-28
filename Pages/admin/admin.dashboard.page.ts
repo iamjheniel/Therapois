@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { settleAfter, waitForOpen, waitForStable } from '../util/settle';
 
 export type ColumnOption = { label: string; checked: boolean };
 
@@ -141,20 +142,17 @@ export class AdminDashboardPage {
 
   /** Advances one page via the "›" arrow. */
   async nextPage(): Promise<void> {
-    await this.pagerControl('›').click({ force: true });
-    await this.page.waitForTimeout(2500);
+    await this.settle(() => this.pagerControl('›').click({ force: true }), 2500);
   }
 
   /** Steps back one page via the "‹" arrow (inert on page 1). */
   async prevPage(): Promise<void> {
-    await this.pagerControl('‹').click({ force: true });
-    await this.page.waitForTimeout(2500);
+    await this.settle(() => this.pagerControl('‹').click({ force: true }), 2500);
   }
 
   /** Jumps to a page by its number, as shown in the windowed page list. */
   async gotoPage(n: number): Promise<void> {
-    await this.pagerControl(String(n)).click({ force: true });
-    await this.page.waitForTimeout(2500);
+    await this.settle(() => this.pagerControl(String(n)).click({ force: true }), 2500);
   }
 
   /** The current page size, read off the "Zeilen pro Seite" selector's own aria-label. */
@@ -172,15 +170,31 @@ export class AdminDashboardPage {
   async setRowsPerPage(size: number): Promise<void> {
     if ((await this.rowsPerPage()) === size) return;
     await this.rowsPerPageControl().click();
-    await this.page.waitForTimeout(1500);
+    // The portalled option panel appearing is the precondition for the click below.
+    await waitForOpen(this.panel());
     // The options open in the same portalled `[role="dialog"]` the panels use. Scoping to it matters:
     // the table and the pager both render bare numbers that would otherwise match.
-    await this.panel()
-      .getByText(String(size), { exact: true })
-      .filter({ visible: true })
-      .first()
-      .click({ force: true });
-    await this.page.waitForTimeout(3000);
+    await this.settle(
+      () =>
+        this.panel()
+          .getByText(String(size), { exact: true })
+          .filter({ visible: true })
+          .first()
+          .click({ force: true }),
+      3000,
+    );
+  }
+
+  /**
+   * Runs a board interaction and waits for the refetch it triggers, rather than sleeping a guess.
+   *
+   * `fallbackMs` is the flat sleep this call used to perform, kept only as the shape of the upper
+   * bound. See `Pages/util/settle.ts` for why waiting on the network is what makes "the table has
+   * stopped changing" trustworthy here — on its own it is satisfied while the request is still in
+   * flight, which is how an earlier attempt at this read the PRE-filter row count.
+   */
+  private async settle<T>(action: () => Promise<T>, fallbackMs: number): Promise<T> {
+    return await settleAfter(this.page, action, { budgetMs: Math.max(fallbackMs, 10_000) });
   }
 
   private async rootLines(): Promise<string[]> {
@@ -232,8 +246,7 @@ export class AdminDashboardPage {
     const box = this.searchBox();
     await box.click();
     await box.fill(query);
-    await this.page.keyboard.press('Enter');
-    await this.page.waitForTimeout(2500);
+    await this.settle(() => this.page.keyboard.press('Enter'), 2500);
   }
 
   // ------------------------------------------------------------------ summary status pills
@@ -264,18 +277,20 @@ export class AdminDashboardPage {
    */
   async clickPill(label: string): Promise<void> {
     const before = await this.totalCount().catch(() => NaN);
-    await this.pill(label).click();
-    const deadline = Date.now() + 30_000;
+    // The refetch itself is what `settle` waits for, so the total read after it is the NEW one —
+    // the old loop had to infer that from the number having moved, which cost a fixed 2.2 s on
+    // every pill and span the full 30 s whenever a pill legitimately matched the same row count
+    // (clicking "Alle VOs" while already unfiltered does exactly that).
+    await this.settle(() => this.pill(label).click(), 3000);
+    if ((await this.totalCount().catch(() => NaN)) !== before) return;
+    // Unmoved. Usually that is a pill that really does match the same total, but give a lagging
+    // render a bounded chance to disagree before accepting it.
+    const deadline = Date.now() + 6_000;
     while (Date.now() < deadline) {
-      await this.page.waitForTimeout(1000);
+      await this.page.waitForTimeout(500);
       const now = await this.totalCount().catch(() => NaN);
-      // Settled: the total moved off the previous filter's value and stopped changing.
-      if (Number.isFinite(now) && now !== before) {
-        await this.page.waitForTimeout(1200);
-        if ((await this.totalCount().catch(() => NaN)) === now) return;
-      }
+      if (Number.isFinite(now) && now !== before) return;
     }
-    await this.page.waitForTimeout(1000);
   }
 
   // ------------------------------------------------------------------ the toolbar chips
@@ -352,10 +367,22 @@ export class AdminDashboardPage {
     } else {
       await this.page.keyboard.press('Escape').catch(() => {});
     }
-    await this.page.waitForTimeout(2500);
+    // The panel being CLOSED is the postcondition; poll for it instead of sleeping 2.5 s and then
+    // re-checking. On the common path this returns in one interval.
+    await this.waitForPanelClosed(() => this.isFilterPanelOpen());
     if (await this.isFilterPanelOpen()) {
+      // Neither control always dismisses the portalled panel; toggling the chip does.
       await this.toolbarChip('Filter').click({ force: true });
-      await this.page.waitForTimeout(1500);
+      await this.waitForPanelClosed(() => this.isFilterPanelOpen());
+    }
+  }
+
+  /** Polls until `isOpen` reports the portalled panel has gone (bounded; never throws). */
+  private async waitForPanelClosed(isOpen: () => Promise<boolean>, budgetMs = 6_000): Promise<void> {
+    const deadline = Date.now() + budgetMs;
+    while (Date.now() < deadline) {
+      if (!(await isOpen().catch(() => false))) return;
+      await this.page.waitForTimeout(150);
     }
   }
 
@@ -379,8 +406,7 @@ export class AdminDashboardPage {
   /** Clears every applied filter from within the open panel. */
   async clearFilters(): Promise<void> {
     await this.openFilterPanel();
-    await this.filterPanelSentinel().click({ force: true });
-    await this.page.waitForTimeout(2500);
+    await this.settle(() => this.filterPanelSentinel().click({ force: true }), 2500);
   }
 
   /**
@@ -394,7 +420,9 @@ export class AdminDashboardPage {
   async selectFilter(section: string, option: string): Promise<void> {
     await this.openFilterPanel();
     await this.page.getByRole('button', { name: section, exact: true }).click();
-    await this.page.waitForTimeout(1500);
+    // Opening a section REPLACES the filter panel with the option list in the same dialog node, so
+    // wait for that list to have content rather than sleeping at it.
+    await waitForStable(this.panel().getByText(/\S/));
 
     const list = this.panel();
     // Long option lists (Therapeut / Arzt / ER) open with their own search box, and the wanted
@@ -402,7 +430,8 @@ export class AdminDashboardPage {
     const search = list.locator('input');
     if (await search.first().isVisible().catch(() => false)) {
       await search.first().fill(option);
-      await this.page.waitForTimeout(1500);
+      // The filtered list is what the option is then picked from.
+      await waitForStable(list.getByText(/\S/));
     }
 
     // Prefer an exact hit; the Arzt/ER pickers decorate entries with a location suffix
@@ -415,10 +444,13 @@ export class AdminDashboardPage {
     // Long lists scroll inside the dropdown, so an entry can sit outside the viewport — which even
     // a force-click rejects. Scroll it in first, then fall back to a direct DOM click.
     await opt.evaluate((el) => el.scrollIntoView({ block: 'center' })).catch(() => {});
-    await opt.click({ force: true, timeout: 8000 }).catch(async () => {
-      await opt.evaluate((el) => (el as HTMLElement).click());
-    });
-    await this.page.waitForTimeout(2500);
+    await this.settle(
+      () =>
+        opt.click({ force: true, timeout: 8000 }).catch(async () => {
+          await opt.evaluate((el) => (el as HTMLElement).click());
+        }),
+      2500,
+    );
   }
 
   /**
@@ -430,7 +462,7 @@ export class AdminDashboardPage {
   async selectFirstFilterOption(section: string): Promise<string | null> {
     await this.openFilterPanel();
     await this.page.getByRole('button', { name: section, exact: true }).click();
-    await this.page.waitForTimeout(1500);
+    await waitForStable(this.panel().getByText(/\S/));
 
     // The option list populates asynchronously, so poll rather than reading once.
     const readOptions = async () =>
@@ -451,16 +483,19 @@ export class AdminDashboardPage {
     while (Date.now() < deadline) {
       [label] = await readOptions();
       if (label) break;
-      await this.page.waitForTimeout(700);
+      await this.page.waitForTimeout(250);
     }
     if (!label) return null;
 
     const opt = this.panel().getByText(label, { exact: true }).filter({ visible: true }).first();
     await opt.evaluate((el) => el.scrollIntoView({ block: 'center' })).catch(() => {});
-    await opt.click({ force: true, timeout: 8000 }).catch(async () => {
-      await opt.evaluate((el) => (el as HTMLElement).click());
-    });
-    await this.page.waitForTimeout(2500);
+    await this.settle(
+      () =>
+        opt.click({ force: true, timeout: 8000 }).catch(async () => {
+          await opt.evaluate((el) => (el as HTMLElement).click());
+        }),
+      2500,
+    );
     return label;
   }
 
@@ -541,13 +576,12 @@ export class AdminDashboardPage {
     const close = this.page.getByText('Schließen', { exact: true }).filter({ visible: true }).first();
     if (await close.isVisible().catch(() => false)) await close.click({ force: true });
     else await this.page.keyboard.press('Escape').catch(() => {});
-    await this.page.waitForTimeout(1000);
+    await this.waitForPanelClosed(() => this.isColumnChooserOpen());
     if (await this.isColumnChooserOpen()) {
       // Neither always dismisses the portalled panel; toggling the chip does.
       await this.toolbarChip('Spalten').click({ force: true });
-      await this.page.waitForTimeout(1500);
+      await this.waitForPanelClosed(() => this.isColumnChooserOpen());
     }
-    await this.page.waitForTimeout(1000);
   }
 
   /**
@@ -602,7 +636,10 @@ export class AdminDashboardPage {
     if (await row.count()) await row.click();
     // Older build: no roles to hook, so click the label itself inside the panel.
     else await this.panel().getByText(name, { exact: true }).first().click({ force: true });
-    await this.page.waitForTimeout(1500);
+    // Toggling a column rewrites the chooser row's own tick and repaints the table behind it. That
+    // is a client-side preference write, so the completion signal is the chooser settling — not a
+    // network round trip, and certainly not a flat 1.5 s.
+    await waitForStable(this.panel().getByText(/\S/), { budgetMs: 5_000 });
   }
 
   /** Drives a column to a wanted state, leaving it alone when it is already there. */

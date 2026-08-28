@@ -1,4 +1,5 @@
 import { Locator, Page, expect } from '@playwright/test';
+import { settleAfter } from '../util/settle';
 
 /**
  * The "Doku erfassen" (document treatment) modal — the primary action on both the therapist board
@@ -80,8 +81,12 @@ export class DokuModalPage {
 
   /** Copies the previous documentation into the note field. */
   async useLastNote(): Promise<void> {
-    await this.modal().getByText('Letzte Doku übernehmen', { exact: true }).click();
-    await this.page.waitForTimeout(1200);
+    // Copying the previous documentation fetches it; settle on that request.
+    await settleAfter(
+      this.page,
+      () => this.modal().getByText('Letzte Doku übernehmen', { exact: true }).click(),
+      { budgetMs: 10_000 },
+    );
   }
 
   // ───────────────────────── multi-patient entries ──────────────────────────
@@ -106,7 +111,12 @@ export class DokuModalPage {
     const glyph = ((await toggle.first().innerText().catch(() => '')) || '').trim();
     if (glyph === DokuModalPage.EXPANDED_GLYPH) return true; // already open
     await toggle.first().click({ force: true });
-    await this.page.waitForTimeout(1500);
+    // Expanding reveals this entry's note field, which is exactly what the caller goes on to fill.
+    await this.modal()
+      .getByPlaceholder('Doku eingeben')
+      .first()
+      .waitFor({ state: 'visible', timeout: 8_000 })
+      .catch(() => {});
     return true;
   }
 
@@ -122,9 +132,16 @@ export class DokuModalPage {
       const collapsed = this.modal()
         .locator('button[aria-label]')
         .filter({ hasText: DokuModalPage.COLLAPSED_GLYPH });
-      if ((await collapsed.count()) === 0) break;
+      const before = await collapsed.count();
+      if (before === 0) break;
       await collapsed.first().click({ force: true });
-      await this.page.waitForTimeout(1200);
+      // Expanding an entry removes it from the collapsed set, so that count dropping is the
+      // completion signal - and it is reached in ~100 ms rather than the flat 1.2 s this paid on
+      // every one of up to 12 rounds.
+      await expect
+        .poll(() => collapsed.count(), { timeout: 5_000, intervals: [100, 150, 250, 400] })
+        .toBeLessThan(before)
+        .catch(() => {});
     }
     return await this.noteFieldCount();
   }
@@ -167,7 +184,13 @@ export class DokuModalPage {
    */
   async addActivity(): Promise<void> {
     await this.modal().getByRole('button', { name: 'Aktivität', exact: true }).click();
-    await this.page.waitForTimeout(2500);
+    // The appended entry defaults to type "Pause" and requires a duration; that field appearing is
+    // the signal the entry actually landed.
+    await this.modal()
+      .getByPlaceholder('In Minuten')
+      .first()
+      .waitFor({ state: 'visible', timeout: 8_000 })
+      .catch(() => {});
   }
 
   /** Sets the expanded activity entry's duration in minutes. */

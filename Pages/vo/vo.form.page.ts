@@ -1,5 +1,6 @@
 import { Page, Locator, Response, expect } from '@playwright/test';
 import { AdminDashboardPage } from '../admin/admin.dashboard.page';
+import { settleAfter, waitForOpen, waitForStable } from '../util/settle';
 
 /**
  * v3.11.0 translated the Create-VO form. These matchers accept BOTH languages so one POM drives
@@ -171,9 +172,19 @@ export class VoFormPage {
     ).locator('xpath=following::div[@tabindex="0"][1]');
   }
 
+  /** The currently-open dropdown flatlist. */
+  private flatlist(): Locator {
+    return this.page.locator('[data-testid*="flatlist"]');
+  }
+
+  /** Every option row inside the currently-open dropdown flatlist. */
+  private flatOptions(): Locator {
+    return this.flatlist().getByText(/\S/);
+  }
+
   /** The first option row inside the currently-open dropdown flatlist. */
   private firstFlatOption(): Locator {
-    return this.page.locator('[data-testid*="flatlist"]').getByText(/\S/).first();
+    return this.flatOptions().first();
   }
 
   /**
@@ -187,8 +198,10 @@ export class VoFormPage {
    */
   private async searchAndPickFirst(open: () => Promise<void>, query: string): Promise<boolean> {
     await open();
-    await this.page.waitForTimeout(700);
+    // The dropdown's own search box becoming visible IS "the dropdown is open" — wait for that
+    // signal instead of charging every call site a flat 700 ms whether it is needed or not.
     const search = this.page.locator(DROPDOWN_SEARCH_SELECTOR).last();
+    await waitForOpen(search);
     await search.pressSequentially(query, { delay: 100 });
     // Wait (generously — the search hits the network) for a first result to confirm there's
     // data. Results stream in asynchronously, so a slow/empty first attempt is retried once by
@@ -211,15 +224,22 @@ export class VoFormPage {
     // its overlay blocks later steps) and report back so the caller can fall back.
     if (!appeared) {
       await this.page.keyboard.press('Escape').catch(() => {});
-      await this.page.waitForTimeout(300);
+      // The overlay being GONE is the thing later steps depend on, so wait for that rather than
+      // sleeping 300 ms and hoping.
+      await this.flatlist()
+        .first()
+        .waitFor({ state: 'hidden', timeout: 5_000 })
+        .catch(() => {});
       return false;
     }
     // Let the streaming list SETTLE before clicking — results stream in as the query runs,
     // and clicking mid-stream detaches the target and hangs. Re-resolve the locator after
     // the wait so we click the settled first row, not a stale handle.
-    await this.page.waitForTimeout(1500);
-    await this.firstFlatOption().click();
-    await this.page.waitForTimeout(1200);
+    await waitForStable(this.flatOptions());
+    // Picking a record auto-fills dependent fields (a patient back-fills Praxis + Facility), so
+    // the click is followed by a refetch. `settleAfter` waits for exactly that instead of the
+    // flat 1200 ms, and unlike the sleep it keeps waiting when staging is slower than the guess.
+    await settleAfter(this.page, () => this.firstFlatOption().click(), { budgetMs: 12_000 });
     return true;
   }
 
@@ -274,23 +294,23 @@ export class VoFormPage {
    */
   async selectArea(area?: string) {
     await this.dropdownFor(/^(Area|Fachbereich) \*$/).click();
-    await this.page.waitForTimeout(900);
+    await waitForOpen(this.flatOptions());
     const option = area
-      ? this.page.locator('[data-testid*="flatlist"]').getByText(area, { exact: true }).first()
+      ? this.flatlist().getByText(area, { exact: true }).first()
       : this.firstFlatOption();
-    await option.click();
-    await this.page.waitForTimeout(2_000);
+    // Choosing an Area re-derives the ICD + Diagnosegruppe fields off the backend, so wait for
+    // that refetch rather than the flat 2 s this used to guess at.
+    await settleAfter(this.page, () => option.click(), { budgetMs: 12_000 });
   }
 
   /** Picks the Insurance Type / Versicherungsart. First available option by default. */
   async selectInsuranceType(type?: string) {
     await this.dropdownFor(/^(Insurance Type|Versicherungsart) \*$/).click();
-    await this.page.waitForTimeout(900);
+    await waitForOpen(this.flatOptions());
     const option = type
-      ? this.page.locator('[data-testid*="flatlist"]').getByText(type, { exact: true }).first()
+      ? this.flatlist().getByText(type, { exact: true }).first()
       : this.firstFlatOption();
-    await option.click();
-    await this.page.waitForTimeout(1_000);
+    await settleAfter(this.page, () => option.click(), { budgetMs: 10_000 });
   }
 
   /**
@@ -317,9 +337,10 @@ export class VoFormPage {
       .catch(() => false);
     if (!appeared) return false;
     // Let the streaming list settle so the row we click isn't detached mid-update.
-    await this.page.waitForTimeout(1_200);
-    await firstResult.click();
-    await this.page.waitForTimeout(1_500);
+    await waitForStable(this.page.getByText(/^\S+ -- /));
+    // Picking an ICD auto-fills Diagnose + Diagnosegruppe from the backend — settle on that
+    // refetch instead of the flat 1.5 s.
+    await settleAfter(this.page, () => firstResult.click(), { budgetMs: 12_000 });
     return true;
   }
 
@@ -341,9 +362,10 @@ export class VoFormPage {
    */
   async selectTreatmentHeilmittel(seed = 'KG'): Promise<boolean> {
     await this.dropdownFor('Heilmittel/s *').click();
-    await this.page.waitForTimeout(1_000);
-    await this.page.locator(DROPDOWN_SEARCH_SELECTOR).last().pressSequentially(seed, { delay: 120 });
-    const flatlist = this.page.locator('[data-testid*="flatlist"]');
+    const search = this.page.locator(DROPDOWN_SEARCH_SELECTOR).last();
+    await waitForOpen(search);
+    await search.pressSequentially(seed, { delay: 120 });
+    const flatlist = this.flatlist();
     // Wait for the streaming option list to actually produce a row instead of guessing with a
     // fixed sleep (the source of Heilmittel flakiness — the search hits the network).
     const anyOption = flatlist.getByText(/\S/).filter({ visible: true }).first();
@@ -356,7 +378,7 @@ export class VoFormPage {
       return false;
     }
     // Let the streaming list settle, then re-resolve so we don't click a detached row.
-    await this.page.waitForTimeout(1_200);
+    await waitForStable(flatlist.getByText(/\S/));
     // Prefer an exact seed match (each option row carries data-testid=<code>); fall back to
     // the first available visible option so the flow isn't tied to one specific code existing.
     let option = flatlist.getByText(seed, { exact: true }).filter({ visible: true }).first();
@@ -433,15 +455,20 @@ export class VoFormPage {
 
     for (let attempt = 0; attempt < 4; attempt++) {
       await this.dismissOverlay();
-      await this.speichernButton().click().catch(() => {});
-      await this.page.waitForTimeout(2_000);
+      // Speichern runs the backend validation checks, so settle on that round trip. The old flat
+      // 2 s was charged on all four attempts whether or not anything was still in flight.
+      await settleAfter(this.page, () => this.speichernButton().click().catch(() => {}), {
+        budgetMs: 15_000,
+      });
       if (await confirmNotDuplicate.isVisible().catch(() => false)) {
-        await confirmNotDuplicate.click().catch(() => {});
-        await this.page.waitForTimeout(1_200);
+        await settleAfter(this.page, () => confirmNotDuplicate.click().catch(() => {}), {
+          budgetMs: 10_000,
+        });
       }
       if (await rejectPredecessor.isVisible().catch(() => false)) {
-        await rejectPredecessor.first().click().catch(() => {});
-        await this.page.waitForTimeout(1_200);
+        await settleAfter(this.page, () => rejectPredecessor.first().click().catch(() => {}), {
+          budgetMs: 10_000,
+        });
       }
       if (await valPanel.isVisible().catch(() => false)) break;
     }
@@ -454,11 +481,20 @@ export class VoFormPage {
     // check and removes its button, exposing the next. Loop until none remain (all green).
     for (let guard = 0; guard < 12; guard++) {
       const approve = this.page.getByText('Bestanden', { exact: true });
-      if ((await approve.count()) === 0) break;
+      const before = await approve.count();
+      if (before === 0) break;
       await approve.first().click().catch(() => {});
-      await this.page.waitForTimeout(500);
+      // Approving a check REMOVES its button, so the count changing is the completion signal.
+      // Polling for it returns in ~100 ms on the common path instead of always paying 500 ms,
+      // and still waits up to 3 s when staging is slow (where 500 ms would have been too short
+      // and the next iteration would have re-clicked a button that was already going away).
+      await expect
+        .poll(() => approve.count(), { timeout: 3_000, intervals: [100, 150, 250, 500] })
+        .not.toBe(before)
+        .catch(() => {});
     }
-    await this.page.waitForTimeout(1_000);
+    // No trailing sleep: `confirmValidatedSave()` opens by waiting for "Alle N Prüfungen
+    // bestanden", which is the same condition this was sleeping in the hope of reaching.
   }
 
   /**

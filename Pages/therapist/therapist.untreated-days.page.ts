@@ -1,5 +1,6 @@
 import { Page, Locator, Response, expect } from '@playwright/test';
 import { TherapistBoardV2Page } from './therapist.board-v2.page';
+import { settleAfter } from '../util/settle';
 
 /**
  * "Tage seit Beh." — the days-since-last-treatment measure on the Therapist Board (RC 3.11.1 #3471).
@@ -341,8 +342,7 @@ export class UntreatedDaysPage {
   async expandGroup(label: string): Promise<boolean> {
     const header = this.page.getByText(new RegExp(`^${label}$`, 'i')).first();
     if (!(await header.isVisible({ timeout: 15_000 }).catch(() => false))) return false;
-    await header.click({ timeout: 30_000 });
-    await this.page.waitForTimeout(6000);
+    await this.settle(() => header.click({ timeout: 30_000 }), 6000);
     return true;
   }
 
@@ -355,8 +355,7 @@ export class UntreatedDaysPage {
   async revealPreviousVos(): Promise<boolean> {
     const control = this.page.getByRole('button', { name: /v\. VOs/ }).first();
     if (!(await control.isVisible({ timeout: 15_000 }).catch(() => false))) return false;
-    await control.click({ timeout: 30_000 });
-    await this.page.waitForTimeout(5000);
+    await this.settle(() => control.click({ timeout: 30_000 }), 5000);
     return true;
   }
 
@@ -368,9 +367,18 @@ export class UntreatedDaysPage {
   }
 
   /** Clicks the header and reports the direction glyph it settles on ("↕" / "↑" / "↓"). */
+  /**
+   * Runs an interaction and waits for the requests it fires to come back, rather than sleeping a
+   * flat guess. `fallbackMs` is the sleep this replaced, kept only as the upper bound — see
+   * `Pages/util/settle.ts` for why the network signal is what makes "the page has stopped changing"
+   * trustworthy, and why a purely client-side interaction returns early instead of waiting it out.
+   */
+  private async settle<T>(action: () => Promise<T>, fallbackMs: number): Promise<T> {
+    return await settleAfter(this.page, action, { budgetMs: Math.max(fallbackMs, 10_000) });
+  }
+
   async sortByDays(): Promise<string> {
-    await this.daysHeader().click({ timeout: 30_000 });
-    await this.page.waitForTimeout(4500);
+    await this.settle(() => this.daysHeader().click({ timeout: 30_000 }), 4500);
     const text = (await this.daysHeader().innerText().catch(() => '')) || '';
     return text.split('\n').map((l) => l.trim()).find((l) => ['↕', '↑', '↓'].includes(l)) ?? '';
   }
@@ -402,14 +410,13 @@ export class UntreatedDaysPage {
    */
   async applyGapFilter(): Promise<number | null> {
     await this.board.openFilterPanel();
-    await this.board
+    const option = this.board
       .panel()
-      .getByRole('button', { name: UntreatedDaysPage.GAP_FILTER, exact: true })
-      .click({ timeout: 30_000 });
-    await this.page.waitForTimeout(3000);
+      .getByRole('button', { name: UntreatedDaysPage.GAP_FILTER, exact: true });
+    await this.settle(() => option.click({ timeout: 30_000 }), 3000);
     const preview = await this.board.filterResultCount();
     await this.board.closeFilterPanel();
-    await this.page.waitForTimeout(3000);
+    await this.settle(async () => {}, 3000);
     return preview;
   }
 
@@ -428,11 +435,9 @@ export class UntreatedDaysPage {
       await this.page.getByRole('button', { name: 'Filter', exact: true }).click({ timeout: 30_000 });
       await expect(panel, 'the Filter panel must open to be cleared').toBeVisible({ timeout: 30_000 });
     }
-    await panel
-      .getByRole('button', { name: 'Alle löschen', exact: true })
-      .click({ timeout: 30_000 });
-    await this.page.waitForTimeout(2500);
+    const clearAll = panel.getByRole('button', { name: 'Alle löschen', exact: true });
+    await this.settle(() => clearAll.click({ timeout: 30_000 }), 2500);
     await this.board.closeFilterPanel();
-    await this.page.waitForTimeout(3000);
+    await this.settle(async () => {}, 3000);
   }
 }

@@ -1,4 +1,5 @@
-import { Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { settleAfter } from '../util/settle';
 import { boardSearchBox } from '../base/app.page';
 
 /**
@@ -83,10 +84,13 @@ export class TherapistListPage {
       const box = this.searchBox();
       await box.click({ timeout: 15_000 });
       await box.fill(term, { timeout: 15_000 });
-      await box.press('Enter', { timeout: 15_000 });
       // A submitted search re-fetches, and the board shows its empty state while the request is in
-      // flight — so read the result only after it has landed.
-      await this.page.waitForTimeout(1200);
+      // flight — so read the result only after it has landed. `settleAfter` waits for that request
+      // specifically, which is both faster than the old flat 1.2 s on a warm board and, unlike it,
+      // actually correct when staging takes longer than the guess.
+      await settleAfter(this.page, () => box.press('Enter', { timeout: 15_000 }), {
+        budgetMs: 15_000,
+      });
       await this.settle(15_000);
     }
   }

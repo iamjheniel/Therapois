@@ -1,4 +1,5 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
+import { settleAfter } from '../util/settle';
 
 /**
  * Page Object for the RC 3.9 "ETI Experts Debt Collection (PKV)" epic (#2947): the PKV-Abrechnung
@@ -24,10 +25,18 @@ export class PkvBillingPage {
   async open(): Promise<void> {
     await this.page.setViewportSize({ width: 1920, height: 1080 });
     await this.page.goto(`${this.baseUrl}/billing`, { waitUntil: 'domcontentloaded' });
-    await this.page.waitForTimeout(5000);
-    await this.page.getByText('PKV-Abrechnung', { exact: false }).filter({ visible: true }).first()
-      .click({ force: true, timeout: 8000 }).catch(() => {});
-    await this.page.waitForTimeout(3500);
+    // The tab being clickable is the precondition for the click, so wait for THAT rather than
+    // sleeping 5 s at it. `/billing` opens on the Validierung tab and is slow to paint, hence the
+    // generous ceiling - but a warm page clears it in well under a second.
+    const pkvTab = this.page
+      .getByText('PKV-Abrechnung', { exact: false })
+      .filter({ visible: true })
+      .first();
+    await pkvTab.waitFor({ state: 'visible', timeout: 30_000 }).catch(() => {});
+    // Switching tabs refetches the invoice list; settle on that instead of the flat 3.5 s.
+    await settleAfter(this.page, () => pkvTab.click({ force: true, timeout: 8000 }).catch(() => {}), {
+      budgetMs: 20_000,
+    });
     await this.subtab('Alle').waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
   }
 
@@ -37,8 +46,7 @@ export class PkvBillingPage {
   }
 
   async openSubtab(name: string): Promise<void> {
-    await this.subtab(name).click({ force: true });
-    await this.page.waitForTimeout(3000);
+    await settleAfter(this.page, () => this.subtab(name).click({ force: true }), { budgetMs: 15_000 });
   }
 
   /** Number of selectable invoice rows on the current subtab (excludes the header checkbox). */
@@ -49,8 +57,11 @@ export class PkvBillingPage {
   /** Selects the first invoice row. Returns false when the subtab has no invoices. */
   async selectFirstInvoice(): Promise<boolean> {
     if ((await this.invoiceRowCount()) < 1) return false;
-    await this.page.getByRole('checkbox').nth(1).click({ force: true });
-    await this.page.waitForTimeout(1500);
+    // Ticking a row raises the bulk-action bar client-side; settle covers the case where it also
+    // triggers a fetch, and returns quickly when it does not.
+    await settleAfter(this.page, () => this.page.getByRole('checkbox').nth(1).click({ force: true }), {
+      budgetMs: 8_000,
+    });
     return true;
   }
 

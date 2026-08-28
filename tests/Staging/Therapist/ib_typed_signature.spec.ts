@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page';
+import { DataGate } from '../../fixtures/data-gate';
 
 /**
  * Ticket #2963 — IB · Typed-Name Signature Fallback (RC 3.9.0).
@@ -13,6 +14,13 @@ import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page'
  * Data-gated + safe: skips when the wizard/overlay can't be reached; never submits an IB.
  * Staging only (per scope); mirror to Production later.
  */
+/**
+ * The IB flow is reachable only when the board holds a patient in an IB-capable state. That is a
+ * fact about the staging DATA, identical for every test here — so prove it once and let the rest of
+ * the file skip before paying for a navigation and a board search. See `tests/fixtures/data-gate.ts`.
+ */
+const ibGate = new DataGate('IB flow not reachable for the available patient state');
+
 test.describe('Therapist IB — Typed-Name Signature Fallback', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -20,6 +28,8 @@ test.describe('Therapist IB — Typed-Name Signature Fallback', () => {
 
   test.beforeEach(async ({ page }) => {
     test.setTimeout(150_000);
+    // Before the navigation, not after: this is the whole point of the gate.
+    ibGate.skipIfKnownClosed();
     ib = new IbWizardPage(page);
     await ib.open();
     await ib.filterAndExpand('Test');
@@ -35,8 +45,8 @@ test.describe('Therapist IB — Typed-Name Signature Fallback', () => {
   test('Typed-fallback link is visible in draw mode', {
     tag: ['@Therapist', '@IBTypedSignature'],
   }, async () => {
-    test.skip(!(await ib.enterWizard('Patient/in')), 'IB wizard not reachable for the available patient state');
-    test.skip(!(await ib.openSignatureOverlay()), 'Signature overlay did not open');
+    ibGate.apply(await ib.enterWizard('Patient/in'), 'wizard not reachable for the patient signer');
+    ibGate.apply(await ib.openSignatureOverlay(), 'signature overlay did not open');
 
     // AC1: the "Can't sign? Type name" link sits below the drawing canvas.
     await expect(ib.typedFallbackLink()).toBeVisible();
@@ -48,7 +58,7 @@ test.describe('Therapist IB — Typed-Name Signature Fallback', () => {
   test('Switching to typed mode shows a name input, prompt, and confirm checkbox', {
     tag: ['@Therapist', '@IBTypedSignature'],
   }, async ({ page }) => {
-    test.skip(!(await reachTypedMode()), 'Typed-name mode not reachable for the available patient state');
+    ibGate.apply(await reachTypedMode(), 'typed-name mode not reachable');
 
     // AC2/AC3: canvas is replaced by a text input + confirmation checkbox, with the typed prompt.
     await expect(page.getByText('Geben Sie Ihren vollständigen Namen als Unterschrift ein', { exact: true })).toBeVisible();
@@ -64,7 +74,7 @@ test.describe('Therapist IB — Typed-Name Signature Fallback', () => {
   test('Done is gated on both a non-empty name and the confirmation checkbox', {
     tag: ['@Therapist', '@IBTypedSignature'],
   }, async () => {
-    test.skip(!(await reachTypedMode()), 'Typed-name mode not reachable for the available patient state');
+    ibGate.apply(await reachTypedMode(), 'typed-name mode not reachable');
 
     // AC5: with a pre-filled name but the box unchecked, Done is still disabled.
     await expect(ib.typedNameInput()).toHaveValue(/\S/);
@@ -88,7 +98,7 @@ test.describe('Therapist IB — Typed-Name Signature Fallback', () => {
   test('Back to drawing returns to draw mode with an empty canvas', {
     tag: ['@Therapist', '@IBTypedSignature'],
   }, async () => {
-    test.skip(!(await reachTypedMode()), 'Typed-name mode not reachable for the available patient state');
+    ibGate.apply(await reachTypedMode(), 'typed-name mode not reachable');
 
     // AC4: "Zurück zum Zeichnen" switches back to the drawing canvas.
     await expect(ib.backToDrawingLink()).toBeVisible();
