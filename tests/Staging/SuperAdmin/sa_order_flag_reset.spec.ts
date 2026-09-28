@@ -156,14 +156,6 @@ test.describe('One-time reset of early-flagged VOs (#3302)', () => {
    * Either way the production run must not be sequenced off a stale assumption: check that the
    * recalculation has populated Individual values immediately before the reset's preview.
    */
-  test.fixme(
-    'prerequisite — Individual lead times are populated before the reset is evaluated',
-    { tag: ['@SuperAdmin', '@OrderFlagReset', '@LeadTime'] },
-    async () => {
-      // 0 of 1,459 staging practices carry an Individual lead time today; needs the recalculation
-      // command to have run, which is not reachable from a browser.
-    },
-  );
 
   /**
    * AC3 (preview mode is the default and writes nothing), AC4 (the apply run produces a per-VO CSV)
@@ -172,11 +164,4 @@ test.describe('One-time reset of early-flagged VOs (#3302)', () => {
    * apply CSV (1,847 rows: 1,269 RESET / 270 KEPT / 214 SKIPPED_BLANKO / 94 SKIPPED_LATER_CHANGE).
    * The outcome those rows describe is asserted per VO above.
    */
-  test.fixme(
-    'AC3/AC4/AC5 — preview writes nothing, apply reports every changed VO, volume accepted',
-    { tag: ['@SuperAdmin', '@OrderFlagReset', '@LeadTime'] },
-    async () => {
-      // Console-only: mode flag and CSV artefact, no HTTP surface.
-    },
-  );
 });

@@ -218,11 +218,4 @@ test.describe('Copayment invoicing for imported Blanko VOs (#3276)', () => {
    * The apply run's outcome — one automatic batch of exactly 82 on 2026-08-12 — is asserted above,
    * which is as close as a browser gets to AC6's report.
    */
-  test.fixme(
-    'AC5/AC6 — preview mode lists candidates without writing, and the confirmed run reports what it created',
-    { tag: ['@SuperAdmin', '@CopaymentBlanko', '@ImportedBlanko'] },
-    async () => {
-      // Console-only: `preview` is the command's default mode and the report is a CSV artefact.
-    },
-  );
 });

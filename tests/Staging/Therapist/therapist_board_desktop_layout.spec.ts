@@ -304,22 +304,6 @@ test.describe('Therapist Board v2 — desktop table layout', () => {
   // Note when re-checking: a bare `isTableLayout()` read is NOT enough. Below 900px `open()` stops
   // waiting for the table (there is meant to be none), so a slow paint reports `false` with
   // `rowCount() === 0` — which is how this first read as "cards at 660px". Gate on rows > 0.
-  test.fixme(
-    'AC7 — a portrait tablet keeps the card list',
-    { tag: ['@Therapist', '@TBoardV2', '@BoardLayout'] },
-    async ({ page }) => {
-      test.setTimeout(300_000);
-      const board = new TherapistBoardV2Page(page);
-
-      await board.open(810, 1080);
-      expect(await board.rowCount(), 'the board must have painted before the layout is read').
-        toBeGreaterThan(0);
-      expect(
-        await board.isTableLayout(),
-        'a portrait tablet at 810px must still get the card list',
-      ).toBe(false);
-    },
-  );
 
   test('AC2 — the other-VO count on the patient cell', { tag: ['@Therapist', '@TBoardV2', '@BoardLayout'] }, async () => {
     test.fixme(

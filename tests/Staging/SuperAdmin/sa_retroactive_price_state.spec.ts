@@ -221,11 +221,4 @@ test.describe('Retroactive price recompute — standing state (#3378, read-only)
    * with a `--dry-run` preview — a console command against production data, with no browser surface
    * and no way to undo it.
    */
-  test.fixme(
-    'AC2/AC5 (need a write) and AC7/AC8 (console command against production)',
-    { tag: ['@SuperAdmin', '@TreatmentPrices', '@RetroactivePrice'] },
-    async () => {
-      // Read-only by request; the write paths live in sa_retroactive_price_recompute.spec.ts.
-    },
-  );
 });

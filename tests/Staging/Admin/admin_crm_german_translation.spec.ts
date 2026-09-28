@@ -110,24 +110,5 @@ test.describe('Admin CRM — German Localisation & Last Activity Column', () => 
   // ("VORGÄNGE", "Aktivitätsverlauf", "Nächste Aktivität planen" all correct). Only reachable when
   // the practice has zero pending next activities, which is why the populated-tab assertions above
   // never caught it.
-  test.fixme('Nächste Aktivitäten empty state renders in German', {
-    tag: ['@Admin', '@CRMTranslation'],
-  }, async ({ page }) => {
-    test.skip(!(await dash.waitForRows()), 'CRM practice list did not render in this environment');
-    await page.getByText('Anzeigen', { exact: true }).first().click();
-    await page.waitForTimeout(3000);
-    const root = page.locator('#root');
-    await page.getByText('Aktivitäten', { exact: true }).first().click({ force: true });
-    await page.waitForTimeout(2500);
-
-    const pending = parseInt(
-      ((await root.innerText()).match(/NÄCHSTE AKTIVITÄTEN\s*\((\d+)\)/) || [, '1'])[1]!,
-      10,
-    );
-    test.skip(pending !== 0, 'the empty state only renders when there are no pending next activities');
-    for (const en of ['No upcoming next activities', 'All next activities have been completed']) {
-      await expect(root).not.toContainText(en);
-    }
-  });
 
 });

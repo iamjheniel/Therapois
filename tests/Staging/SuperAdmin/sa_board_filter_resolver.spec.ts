@@ -225,13 +225,6 @@ test.describe('Board filter resolver — one shared parse for nine providers (#3
    * in `api/src/State/`). The tests above cover the behavioural half — that the nine agree today,
    * and will fail loudly if a future provider goes back to its own copy.
    */
-  test.fixme(
-    'AC1/AC2/AC3 — no private resolveInsuranceTypes remains, suites unedited, cache keys byte-identical',
-    { tag: ['@SuperAdmin', '@FlowBoards', '@FilterResolver'] },
-    async () => {
-      // Source-level: needs the api/ tree and its PHPUnit suite, neither reachable from the browser.
-    },
-  );
 
   test.afterAll(() => {
     console.log(`[#3311] period under test: ${PERIOD_FROM} … ${PERIOD_TO} (read-only; every request a GET)`);

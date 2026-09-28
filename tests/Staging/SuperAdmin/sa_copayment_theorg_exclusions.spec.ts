@@ -357,11 +357,4 @@ test.describe('Copayment invoicing — TheOrg-invoiced Blanko exclusions (#3426)
    * excluded-18 half of AC1 is covered from the data side by the "no excluded VO has been invoiced
    * automatically" test above, which is what the run's exclusion group has to produce.
    */
-  test.fixme(
-    'AC1/AC2 — catch-up preview reports 136 would-create / 18 excluded / 9 skipped',
-    { tag: ['@SuperAdmin', '@CopaymentExclusions', '@TheOrgBlanko', '@ReadOnly'] },
-    async () => {
-      // Console-only command against production data; no browser or API surface exists to drive it.
-    },
-  );
 });

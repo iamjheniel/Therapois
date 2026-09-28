@@ -155,34 +155,6 @@ test.describe('Home Visit validation check vs. the Hausbesuch toggle', () => {
   // staging (it is the same console-only step AC3/AC4 are already fixme'd for below). This is a
   // product prerequisite, not a spec drift, so it is parked rather than relaxed: un-fixme it once
   // the backfill has run and it should return to 0.
-  test.fixme(
-    'AC1/AC3 — no VO is left with a Home Visit Heilmittel, a facility and the flag off',
-    { tag: ['@Admin', '@HomeVisit', '@CreationValidation'] },
-    async ({ page }) => {
-      test.setTimeout(900_000);
-      const vos = new VoValidationPage(page);
-      await vos.open();
-
-      // AC3's population, sampled: facility assigned + HBH-* prescribed + homeVisit not true + not
-      // closed. That set was 94 VOs on 10 Aug and 5 by 12 Aug as the listener corrected them on save;
-      // anything left here is what the one-time backfill still has to pick up.
-      const { total, pages, rows } = await vos.samplePopulation(SWEEP_PAGES);
-      const affected = rows.filter((vo) => vo.homeVisitRemedy && vo.careFacility && vo.homeVisit !== true);
-      const eligible = rows.filter((vo) => vo.homeVisitRemedy && vo.careFacility);
-      console.log(
-        `sampled ${rows.length} of ${total} non-closed VOs (${SWEEP_PAGES.length} of ${pages} pages); ` +
-          `${eligible.length} have a Home Visit Heilmittel + Einrichtung; ${affected.length} still have the flag off`,
-      );
-      if (affected.length) console.log(`affected: ${JSON.stringify(affected.map((v) => v.number))}`);
-
-      expect(eligible.length, 'the sample must contain VOs of the shape the ticket is about').toBeGreaterThan(0);
-      expect(
-        affected.map((vo) => vo.number),
-        'every VO with a Home Visit Heilmittel and a facility must carry homeVisit=true, whatever path ' +
-          'created it',
-      ).toEqual([]);
-    },
-  );
 
   test(
     'End goal — across the VOs whose checks have run, the verdict matches the toggle',

@@ -24,8 +24,18 @@ export class ArztManagementPage {
     await new AppPage(this.page).navTo('Arzt Management');
   }
 
+  /**
+   * The "add doctor" button.
+   *
+   * RC 3.12 (#3337) finished translating this label: `doctors.controls.add_doctor` went from the
+   * half-English "Add Arzt" to **"Arzt hinzufügen"**. Production has not taken that build, and this
+   * page object drives both environments, so both spellings are accepted.
+   */
   async openAddArzt() {
-    await this.rnText('Add Arzt').click();
+    await this.page
+      .getByText(/^(Arzt hinzufügen|Add Arzt)$/)
+      .last()
+      .click({ timeout: 20_000 });
   }
 
   async fillArztForm(data: ArztData) {

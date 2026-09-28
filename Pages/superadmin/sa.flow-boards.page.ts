@@ -569,6 +569,230 @@ export class FlowBoardsPage extends AppPage {
     await this.settle(() => this.bucket(label).click(), 4000);
   }
 
+  // ─────────────────────── chart date-basis note (#3400) ─────────────────────
+
+  /**
+   * Both revenue charts carry a persistent "nach Behandlungsdatum" subtitle plus a click-to-open
+   * explanation (`ChartDateBasisNote`, shipped in e87c91bad).
+   *
+   * The component is one of the few things on this board with real hooks, so use them:
+   * `data-testid="date-basis-info"` is the ⓘ trigger (a genuine `role="button"` with
+   * `tabindex="0"`, accessible name = the subtitle) and `data-testid="date-basis-close"` is the
+   * popover's close control. The popover itself is a react-native-paper `Menu` rendered into the
+   * app-root portal, so it is NOT inside the chart card in the DOM — locate it by its text, never
+   * by descending from the chart.
+   *
+   * Note these helpers drive a SCREEN, so the spec must mint a session (`mintUiSession`) before
+   * `open()`: a saved storageState no longer boots logged in on this build.
+   */
+  static readonly DATE_BASIS = {
+    subtitle: 'nach Behandlungsdatum',
+    explanation:
+      'Der Umsatz wird dem Behandlungsdatum zugeordnet, nicht dem Abrechnungs- oder ' +
+      'Validierungsdatum. Ein Monat, der sich noch in Behandlung befindet, zeigt deshalb zunächst ' +
+      'einen niedrigen validierten Anteil — dieser wächst, sobald die VOs validiert werden. ' +
+      'Realisierte Beträge folgen später.',
+    trigger: '[data-testid="date-basis-info"]',
+    close: '[data-testid="date-basis-close"]',
+    /** The two charts that must carry it — matched on the leading words of each title. */
+    charts: ['Umsatz-Realisierung', 'Verlauf nach Gruppe'] as const,
+  };
+
+  dateBasisTrigger(index = 0): Locator {
+    return this.page.locator(FlowBoardsPage.DATE_BASIS.trigger).nth(index);
+  }
+
+  async dateBasisTriggerCount(): Promise<number> {
+    return await this.page.locator(FlowBoardsPage.DATE_BASIS.trigger).count();
+  }
+
+  async dateBasisSubtitleCount(): Promise<number> {
+    return await this.page.getByText(FlowBoardsPage.DATE_BASIS.subtitle, { exact: true }).count();
+  }
+
+  /** How many notes currently show their explanation — 0 unless one was opened. */
+  async dateBasisExplanationCount(): Promise<number> {
+    return await this.page.getByText(FlowBoardsPage.DATE_BASIS.explanation.slice(0, 60), { exact: false }).count();
+  }
+
+  /**
+   * Where each note sits relative to the chart title above it — AC1's "directly under their
+   * titles" is a geometric claim, so it is measured rather than assumed from DOM order.
+   *
+   * `gap` is the vertical distance from the title's bottom to the subtitle row's top, `leftDelta`
+   * the difference in left edges (0 means flush under the title). `owner` is the chart title whose
+   * header block contains the note.
+   */
+  async dateBasisPlacement(): Promise<
+    { owner: string | null; title: string | null; gap: number | null; leftDelta: number | null; y: number }[]
+  > {
+    return await this.page.evaluate((charts) => {
+      const results: {
+        owner: string | null;
+        title: string | null;
+        gap: number | null;
+        leftDelta: number | null;
+        y: number;
+      }[] = [];
+      document.querySelectorAll('[data-testid="date-basis-info"]').forEach((icon) => {
+        const row = (icon as HTMLElement).parentElement!;
+        const rowRect = row.getBoundingClientRect();
+        let node: HTMLElement | null = row;
+        let owner: string | null = null;
+        for (let i = 0; i < 10 && node && !owner; i++) {
+          const text = node.innerText || '';
+          owner = charts.find((c) => text.includes(c)) ?? null;
+          node = node.parentElement;
+        }
+        // The nearest leaf whose text starts with a chart title and which sits above this row.
+        const title = Array.from(document.querySelectorAll('div'))
+          .filter(
+            (d) =>
+              charts.some((c) => ((d as HTMLElement).innerText || '').trim().startsWith(c)) &&
+              (d as HTMLElement).children.length === 0,
+          )
+          .map((d) => ({ el: d as HTMLElement, rect: (d as HTMLElement).getBoundingClientRect() }))
+          .filter((c) => c.rect.bottom <= rowRect.top + 4)
+          .sort((a, b) => b.rect.bottom - a.rect.bottom)[0];
+        results.push({
+          owner,
+          title: title ? title.el.innerText.trim() : null,
+          gap: title ? Math.round(rowRect.top - title.rect.bottom) : null,
+          leftDelta: title ? Math.round(rowRect.left - title.rect.left) : null,
+          y: Math.round(rowRect.top),
+        });
+      });
+      return results;
+    }, FlowBoardsPage.DATE_BASIS.charts as unknown as string[]);
+  }
+
+  /** Every attribute of a trigger — used to assert the button/keyboard contract (and what is missing). */
+  async dateBasisTriggerAttributes(index = 0): Promise<Record<string, string>> {
+    return await this.dateBasisTrigger(index).evaluate((el) =>
+      Object.fromEntries([...el.attributes].map((a) => [a.name, a.value])),
+    );
+  }
+
+  /**
+   * Opens a note, and waits for the popover rather than for a fixed moment.
+   *
+   * `force` is required — the trigger is a 14px control inside a card the board paints over, and
+   * with `actionTimeout: 0` a click that misses actionability hangs to the test timeout instead of
+   * failing. The retry is required too: the board re-renders as its five aggregations land, and a
+   * click that lands mid-repaint is simply lost, which reads as "the ⓘ does nothing".
+   */
+  async openDateBasis(index = 0, attempts = 3): Promise<boolean> {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      await this.dateBasisTrigger(index).click({ force: true, timeout: 30_000 });
+      if (await this.waitForDateBasisState(true, 6_000)) return true;
+    }
+    return false;
+  }
+
+  /** Polls until the explanation is (or is no longer) on screen. Returns whether it got there. */
+  async waitForDateBasisState(open: boolean, timeout = 6_000): Promise<boolean> {
+    const deadline = Date.now() + timeout;
+    do {
+      const count = await this.dateBasisExplanationCount();
+      if (open ? count > 0 : count === 0) return true;
+      await this.page.waitForTimeout(250);
+    } while (Date.now() < deadline);
+    return false;
+  }
+
+  /**
+   * The popover's own bounding box, once it has finished animating.
+   *
+   * Two traps, both of which produce a box that passes an on-screen assertion while telling you
+   * nothing:
+   *  - Paper animates the menu in, and a reading taken the moment the text appears catches it
+   *    mid-flight — measured at 500px the same popover reported `x = -98, w = 0` while animating and
+   *    `x = 57, w = 312` a second later. So this polls until two consecutive readings agree.
+   *  - the explanation's text propagates up to Paper's full-screen backdrop (0,0 → viewport) and
+   *    down into 1px wrapper divs, so only LEAF nodes are measured and the widest one is taken —
+   *    that is the 264px text block the component sizes, which is what positions the popover.
+   */
+  async dateBasisPopoverBox(
+    timeout = 8_000,
+  ): Promise<{ x: number; right: number; width: number; viewport: number } | null> {
+    const read = async () =>
+      await this.page.evaluate((needle) => {
+        const boxes = Array.from(document.querySelectorAll('div'))
+          .filter(
+            (d) =>
+              (d as HTMLElement).children.length === 0 &&
+              ((d as HTMLElement).innerText || '').startsWith(needle),
+          )
+          .map((d) => (d as HTMLElement).getBoundingClientRect())
+          .sort((a, b) => b.width - a.width);
+        const rect = boxes[0];
+        if (!rect) return null;
+        return {
+          x: Math.round(rect.x),
+          right: Math.round(rect.right),
+          width: Math.round(rect.width),
+          viewport: window.innerWidth,
+        };
+      }, FlowBoardsPage.DATE_BASIS.explanation.slice(0, 40));
+
+    const deadline = Date.now() + timeout;
+    let previous = await read();
+    do {
+      await this.page.waitForTimeout(400);
+      const current = await read();
+      if (current && previous && current.width > 0 && JSON.stringify(current) === JSON.stringify(previous)) {
+        return current;
+      }
+      previous = current;
+    } while (Date.now() < deadline);
+    return previous;
+  }
+
+  /**
+   * Clicks the popover's own close control.
+   *
+   * The wait first is not padding: the control rides in with Paper's open animation, so a click
+   * dispatched while it is still moving lands where it no longer is and the popover simply stays
+   * open — which reads as "the close control is broken" and only under load, because a slower
+   * machine happens to click after the animation instead.
+   */
+  async closeDateBasisWithControl(): Promise<boolean> {
+    await this.dateBasisPopoverBox();
+    await this.page.locator(FlowBoardsPage.DATE_BASIS.close).first().click({ force: true, timeout: 30_000 });
+    return await this.waitForDateBasisState(false, 10_000);
+  }
+
+  async dismissDateBasisWithEscape(): Promise<boolean> {
+    await this.page.keyboard.press('Escape');
+    return await this.waitForDateBasisState(false, 10_000);
+  }
+
+  /** Clicks well away from the popover — the backdrop dismissal path. */
+  async clickAwayFromDateBasis(): Promise<boolean> {
+    await this.dateBasisPopoverBox();
+    const size = this.page.viewportSize() ?? { width: 1200, height: 800 };
+    await this.page.mouse.click(Math.round(size.width * 0.8), 300);
+    return await this.waitForDateBasisState(false, 10_000);
+  }
+
+  /**
+   * Tabs from the top of the document until the ⓘ takes focus; returns the number of presses, or
+   * -1 if it was never reached. AC2 requires the popover to be reachable by keyboard, and the PM
+   * left exactly this open ("the focus path may require multiple Tab presses").
+   */
+  async tabPressesToReachDateBasis(max = 150): Promise<number> {
+    await this.page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await this.page.locator('body').click({ position: { x: 5, y: 5 }, force: true });
+    for (let press = 1; press <= max; press++) {
+      await this.page.keyboard.press('Tab');
+      const testId = await this.page.evaluate(
+        () => (document.activeElement as HTMLElement | null)?.getAttribute('data-testid') ?? null,
+      );
+      if (testId === 'date-basis-info') return press;
+    }
+    return -1;
+  }
+
   // ───────────────────────── revenue waterfall ───────────────────────────
 
   /** The amount printed ABOVE a waterfall step (the step renders "<amount>\n<step label>"). */

@@ -218,12 +218,4 @@ test.describe('Wednesday pull-forward for ordering flips (#3299)', () => {
    * corroborated from the data, and #3299 is not re-verifiable read-only until the nightly job runs
    * on a Wednesday against populated Individual lead times.
    */
-  test.fixme(
-    'AC2 — a VO due Saturday appears under "Heute bestellen" on the preceding Wednesday',
-    { tag: ['@SuperAdmin', '@OrderPullForward', '@ReadOnly'] },
-    async () => {
-      // Needs the nightly job to have run on a Wednesday with Individual lead times populated;
-      // neither holds on staging today. See the block comment above for the evidence.
-    },
-  );
 });

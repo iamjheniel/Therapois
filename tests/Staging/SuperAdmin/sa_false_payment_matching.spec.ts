@@ -226,24 +226,5 @@ test.describe('False payment matching for old-format invoices (#3499)', () => {
   // The ticket's Testing Guidance says exactly this and routes verification to developer unit tests
   // plus a restored-production rehearsal. Recorded here so the gap is explicit rather than looking
   // like missing coverage.
-  test.fixme(
-    'AC1/AC2/AC3 — a cleared item is accepted only when invoice number AND debtor both match',
-    { tag: ['@SuperAdmin', '@FalsePaymentMatch'] },
-    async () => {
-      // Reachable only with a debtor-account and cleared-bank-item surface, plus a DATEV connection.
-      // If those ever land, the shape is: take 426-16 (Grünwald-Schuller, EUR 917.90), present a
-      // cleared item carrying its invoice number but Joachim Alois Salm's debtor account, run the
-      // check, and assert the invoice is still overdue.
-    },
-  );
 
-  test.fixme(
-    'AC5/AC6 — the nightly check and the manual command\'s chained check share the corrected rule',
-    { tag: ['@SuperAdmin', '@FalsePaymentMatch'] },
-    async () => {
-      // Both are console/cron paths with no browser surface. The developer reference states both
-      // call `collectClearedMatches()`, so this is a source-level equivalence rather than a
-      // black-box one — a unit test, or a rehearsal against restored production data.
-    },
-  );
 });

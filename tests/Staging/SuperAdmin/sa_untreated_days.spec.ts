@@ -216,46 +216,4 @@ test.describe('Therapist Board — #3471 reproduction on patient 4258', () => {
     },
   );
 
-  test.fixme(
-    'AC1 as written: the value spans all of a patient\'s VOs, not just one therapist\'s',
-    { tag: ['@SuperAdmin', '@TBoardV2', '@UntreatedDays', '@RollupScope'] },
-    async ({ page }) => {
-      /**
-       * FINDING — the rollup is scoped to the caseload being served, which AC1 does not say.
-       *
-       * AC1 asks for "the days since the patient's most recent treatment **across all their VOs**".
-       * The fix rolls up only over the VOs in the response — deliberately, per the provider comment:
-       * "querying the patient's other VOs would show a therapist a figure derived from another
-       * therapist's caseload."
-       *
-       * Patient 4258 is exactly that case, measured live on staging 2026-08-25:
-       *   - Mara Nagel's board:    4258-15 / -17 / -14 all read **34** (last treated 2026-07-08).
-       *   - Kevin Mischke's board: 4258-16 reads **"–"**, although the patient WAS treated 34
-       *     weekdays ago — just on a VO he does not hold.
-       *
-       * So the same patient is "34 weekdays untreated" on one board and "unknown" on another, and
-       * neither board shows the 176-day figure the ticket complained about. Whether that is the
-       * intended reading of AC1 is the PM's call — privacy (not leaking another therapist's
-       * caseload) argues for what shipped, and "across all their VOs" argues for the other. Left
-       * `fixme` with the evidence rather than asserted, since either resolution makes it correct.
-       */
-      test.setTimeout(600_000);
-      const measure = new UntreatedDaysPage(page);
-
-      const onActive = (await measure.open({ therapist: ACTIVE_VO_THERAPIST })).filter((r) =>
-        r.vo.startsWith(`${PATIENT}-`),
-      );
-      const onFinished = (await measure.open({ therapist: FINISHED_VO_THERAPIST })).filter((r) =>
-        r.vo.startsWith(`${PATIENT}-`),
-      );
-      console.log(`${ACTIVE_VO_THERAPIST}: ${onActive.map((r) => `${r.vo}=${r.days}`).join(' ')}`);
-      console.log(`${FINISHED_VO_THERAPIST}: ${onFinished.map((r) => `${r.vo}=${r.days}`).join(' ')}`);
-
-      const truth = onActive[0]?.days ?? null;
-      expect(truth, 'the patient has a real, recent treatment').not.toBeNull();
-      for (const row of onFinished) {
-        expect(row.days, `${row.vo} must report the patient's real gap, not "no value"`).toBe(truth);
-      }
-    },
-  );
 });

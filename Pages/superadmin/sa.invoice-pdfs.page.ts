@@ -1,4 +1,5 @@
 import { Page, expect, test } from '@playwright/test';
+import { apiBearerToken, STAGING_CREDENTIALS } from '../util/api-token';
 import { createHash } from 'crypto';
 import { execFileSync } from 'child_process';
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
@@ -40,6 +41,8 @@ export type PdfDownload = {
   /** `/CreationDate` out of the PDF trailer — when this file was actually rendered. */
   createdAt: Date | null;
   sha256: string;
+  /** `detail` out of the API's problem+json body on a non-200 — e.g. the #3495 409's message. */
+  detail: string | null;
 };
 
 export type BulkZip = {
@@ -50,6 +53,8 @@ export type BulkZip = {
   error: string | null;
   entries: string[];
   dir: string | null;
+  /** `Fehlerbericht.txt` from inside the zip — the "could not be created" report (#3495 AC3). */
+  report: string | null;
 };
 
 export class InvoicePdfsPage {
@@ -59,23 +64,18 @@ export class InvoicePdfsPage {
 
   constructor(private page: Page) {}
 
-  /** Loads a page so the app's `auth-state` is available, then caches the bearer token. */
+  /**
+   * Establishes a bearer token for the invoice API.
+   *
+   * The page load is best-effort now. The current staging build keeps the access token in memory and
+   * spends the saved `auth-refresh-token` on the first boot, so a storageState that has already been
+   * used lands on the login screen with nothing in `localStorage` to read. `apiBearerToken()` falls
+   * back to `POST /auth`, which is what keeps these API tests running against a spent session — see
+   * `Pages/util/api-token.ts`.
+   */
   async open(): Promise<void> {
-    await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    // `auth-state` is written into localStorage from the .auth storageState BEFORE the page loads,
-    // so the token is readable as soon as the document exists. The flat sleep this replaces was
-    // waiting for nothing — it just delayed reading a value that was already there.
-    await this.page
-      .waitForFunction(() => !!localStorage.getItem('auth-state'), null, { timeout: 30_000 })
-      .catch(() => {});
-    this.token = await this.page.evaluate(() => {
-      try {
-        const state = JSON.parse(localStorage.getItem('auth-state') || '');
-        return state.token || state.accessToken || state.access_token || null;
-      } catch {
-        return null;
-      }
-    });
+    await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' }).catch(() => {});
+    this.token = await apiBearerToken(this.page, { credentials: STAGING_CREDENTIALS.superadmin });
     expect(this.token, 'the session must carry a bearer token for the invoice API').toBeTruthy();
   }
 
@@ -196,6 +196,20 @@ export class InvoicePdfsPage {
     const started = Date.now();
     const res = await this.page.request.get(`${InvoicePdfsPage.API}${path}`, { headers: this.auth, timeout: 120_000 });
     const buffer = res.status() === 200 ? await res.body() : Buffer.alloc(0);
+    // A failure carries API Platform's `problem+json`, whose `detail` is the message #3495 specifies
+    // ("No stored PDF exists for this invoice."). It is read here rather than in the callers so a
+    // 409 is never reported as a bare status code.
+    let detail: string | null = null;
+    if (res.status() !== 200) {
+      const body = await res.text().catch(() => '');
+      detail = (() => {
+        try {
+          return JSON.parse(body).detail ?? null;
+        } catch {
+          return body.slice(0, 200) || null;
+        }
+      })();
+    }
     const ms = Date.now() - started;
     const text = buffer.toString('latin1');
     return {
@@ -206,7 +220,88 @@ export class InvoicePdfsPage {
       filename: res.headers()['content-disposition']?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
       createdAt: InvoicePdfsPage.pdfCreationDate(text),
       sha256: createHash('sha256').update(buffer).digest('hex'),
+      detail,
     };
+  }
+
+  /**
+   * Status + filename for a download without transferring the file — the API answers `HEAD` on both
+   * download routes, and the response still carries the real `content-disposition`
+   * (`Zuzahlung_Lange_R426-67.pdf`), which is only knowable by resolving the stored file. That makes
+   * it a sound probe for "is a stored PDF there", and a ~6x cheaper one: 1.2s against 7.4s for the
+   * same 790KB invoice.
+   */
+  async headDownload(id: number, opts: { storno?: boolean } = {}): Promise<{ status: number; filename: string | null; ms: number }> {
+    const started = Date.now();
+    const res = await this.page.request.head(
+      `${InvoicePdfsPage.API}/invoices/${id}/${opts.storno ? 'storno/download' : 'download'}`,
+      { headers: this.auth, timeout: 120_000 },
+    );
+    return {
+      status: res.status(),
+      filename: res.headers()['content-disposition']?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
+      ms: Date.now() - started,
+    };
+  }
+
+  /** Every invoice in the collection, paged out. */
+  async allInvoices(perPage = 100): Promise<InvoiceRef[]> {
+    const rows: InvoiceRef[] = [];
+    for (let page = 1; ; page++) {
+      const body = await this.json(`/invoices?page=${page}&itemsPerPage=${perPage}`);
+      const member = body.member ?? body['hydra:member'] ?? [];
+      for (const m of member) {
+        rows.push({ id: m.id, invoiceNumber: m.invoiceNumber, status: m.status, createdAt: m.createdAt, updatedAt: m.updatedAt });
+      }
+      if (!member.length || rows.length >= (body.totalItems ?? 0)) return rows;
+    }
+  }
+
+  /**
+   * `HEAD`s a download route for every id, a few at a time — the population-level answer to "does
+   * any invoice on this environment have no stored PDF" (#3495 AC2/AC5).
+   */
+  async sweepDownloads(ids: number[], opts: { storno?: boolean; concurrency?: number } = {}): Promise<Map<number, { status: number; filename: string | null }>> {
+    const results = new Map<number, { status: number; filename: string | null }>();
+    const queue = [...ids];
+    const worker = async () => {
+      for (let id = queue.shift(); id !== undefined; id = queue.shift()) {
+        const head = await this.headDownload(id, { storno: opts.storno });
+        results.set(id, { status: head.status, filename: head.filename });
+      }
+    };
+    await Promise.all(Array.from({ length: opts.concurrency ?? 6 }, worker));
+    return results;
+  }
+
+  /** Copayment-eligible VOs that carry no invoice yet — the only source of a missing-PDF window. */
+  async uninvoicedCopaymentCandidates(limit = 30): Promise<{ prescriptionId: number; prescriptionNumber: string; treatmentStatus: string }[]> {
+    const body = await this.json(
+      `/prescriptions?page=1&itemsPerPage=${limit}&copaymentBilling=true&groups%5B%5D=billing%3Aread`,
+    );
+    return (body.member ?? [])
+      .filter((m: any) => !m.invoice?.id)
+      .map((m: any) => ({ prescriptionId: m.id, prescriptionNumber: m.prescriptionId, treatmentStatus: m.treatmentStatus }));
+  }
+
+  /** `GET /status` — unauthenticated, and the one place the API states its own version. */
+  async apiVersion(): Promise<string | null> {
+    const res = await this.page.request.get(`${InvoicePdfsPage.API}/status`, { timeout: 60_000 });
+    if (res.status() !== 200) return null;
+    return (await res.json().catch(() => ({})))?.version ?? null;
+  }
+
+  /**
+   * The deployed web bundle's source, for the client half of #3495 (the 409 branch and the German
+   * message live in the frontend, not the API — `api/` has no translator).
+   */
+  async appBundle(): Promise<string> {
+    const index = await this.page.request.get('https://staging.therapios.de/', { timeout: 60_000 });
+    const html = await index.text();
+    const entry = html.match(/src="(\/_expo\/static\/js\/web\/entry-[^"]+\.js)"/)?.[1];
+    expect(entry, 'the staging index must reference an entry bundle').toBeTruthy();
+    const bundle = await this.page.request.get(`https://staging.therapios.de${entry}`, { timeout: 120_000 });
+    return await bundle.text();
   }
 
   /** Parses a PDF `/CreationDate (D:20260814003250Z00'00')` into a Date. */
@@ -244,20 +339,22 @@ export class InvoicePdfsPage {
     const body = await res.body();
     const ms = Date.now() - started;
     if (res.status() !== 200) {
-      return { status: res.status(), ms, bytes: body.length, contentType: res.headers()['content-type'], error: body.toString('utf8').slice(0, 300), entries: [], dir: null };
+      return { status: res.status(), ms, bytes: body.length, contentType: res.headers()['content-type'], error: body.toString('utf8').slice(0, 300), entries: [], dir: null, report: null };
     }
-    const dir = test.info().outputPath(`bulk-${type}-${ids.length}`);
+    const dir = test.info().outputPath(`bulk-${type}-${ids.length}-${Date.now()}`);
     mkdirSync(dir, { recursive: true });
     const file = join(dir, 'invoices.zip');
     writeFileSync(file, body);
+    const entries = InvoicePdfsPage.zipEntries(file);
     return {
       status: 200,
       ms,
       bytes: body.length,
       contentType: res.headers()['content-type'],
       error: null,
-      entries: InvoicePdfsPage.zipEntries(file),
+      entries,
       dir,
+      report: entries.some((e) => e === 'Fehlerbericht.txt') ? InvoicePdfsPage.zipTextEntry(file, 'Fehlerbericht.txt') : null,
     };
   }
 
@@ -279,6 +376,15 @@ export class InvoicePdfsPage {
       const entries = output.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('warning'));
       if (entries.length) return entries;
       throw error;
+    }
+  }
+
+  /** One text entry out of a zip, via `unzip -p` — used for the bulk `Fehlerbericht.txt` (AC3). */
+  static zipTextEntry(zipPath: string, entry: string): string | null {
+    try {
+      return execFileSync('unzip', ['-p', zipPath, entry], { encoding: 'utf8' });
+    } catch {
+      return null;
     }
   }
 
@@ -341,6 +447,29 @@ export class InvoicePdfsPage {
    * Replaces the draft in place; the dialog states the invoice number is preserved and no Storno is
    * created. Only ever called against a `not_sent` draft.
    */
+  /**
+   * Creates the copayment invoice for a VO that has none — the same
+   * `POST /prescriptions/{id}/generate-invoice` the draft regeneration uses, which returns
+   * `{success, invoiceId, invoiceNumber}`.
+   *
+   * **This is the only client-reachable way to produce an invoice with no stored PDF.** The file is
+   * written by an async worker, so for the ~30s until it lands `pdf_path` is NULL — which is exactly
+   * the state #3495's ACs describe. Measured on staging: the 409 was live 2.6s after the POST and
+   * the stored file arrived 28s after it.
+   *
+   * It is also irreversible: invoices cannot be deleted (the epic has a separate no-deletion
+   * ticket), so each call permanently consumes an invoice number. Never call it from an ungated
+   * test.
+   */
+  async createInvoiceForPrescription(prescriptionId: number): Promise<{ status: number; invoiceId: number | null; invoiceNumber: string | null }> {
+    const res = await this.page.request.post(
+      `${InvoicePdfsPage.API}/prescriptions/${prescriptionId}/generate-invoice`,
+      { headers: { ...this.auth, 'Content-Type': 'application/json' }, data: {}, timeout: 120_000 },
+    );
+    const body = await res.json().catch(() => ({}) as any);
+    return { status: res.status(), invoiceId: body?.invoiceId ?? null, invoiceNumber: body?.invoiceNumber ?? null };
+  }
+
   async regenerateDraft(prescriptionId: number): Promise<number> {
     const res = await this.page.request.post(
       `${InvoicePdfsPage.API}/prescriptions/${prescriptionId}/generate-invoice`,

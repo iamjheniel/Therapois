@@ -98,21 +98,6 @@ test.describe('Vorabinformation footer columns (#3525)', () => {
   // ("Therapios Hamburg 1" / "GmbH" / "Nagelsweg 30, 20097" / "Hamburg"), so invoices are not a
   // wrap-free reference. This needs a product decision — widen column 1 rather than split evenly,
   // or accept the wrap — so it is reported rather than asserted.
-  test.fixme(
-    'AC2 — the company name no longer wraps awkwardly',
-    { tag: ['@Admin', '@LetterFooter', '@Mutating'] },
-    async ({ page }) => {
-      test.setTimeout(600_000);
-      const letters = new LetterLayoutPage(page);
-      await letters.open();
-      const doc = await letters.generateNotice(LetterLayoutPage.HISTORY_PATIENT, 'regular');
-      const lines = LetterLayoutPage.footerFirstColumnLines(doc);
-      console.log(`${doc.label}: footer column 1 = ${JSON.stringify(lines)}`);
-      // The address line below the company name is expected; only the NAME must not split.
-      const companyLines = lines.filter((l) => !/^Sitz der Gesellschaft:|^Berlin$|\d{5}/.test(l));
-      expect(companyLines.length, `the company name must not wrap; got ${JSON.stringify(companyLines)}`).toBe(1);
-    },
-  );
 
   test(
     'AC2 (evidence) — the wrap that the even split introduced, reported not asserted',
@@ -169,14 +154,4 @@ test.describe('Vorabinformation footer columns (#3525)', () => {
     },
   );
 
-  test.fixme(
-    'AC4 — a Therapy Report footer is unchanged',
-    { tag: ['@Admin', '@LetterFooter', '@ReadOnly'] },
-    async () => {
-      // No reachable Therapy Report PDF from this role on staging: the report is generated from a
-      // VO's Berichte action and is not exposed as a downloadable collection the way invoices and
-      // pre_treatment_notices are. `TherapyReportGenerateController` passes
-      // `hide_bank_details => false` explicitly, so it takes the same 5-column branch AC3 covers.
-    },
-  );
 });

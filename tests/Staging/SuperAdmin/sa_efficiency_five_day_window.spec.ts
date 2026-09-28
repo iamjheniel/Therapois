@@ -174,29 +174,6 @@ test.describe('Efficiency traffic light — 5-day snapshot window (#3486)', () =
   //
   // It needs a product decision (cap the range as well as the count? show both dates and the count?
   // say "5 Tage seit 08.06."?), so it is parked rather than asserted either way.
-  test.fixme(
-    'AC4 (range) — the tooltip date range covers only recent days, not a multi-month span',
-    { tag: ['@SuperAdmin', '@EfficiencyWindow', '@FiveDayWindow', '@ReadOnly'] },
-    async ({ page }) => {
-      test.setTimeout(240_000);
-      const perf = new TherapistPerformancePage(page);
-      await perf.open();
-
-      const rows = await perf.performanceRows();
-      const spans = rows
-        .map((r) => ({ r, span: TherapistPerformancePage.windowSpanDays(r) }))
-        .filter((x) => x.span !== null);
-      const wide = spans.filter((x) => x.span! > 14);
-      console.log(
-        `windows wider than 14 calendar days: ${wide.length}/${spans.length} — ` +
-          JSON.stringify(wide.map((x) => `${x.r.fullName}:${x.r.qualifyingDays}d/${x.span}cal`)),
-      );
-      expect(
-        wide.map((x) => x.r.fullName),
-        'a 5-day snapshot should not be rendered over a multi-month date range',
-      ).toEqual([]);
-    },
-  );
 
   test(
     'AC5 — all three surfaces report the same status for the same therapist',

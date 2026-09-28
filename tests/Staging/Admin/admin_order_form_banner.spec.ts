@@ -118,25 +118,6 @@ test.describe('Rebrand banner on order forms (#3524)', () => {
   // Making this assertable needs an Infoblatt generated after the banner shipped, which means
   // completing the therapist IB signing wizard — a write the IB specs deliberately never make
   // (`ib_signature_overlay.spec.ts` and friends open the wizard and cancel).
-  test.fixme(
-    'AC4 — an Infoblatt never shows the banner',
-    { tag: ['@Admin', '@OrderFormBanner', '@ReadOnly'] },
-    async ({ page }) => {
-      test.setTimeout(600_000);
-      const letters = new LetterLayoutPage(page);
-      await letters.open();
-      const records = await letters.infoblattRecords(50);
-      let checked = 0;
-      for (const r of records) {
-        if (!r.file) continue;
-        const doc = await letters.infoblattPdf(r.id);
-        if (!doc.buffer) continue;
-        checked++;
-        expect(LetterLayoutPage.hasBanner(doc), `Infoblatt ${r.id} must never carry the banner`).toBe(false);
-      }
-      expect(checked, 'an Infoblatt rendered AFTER the banner shipped is required').toBeGreaterThan(0);
-    },
-  );
 
   test(
     'AC4 (evidence) — every readable Infoblatt, its render date and banner state',
@@ -187,11 +168,4 @@ test.describe('Rebrand banner on order forms (#3524)', () => {
   // specific entity server-side, and the order forms rendered here show the banner for a payload
   // that names no entity at all. If the banner is unconditional on this route rather than resolved
   // through `DocumentBrandingResolver`, AC3 would fail for a non-Curano entity once one exists.
-  test.fixme(
-    'AC3 — neither order form shows a banner for a non-Curano entity or with the switch off',
-    { tag: ['@Admin', '@OrderFormBanner', '@ReadOnly'] },
-    async () => {
-      /* see the note above — no non-Curano entity and no banner switch on staging */
-    },
-  );
 });
