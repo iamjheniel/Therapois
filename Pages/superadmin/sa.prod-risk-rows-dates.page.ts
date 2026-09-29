@@ -164,6 +164,20 @@ export class ProdRiskRowsDatesPage {
     return out;
   }
 
+  /** #3774's summary route, which the Management board renders as a plain line. */
+  async unbilledSummary(): Promise<{ count: number; totalRevenue: number }> {
+    const body = await this.get<any>('/kpis/management/unbilled-summary');
+    const inner = body.member?.[0] ?? body;
+    return { count: inner.count, totalRevenue: inner.totalRevenue };
+  }
+
+  /** Clicks a risk tile by its visible label. */
+  async selectTileByText(label: string): Promise<void> {
+    const page = this.requirePage();
+    await page.getByText(label, { exact: true }).first().click({ timeout: 60_000, force: true });
+    await page.waitForTimeout(5_000);
+  }
+
   /** Activities for many VOs in one request — `/activities` registers `prescription[]`. */
   async activitiesFor(voIds: readonly number[], chunk = 30): Promise<Map<number, Activity[]>> {
     const out = new Map<number, Activity[]>();
@@ -302,6 +316,91 @@ export class ProdRiskRowsDatesPage {
       }
       return out;
     });
+  }
+
+  /**
+   * One dictionary value, read from the served bundle by its LEAF key.
+   *
+   * The lookbehind must exclude `_` as well as letters, or `standard:` also matches
+   * `crm.lead_time.source_standard` — which legitimately still reads "Standard" and makes #3770's
+   * rename look un-shipped. Returns every occurrence (en and de), escaped form as stored.
+   */
+  static dictValues(bundle: string, leafKey: string): string[] {
+    const re = new RegExp(`(?<![A-Za-z_])${leafKey}:"((?:[^"\\\\]|\\\\.){0,80})"`, 'g');
+    return [...bundle.matchAll(re)].map((m) => m[1]);
+  }
+
+  /** `Übersicht` is stored as `\xdcbersicht`; compare against the escaped form. */
+  static escapeNonAscii(text: string): string {
+    return [...text]
+      .map((ch) => {
+        const c = ch.codePointAt(0)!;
+        return c < 128 ? ch : `\\x${c.toString(16).padStart(2, '0')}`;
+      })
+      .join('');
+  }
+
+  /**
+   * Opens the Management board and waits for #3774's summary LINE, not merely for the board.
+   *
+   * The board's own marker paints long before the line does — the line comes from
+   * `unbilled-summary`, a separate and slower request — so a gate on the board hands the caller an
+   * unpainted line and `boardText()` returns without it, which reads exactly like the summary
+   * having been removed. (It did here.) Waits for the thing the caller is about to read.
+   */
+  async openManagementBoard(timeout = 420_000): Promise<string | null> {
+    const page = this.requirePage();
+    await mintUiSession(page, STAGING_CREDENTIALS.superadmin, { api: PROD_API });
+    await page.goto(`${PROD_WEB}/flow-boards`, { waitUntil: 'domcontentloaded', timeout });
+    await page.getByText('Privatpatient:innen', { exact: true }).first().waitFor({ state: 'visible', timeout });
+
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+      const line = (await this.boardText())
+        .split('\n')
+        .find((l) => /noch nicht in der Abrechnung|not yet billed/.test(l));
+      if (line) return line;
+      await new Promise((r) => setTimeout(r, 3_000));
+    }
+    return null;
+  }
+
+  /** Whole-page text, for banner-absence and summary-line assertions. */
+  async boardText(): Promise<string> {
+    return this.requirePage().evaluate(() => (document.body as HTMLElement).innerText);
+  }
+
+  /** The working-hours table's painted column headers, left to right. */
+  async workingHoursColumns(): Promise<string[]> {
+    return this.requirePage().evaluate(() => {
+      const heading = [...document.querySelectorAll('div,span')].find(
+        (n) => n.children.length === 0 && /^(Übersicht|Arbeitszeiten)$/.test((n.textContent ?? '').trim()),
+      );
+      if (!heading) return [];
+      const top = heading.getBoundingClientRect().bottom;
+      const leaves: { t: string; x: number; y: number }[] = [];
+      document.querySelectorAll('div,span').forEach((n) => {
+        const el = n as HTMLElement;
+        if (el.children.length !== 0) return;
+        // textContent, not innerText: the headers are CSS-uppercased and German ß uppercases to SS
+        const t = (el.textContent ?? '').trim();
+        if (!t || t.length > 28) return;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) return;
+        if (r.top < top || r.top > top + 220) return;
+        leaves.push({ t, x: r.x, y: r.top });
+      });
+      if (!leaves.length) return [];
+      const band = Math.min(...leaves.map((l) => l.y));
+      return leaves.filter((l) => l.y - band < 22).sort((a, b) => a.x - b.x).map((l) => l.t);
+    });
+  }
+
+  /** Switches the working-hours view. */
+  async selectView(label: 'Operativ' | 'Details'): Promise<void> {
+    const page = this.requirePage();
+    await page.getByText(label, { exact: true }).first().click({ timeout: 60_000, force: true });
+    await page.waitForTimeout(3_000);
   }
 
   /** The served production bundle — the only surface that answers for a frontend change (#3705). */
