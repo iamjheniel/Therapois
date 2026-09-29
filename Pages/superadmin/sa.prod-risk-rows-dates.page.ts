@@ -129,6 +129,41 @@ export class ProdRiskRowsDatesPage {
     return inner;
   }
 
+  /** Whether this account may open the Admin-Performance board — a per-account gate on production. */
+  async boardAccess(): Promise<Record<string, unknown>> {
+    return this.get('/me', 120_000);
+  }
+
+  /** Probe a KPI route's reachability without assuming it exists. */
+  async probe(path: string): Promise<number> {
+    const res = await this.api.get(path, {
+      headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/ld+json' },
+      timeout: 300_000,
+    });
+    return res.status();
+  }
+
+  /** #3775's third surface: the Arbeitszeiten row per therapist. */
+  async workingHours(): Promise<{ therapistId: number; completedUnbilledCount: number | null; completedUnbilledOver30Count: number | null }[]> {
+    const body = await this.get<{ member?: any[] }>('/kpis/management/working-hours');
+    return (body.member ?? []).map((w) => ({
+      therapistId: w.therapistId,
+      completedUnbilledCount: w.completedUnbilledCount ?? null,
+      completedUnbilledOver30Count: w.completedUnbilledOver30Count ?? null,
+    }));
+  }
+
+  /** VOs by internal id, batched. `?id[]=` is registered on `/prescriptions`. */
+  async vosByIds(ids: readonly number[], chunk = 30): Promise<any[]> {
+    const out: any[] = [];
+    for (let i = 0; i < ids.length; i += chunk) {
+      const q = ids.slice(i, i + chunk).map((x) => `id%5B%5D=${x}`).join('&');
+      const body = await this.get<{ member?: any[] }>(`/prescriptions?${q}&itemsPerPage=${chunk + 10}`);
+      out.push(...(body.member ?? []));
+    }
+    return out;
+  }
+
   /** Activities for many VOs in one request — `/activities` registers `prescription[]`. */
   async activitiesFor(voIds: readonly number[], chunk = 30): Promise<Map<number, Activity[]>> {
     const out = new Map<number, Activity[]>();
@@ -280,5 +315,20 @@ export class ProdRiskRowsDatesPage {
 
   static occurrences(haystack: string, needle: string): number {
     return haystack.split(needle).length - 1;
+  }
+
+  /**
+   * The bundle ESCAPES non-ASCII, so `für` is stored as `f\xfcr` and a literal search for the
+   * German string returns 0 — which reads exactly like "never shipped" (#3337, #3611). Counts both
+   * forms, because whether a given string survives as UTF-8 or escaped depends on the minifier.
+   */
+  static escapedOccurrences(haystack: string, needle: string): number {
+    const escaped = [...needle]
+      .map((ch) => {
+        const c = ch.codePointAt(0)!;
+        return c < 128 ? ch : `\\x${c.toString(16).padStart(2, '0')}`;
+      })
+      .join('');
+    return this.occurrences(haystack, needle) + (escaped === needle ? 0 : this.occurrences(haystack, escaped));
   }
 }
