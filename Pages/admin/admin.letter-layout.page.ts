@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { apiBearerToken, STAGING_CREDENTIALS } from '../util/api-token';
 import { AppPage } from '../base/app.page';
 import { pdfPages, pageText, PdfPage, TextRun } from '../util/pdf-layout';
 
@@ -56,24 +57,29 @@ export class LetterLayoutPage extends AppPage {
     super(page);
   }
 
+  /** Resolved once in `open()` and used by every request below. */
+  private bearer = '';
+
   async open(): Promise<void> {
     await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     await this.page
       .waitForFunction(() => !!localStorage.getItem('auth-state'), null, { timeout: 30_000 })
       .catch(() => {});
+    // The v3.12 auth migration emptied `auth-state.token` — it now holds `{user, fetching}` and the
+    // access token lives in memory — so reading it in the page sent `Bearer null` and every request
+    // below came back empty, which read as "this patient has no notices". `apiBearerToken` walks
+    // localStorage → a live request header → `POST /auth`.
+    // Credentials are required: without them the helper returns null once `auth-state` is
+    // empty, and every request below silently sends `Bearer null`. The notice archive and
+    // the invoice store are Super Admin surfaces, as #3668's own page object uses.
+    this.bearer = (await apiBearerToken(this.page, { credentials: STAGING_CREDENTIALS.superadmin })) ?? '';
   }
 
   // ───────────────────────────────── transport ─────────────────────────────────
 
   private async json(path: string): Promise<{ status: number; json: any }> {
     return await this.page.evaluate(
-      async ([base, p]: [string, string]) => {
-        let token: string | null = null;
-        try {
-          token = JSON.parse(localStorage.getItem('auth-state') || '').token;
-        } catch {
-          /* the caller asserts on the status */
-        }
+      async ([base, p, token]: [string, string, string]) => {
         const r = await fetch(`${base}${p}`, {
           headers: { Authorization: `Bearer ${token}`, Accept: 'application/ld+json' },
         });
@@ -84,24 +90,18 @@ export class LetterLayoutPage extends AppPage {
           return { status: r.status, json: t.slice(0, 300) };
         }
       },
-      [LetterLayoutPage.API, path],
+      [LetterLayoutPage.API, path, this.bearer],
     );
   }
 
   /** Fetches a PDF. `absolute` addresses a pre-signed S3 URL, which must NOT carry the bearer. */
   private async pdf(path: string, absolute = false): Promise<Buffer | null> {
     const res = await this.page.evaluate(
-      async ([base, p, abs]: [string, string, boolean]) => {
-        let token: string | null = null;
-        try {
-          token = JSON.parse(localStorage.getItem('auth-state') || '').token;
-        } catch {
-          /* handled by the status check */
-        }
+      async ([base, p, abs, token]: [string, string, boolean, string]) => {
         const r = await fetch(abs ? p : `${base}${p}`, abs ? {} : { headers: { Authorization: `Bearer ${token}` } });
         return { status: r.status, bytes: r.ok ? Array.from(new Uint8Array(await r.arrayBuffer())) : [] };
       },
-      [LetterLayoutPage.API, path, absolute],
+      [LetterLayoutPage.API, path, absolute, this.bearer],
     );
     if (res.status !== 200 || !res.bytes.length) return null;
     const buf = Buffer.from(res.bytes);
@@ -142,13 +142,7 @@ export class LetterLayoutPage extends AppPage {
     discipline: 'physiotherapy' | 'ergotherapy' | 'speech_therapy' = 'physiotherapy',
   ): Promise<LetterRead> {
     const res = await this.page.evaluate(
-      async ([base, pid, disc, v]: [string, number, string, string]) => {
-        let token: string | null = null;
-        try {
-          token = JSON.parse(localStorage.getItem('auth-state') || '').token;
-        } catch {
-          /* handled by the status check */
-        }
+      async ([base, pid, disc, v, token]: [string, number, string, string, string]) => {
         const r = await fetch(`${base}/patients/${pid}/generate-pre-treatment-notice/${disc}`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/ld+json' },
@@ -156,7 +150,7 @@ export class LetterLayoutPage extends AppPage {
         });
         return { status: r.status, body: (await r.text()).slice(0, 200) };
       },
-      [LetterLayoutPage.API, patientId, discipline, variant],
+      [LetterLayoutPage.API, patientId, discipline, variant, this.bearer],
     );
     const label = `Vorabinformation ${variant} (patient ${patientId})`;
     if (res.status >= 300) return LetterLayoutPage.read(`${label} — generate ${res.status}`, null);
@@ -192,13 +186,7 @@ export class LetterLayoutPage extends AppPage {
    * from `{% if address != 'ER' %}`, so a practice address is the case that used to break.
    */
   async orderForm(template: 'order' | 'follow_up', address: 'ER' | 'practice'): Promise<LetterRead> {
-    const token = await this.page.evaluate(() => {
-      try {
-        return JSON.parse(localStorage.getItem('auth-state') || '').token as string;
-      } catch {
-        return null;
-      }
-    });
+    const token = this.bearer;
     const rows = [
       { patient: 'Mustermann, Max', voNumber: '1234-1', therapy: 'Physiotherapie', doctor: 'Dr. Test', lastTreatment: '01.08.2026' },
     ];

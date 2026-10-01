@@ -203,6 +203,16 @@ export interface TextRun {
   size: number;
   font: string;
   text: string;
+  /**
+   * The non-stroking (fill) colour this run was painted with, as `[r, g, b]` in 0..1.
+   *
+   * Tracked because a ticket can be ABOUT the colour (#3886's red "not an invoice" line) and the
+   * text alone cannot tell a red line from a black one. `rg`, `g` and `k` are all honoured and the
+   * value is saved and restored with `q`/`Q` like the CTM; anything exotic (a pattern via `scn`
+   * with a name operand, a separation colour space) leaves the previous value standing rather than
+   * guessing, so a run is never reported as a colour it is not.
+   */
+  color: [number, number, number];
 }
 
 export interface FilledRect { x: number; y: number; w: number; h: number }
@@ -306,6 +316,10 @@ export function pdfPages(buf: Buffer): PdfPage[] {
     const rects: FilledRect[] = [];
     let ctm: M = [1, 0, 0, 1, 0, 0];
     const stack: M[] = [];
+    // The fill colour rides alongside the CTM on its own stack, pushed and popped by the same
+    // operators — a parallel array rather than a shape change, so nothing else in this parser moves.
+    let fill: [number, number, number] = [0, 0, 0];
+    const fillStack: [number, number, number][] = [];
     let tm: M = [1, 0, 0, 1, 0, 0];
     let tlm: M = [1, 0, 0, 1, 0, 0];
     let leading = 0;
@@ -341,6 +355,7 @@ export function pdfPages(buf: Buffer): PdfPage[] {
         size: +(size * Math.hypot(m[0], m[1])).toFixed(2),
         font: font?.base ?? '',
         text,
+        color: [...fill] as [number, number, number],
       });
     };
 
@@ -351,8 +366,33 @@ export function pdfPages(buf: Buffer): PdfPage[] {
         continue;
       }
       switch (tok.v) {
-        case 'q': stack.push(ctm.slice() as M); break;
-        case 'Q': ctm = stack.pop() ?? ([1, 0, 0, 1, 0, 0] as M); break;
+        case 'q': stack.push(ctm.slice() as M); fillStack.push([...fill]); break;
+        case 'Q':
+          ctm = stack.pop() ?? ([1, 0, 0, 1, 0, 0] as M);
+          fill = fillStack.pop() ?? [0, 0, 0];
+          break;
+        // Non-stroking colour. `rg` is RGB, `g` gray, `k` CMYK; `sc`/`scn` depend on the current
+        // colour space, so only their unambiguous 1- and 3-number forms are read.
+        case 'rg': fill = [num(-3), num(-2), num(-1)]; break;
+        case 'g': { const v = num(-1); fill = [v, v, v]; break; }
+        case 'k': {
+          const [c, m2, y2, k2] = [num(-4), num(-3), num(-2), num(-1)];
+          fill = [(1 - c) * (1 - k2), (1 - m2) * (1 - k2), (1 - y2) * (1 - k2)];
+          break;
+        }
+        case 'sc': case 'scn': {
+          const last = operands[operands.length - 1];
+          if (!last || last.t !== 'num') break;            // a pattern name — leave the colour alone
+          const nums: number[] = [];
+          for (let i = operands.length - 1; i >= 0 && nums.length < 4; i--) {
+            const t = operands[i];
+            if (t.t !== 'num') break;
+            nums.unshift(t.v);
+          }
+          if (nums.length === 1) fill = [nums[0], nums[0], nums[0]];
+          else if (nums.length === 3) fill = [nums[0], nums[1], nums[2]];
+          break;
+        }
         case 'cm': ctm = mul([num(-6), num(-5), num(-4), num(-3), num(-2), num(-1)], ctm); break;
         case 'BT': tm = [1, 0, 0, 1, 0, 0]; tlm = [1, 0, 0, 1, 0, 0]; break;
         case 'Tm': tm = [num(-6), num(-5), num(-4), num(-3), num(-2), num(-1)]; tlm = tm.slice() as M; break;
