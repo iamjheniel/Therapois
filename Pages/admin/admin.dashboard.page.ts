@@ -238,9 +238,15 @@ export class AdminDashboardPage {
   }
 
   /**
-   * Types a query into the search box and submits it. Note: once submitted the box renders
-   * `readonly` and offers no clear control — the only reset is a page reload (see `open`), which
-   * the serial `beforeEach` performs between tests to keep them isolated.
+   * Types a query into the search box and submits it.
+   *
+   * NOTE (re-measured 2026-10-01, #3872): the box is NO LONGER `readonly` after submitting and it
+   * DOES grow a "✕" clear control, so a reload is not the only reset any more. The serial
+   * `beforeEach` still reloads, which is fine; a spec that needs to clear in place can click the
+   * "✕" instead (see `SearchVoSortPage.clearSearchWithX`).
+   *
+   * Also worth knowing: a repeat of a query the client already holds is served from the React
+   * Query cache and fires NO request at all, so `settleAfter` has nothing to wait for.
    */
   async search(query: string): Promise<void> {
     const box = this.searchBox();
