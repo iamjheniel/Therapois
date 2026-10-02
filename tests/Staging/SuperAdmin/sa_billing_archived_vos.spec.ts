@@ -47,24 +47,42 @@ test.describe('Invoices of archived VOs on the billing lists (#3277)', () => {
   });
 
   test(
-    'AC5 — the default view on both tabs still excludes archived VOs',
+    'AC5 — SUPERSEDED by #3835: the rule moved from the default view to the new checkbox',
     { tag: ['@SuperAdmin', '@BillingArchived', '@ReadOnly'] },
     async () => {
       test.setTimeout(240_000);
 
+      // #3277's AC5 read "the default view on both tabs still excludes archived VOs", and RC 3.15
+      // #3835 DELIBERATELY reverses exactly that: an archived VO's invoice now shows on every tab
+      // by default, because on the production copy of 25 Sep 2026 all 254 overdue invoices sat on
+      // archived VOs and both "Overdue" tabs therefore showed 0.
+      //
+      // The behaviour this test used to guard is not gone — it moved behind "Archivierte VOs
+      // ausblenden". So the test keeps its substance by asserting it THERE, which also pins that
+      // ticking the box reproduces the pre-#3835 world exactly, and records the reversal rather
+      // than quietly deleting it. See `sa_billing_archived_tabs.spec.ts` for #3835 itself.
       for (const kind of ['copaymentBilling', 'pkvBilling'] as const) {
         const { total, rows } = await billing.list(kind);
         const statuses = [...new Set(rows.map((r) => r.treatmentStatus))].sort();
-        console.log(`[#3277] ${kind} default view: ${total} rows, statuses ${JSON.stringify(statuses)}`);
-
+        console.log(`[#3277→#3835] ${kind} default view: ${total} rows, statuses ${JSON.stringify(statuses)}`);
         expect(rows.length, `${kind} default view must return rows to judge`).toBeGreaterThan(0);
         expect(
-          rows.filter((r) => r.treatmentStatus === ARCHIVED).map((r) => r.number),
-          `${kind} default view must not contain archived VOs`,
+          rows.some((r) => r.treatmentStatus === ARCHIVED),
+          `${kind}: #3835 — the default view now DOES list archived VOs`,
+        ).toBe(true);
+
+        const hidden = await billing.list(kind, { hideArchived: true });
+        const hiddenStatuses = [...new Set(hidden.rows.map((r) => r.treatmentStatus))].sort();
+        console.log(`[#3277→#3835] ${kind} with the box ticked: ${hidden.total} rows, statuses ${JSON.stringify(hiddenStatuses)}`);
+        expect(hidden.rows.length, `${kind} ticked view must return rows to judge`).toBeGreaterThan(0);
+        expect(
+          hidden.rows.filter((r) => r.treatmentStatus === ARCHIVED).map((r) => r.number),
+          `${kind}: ticked, the list excludes archived VOs — #3277's rule, where it now lives`,
         ).toEqual([]);
-        // The everyday list stays the closed set of active cases it has always been.
-        expect(statuses.every((s) => DEFAULT_STATUSES.includes(s)), `${kind} statuses ⊆ ${DEFAULT_STATUSES}`).toBe(true);
-        expect(rows.some((r) => r.number === FIXTURE.number), `${FIXTURE.number} must be absent by default`).toBe(false);
+        expect(hiddenStatuses.every((s) => DEFAULT_STATUSES.includes(s)),
+          `${kind} ticked statuses ⊆ ${DEFAULT_STATUSES}`).toBe(true);
+        expect(hidden.rows.some((r) => r.number === FIXTURE.number),
+          `${FIXTURE.number} is absent once archived VOs are hidden`).toBe(false);
       }
     },
   );

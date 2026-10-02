@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { settleAfter } from '../util/settle';
+import { STAGING_CREDENTIALS, mintUiSession } from '../util/api-token';
 
 /**
  * Finding invoices of archived VOs on Zuzahlungsverwaltung and PKV-Abrechnung — RC 3.11 #3277.
@@ -82,24 +83,25 @@ export class BillingArchivedPage {
 
   constructor(private page: Page) {}
 
+  /**
+   * **The v3.12 auth migration (#3460) broke this file in TWO ways, and both are repaired here.**
+   *
+   * 1. It read the bearer out of `auth-state.token`. That key now holds only `{user, fetching}`, so
+   *    the read returned `null` and every API request went out as `Bearer null` — which does not
+   *    fail loudly, the collections simply answer nothing.
+   * 2. The project's saved `storageState` is **single-use** (the refresh token rotates and is spent
+   *    on boot), so the BROWSER was logged out as well: `/billing` rendered the login form and the
+   *    tab locators matched **0** elements. Repairing only the token leaves the one UI test timing
+   *    out on a tab that is genuinely not there, which reads like the tab having been removed.
+   *
+   * `mintUiSession` settles both — it posts `/auth` and installs the fresh refresh token with
+   * `addInitScript`, so it must run BEFORE the first navigation, and it returns the access token.
+   */
   async open(): Promise<void> {
     await this.page.setViewportSize({ width: 1920, height: 1080 });
-    await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-    // `auth-state` is written into localStorage from the .auth storageState BEFORE the page loads,
-    // so the token is readable as soon as the document exists. The flat sleep this replaces was
-    // waiting for nothing — it just delayed reading a value that was already there.
-    await this.page
-      .waitForFunction(() => !!localStorage.getItem('auth-state'), null, { timeout: 30_000 })
-      .catch(() => {});
-    this.token = await this.page.evaluate(() => {
-      try {
-        const state = JSON.parse(localStorage.getItem('auth-state') || '');
-        return state.token || state.accessToken || state.access_token || null;
-      } catch {
-        return null;
-      }
-    });
+    this.token = await mintUiSession(this.page, STAGING_CREDENTIALS.superadmin);
     expect(this.token, 'the session must carry a bearer token for the billing API').toBeTruthy();
+    await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
   }
 
   private static shape(row: any): BillingRow {
@@ -122,7 +124,7 @@ export class BillingArchivedPage {
    */
   async list(
     kind: ListKind,
-    options: { treatmentStatus?: string; search?: Record<string, string>; page?: number; perPage?: number } = {},
+    options: { treatmentStatus?: string; search?: Record<string, string>; page?: number; perPage?: number; hideArchived?: boolean } = {},
   ): Promise<{ total: number; rows: BillingRow[]; status: number; error: string | null }> {
     const params = [
       `page=${options.page ?? 1}`,
@@ -133,6 +135,9 @@ export class BillingArchivedPage {
     if (options.treatmentStatus) {
       params.push(`${kind}%5BtreatmentStatus%5D=${encodeURIComponent(options.treatmentStatus)}`);
     }
+    // RC 3.15 #3835's "Archivierte VOs ausblenden" — the default view now LISTS archived VOs, and
+    // this is where the rule #3277's AC5 asserted has moved to.
+    if (options.hideArchived) params.push(`${kind}%5BhideArchived%5D=true`);
     for (const [property, value] of Object.entries(options.search ?? {})) {
       params.push(`search%5B${encodeURIComponent(property)}%5D=${encodeURIComponent(value)}`);
     }
@@ -181,17 +186,31 @@ export class BillingArchivedPage {
     await this.settle(() => this.page.goto(BILLING_URL, { waitUntil: 'domcontentloaded' }), 18_000);
   }
 
-  /** Tab labels carry a count ("Zuzahlungsverwaltung (14)"), so they are matched by prefix. */
+  /**
+   * Tab labels carry a count ("Zuzahlungsverwaltung (397)"), so they are matched by prefix.
+   *
+   * The 20s click budget this used to carry expired under load — the label is painted but not yet
+   * actionable while the screen is still settling — and the failure reads as the tab being gone.
+   * Wait for the label, then click with a real budget.
+   */
   async openTab(label: string): Promise<void> {
-    await this.settle(
-      () => this.page.getByText(new RegExp(`^${label}( \\(\\d+\\))?$`)).first().click({ timeout: 20_000 }),
-      9_000,
-    );
+    const tab = this.page.getByText(new RegExp(`^${label}( \\(\\d+\\))?$`)).first();
+    await tab.waitFor({ timeout: 180_000 });
+    await this.settle(() => tab.click({ timeout: 90_000 }), 9_000);
   }
 
-  /** The options behind "VO Status: (Auswählen)" on whichever tab is open. */
+  /**
+   * The options behind "VO Status: (Auswählen)" on whichever tab is open.
+   *
+   * The filter row paints AFTER the tab's own request lands, so the click must wait for it: a bare
+   * 20s budget made this time out under load, which reads like the dropdown having been removed.
+   * #3835's checkbox is the cheapest gate — it sits on this very row, on both billing tabs.
+   */
   async voStatusOptions(): Promise<string[]> {
-    await this.page.getByText(/VO Status/).filter({ visible: true }).first().click({ timeout: 20_000 });
+    await this.page.getByText('Archivierte VOs ausblenden').first()
+      .waitFor({ timeout: 120_000 })
+      .catch(() => {});
+    await this.page.getByText(/VO Status/).filter({ visible: true }).first().click({ timeout: 90_000 });
     await this.page.waitForTimeout(3_000);
     const dialog = this.page.locator('[role="dialog"]').first();
     await expect(dialog, 'the VO Status dropdown must open').toBeVisible({ timeout: 15_000 });
