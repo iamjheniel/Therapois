@@ -18,52 +18,6 @@ test.describe('Super Admin - ICD-Code Verwaltung', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
-
-  // ────────────────────────────────────────────────────
-  // Test 1: Create a new ICD Code
-  // ────────────────────────────────────────────────────
-  test(
-    'SA Create ICD-Code',
-    { tag: ['@SuperAdmin', '@ICDManagement'] },
-    async ({ page }) => {
-      const icd = new IcdManagementPage(page);
-
-      await icd.openIcdManagement();
-      await icd.openAddIcd();
-
-      await icd.fillIcdForm({
-        code: shared.code,
-        description: shared.description,
-      });
-
-      await icd.save();
-      await icd.expectToast('ICD-Code erfolgreich erstellt');
-
-      await icd.search(shared.code);
-      await expect(page.locator('#root')).toContainText(shared.code);
-    }
-  );
-
-  // ────────────────────────────────────────────────────
-  // Test 2: Search ICD Code by code
-  // ────────────────────────────────────────────────────
-  test(
-    'SA Search ICD-Code',
-    { tag: ['@SuperAdmin', '@ICDManagement'] },
-    async ({ page }) => {
-      const icd = new IcdManagementPage(page);
-
-      await icd.openIcdManagement();
-      await icd.search(shared.code);
-      await expect(page.locator('#root')).toContainText(shared.code, {
-        timeout: 10_000,
-      });
-    }
-  );
-
-  // ────────────────────────────────────────────────────
-  // Test 3: Search with no results
-  // ────────────────────────────────────────────────────
   test(
     'SA Search ICD-Code - no results',
     { tag: ['@SuperAdmin', '@ICDManagement'] },

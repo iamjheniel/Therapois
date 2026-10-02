@@ -232,9 +232,9 @@ tests/
     Admin/                          # 40 spec files — project: AdminJhen
     SuperAdmin/                     # 117 spec files — project: SAJhen
     Therapist/                      # 20 spec files — project: SandraZeibig
-  Production/
+  Production/                       # READ-ONLY: no Production spec may create a record (see below)
     Admin/                          # 13 spec files — project: AdminJhen-Prod
-    SuperAdmin/                     # 26 spec files — project: SAJhen-Prod
+    SuperAdmin/                     # 35 spec files — project: SAJhen-Prod
     Therapist/                      # 12 spec files — project: JhenQA-Prod
   auth.setup.ts                     # Generates .auth/ session files for Staging
   production.auth.setup.ts          # Generates .auth/ session files for Production
@@ -497,6 +497,38 @@ playwright.config.ts
 `tests/Production/SuperAdmin/sa_privat_basis.spec.ts` (`@SuperAdmin @ProdPrivatBasis @ReadOnly`, one test also `@Slow`) covers **RC 3.14 #3708** (Privat Basis VOs use the GKV check set) and **#3709** (they expire automatically like GKV) from the PRODUCTION side. **Checked 2026-09-29: 4 passed, 0 `fixme`, 23 s. Both deployed.** They shipped in the SAME commit `28f402375` plus migration `Version20260916070000`, so deploying one deploys the other — which is why they are verified together and each is an independent probe for the pair. **Read-only:** every request a GET; nothing is validated, expired or saved. **#3708 is one served column and the migration's arithmetic is exact:** `/validations` reports **public 44, privat_basis 33, private 15, disabled 6**, with **0** Privat Basis checks that are not also GKV checks — the CONTAINMENT is asserted FIRST, because without it `public − excluded` is not a superset and the target silently under-counts. `public − privat_basis` is then exactly **11**, and exactly the migration's named list, which is pinned against **AC3's five CATEGORIES** rather than merely counted (copayment/exemption 3, 9-month 1, Blanko/LHB/BVB 4, discharge 2, group-switch 1 = 11), each required to exist, to be a GKV check and to be off for Privat Basis — an "exclusion" GKV does not have either would be a migration no-op and a sign the list had drifted. Timing split **15 `vo_creation` / 17 `billing` / 1 `not_needed`**, identical to staging. AC5's PKV set is untouched at 15. **Trap:** `/validations` needs `itemsPerPage` raised or the default page hides most of the 51. **#3709 is probed through its two SERIALIZED inputs**, since the job is console-only: `treatmentStartDeadline` and `validityDate` both return null for an excluded insurance type BEFORE any rule runs, so a Privat Basis VO serving them IS the deployed build (`/status` gives the release, not the commit — #3704). **All 8** production Privat Basis VOs serve a start deadline. **The control is mandatory and is what makes that mean anything:** both fields are legitimately null on many GKV VOs (no first treatment ⇒ no validity window) — measured, the GKV control serves a start deadline on 40/40 but a validity date on only **33/40** — while the **PKV control serves NEITHER on 0/40**, so PKV is still excluded from expiry entirely (AC5) and the fields are demonstrably not globally off. **AC3's urgent branch has a LIVE instance on production, which staging could not provide:** VO **2001-27** is `urgentTreatmentNeed` and serves **+14**, against **+28** on the other seven — on staging the only urgent Privat Basis VO was already Fertig Behandelt and so out of scope. `urgentTreatmentNeed` is OMITTED when false, so it reads `undefined` and both the rule and the test compare `=== true`. AC3's other half still cannot ever apply, asserted as data: the rule is `isUrgentTreatmentNeed() || UV === insuranceType` and a VO is either `privat_basis` or `accident`, never both, so only the urgent condition can produce 14 days for one of these. **The catch-up invariant holds — 0 stranded**, and that is the contrast with #3800 on the same environment: every OPEN Privat Basis VO past its start deadline had its first treatment BEFORE that deadline (905301-2 treated 09.07 against a 13.07 deadline, 905806-1 likewise, 2001-27 treated on its issue date), so the rule correctly does not fire, and none has passed its validity date. Stated in the durable form (#3709's own lesson) — a flat "nothing is overdue" would fail every day between a deadline passing and the next nightly run. Population note: production holds **8** Privat Basis VOs against staging's 11, so the type is rare in both. Uses no page object — the two tickets share one small API surface, so the spec carries its own helpers.
 
 Production specs mirror the Staging inventory under `tests/Production/`. The RC 3.11 specs (`admin_letter_country_marker`, `admin_home_visit_validation`, `admin_optica_bsnr`, `sa_retroactive_price_recompute`, `sa_invoice_stored_pdfs`, `sa_invoice_bulk_download`, `sa_vo_validation_choice`, `therapist_board_desktop_layout`) and the RC 3.11.1 hotfix spec (`sa_copayment_theorg_exclusions`) are Staging-only for now: those changes sit on `release/3.11.0` / the 3.11.1 hotfix branch and are not deployed to Production yet, so mirrored specs would fail. Mirror them when 3.11 ships — `sa_copayment_theorg_exclusions` is the one to mirror *first*, since the 33 VOs it lists are production data and the held catch-up run executes there.
+
+## Production specs must not CREATE records (2026-10-02)
+
+Every Production spec that created a record was removed. These ran against the live healthcare
+system and all but one left the record behind:
+
+| File | Test removed | What it created in production |
+|---|---|---|
+| `SuperAdmin/sa_announcement.spec.ts` | the whole file (its only test) | a **General Announcement visible to every user** on the Admin Board, toggled live, never deleted |
+| `SuperAdmin/sa_team.spec.ts` | `Super Admin Team Account Creation` | a **real user account**, with the password `12345678`, never deleted |
+| `SuperAdmin/sa_heilmittelverwaltung.spec.ts` | `Create new Heilmittel` + `Search Heilmittel by code` | a **treatment-catalogue entry** with a GKV price, never deleted |
+| `SuperAdmin/sa_icd_management.spec.ts` | `SA Create ICD-Code` + `SA Search ICD-Code` | an **ICD code**, never deleted |
+| `Admin/` + `SuperAdmin/` + `Therapist/` `*arzt_management.spec.ts` | `Create Arzt` ×3 | a **doctor record** each run, never deleted |
+
+**Two of the removals are collateral and were unavoidable:** `SA Search ICD-Code` and
+`Search Heilmittel by code` look up the very code their creator made (`shared.code` /
+`uniqueCode`), so they cannot run without it. The Arzt `Search`/`Update`/`Delete` tests and the
+Team `Edit`/`Inactivate` tests do NOT depend on their creator — they act on whatever matches a
+literal (`'SA'`, `'automation'`), i.e. on residue from past runs — so they were kept.
+
+**What still contains a creation, deliberately:** the four `Delete Arzt` / `SA Delete ICD-Code`
+tests create a record so the delete is self-contained — but every one of them is already
+`test.fixme(true, …)` on a backend defect (the delete toast appears and the row survives), so none
+executes. If those fixmes are ever cleared, the creation runs again on production.
+
+**`sa_praxis.spec.ts` is not a creation test** — it only asserts that `+ Praxis hinzufügen` is
+visible; it never clicks it. A keyword grep for `hinzufügen` flags it, which is why the sweep has
+to read the surrounding lines rather than trust the match.
+
+**`sa_team.spec.ts`'s two survivors depend on residue.** They search `automation` and act on the
+accounts earlier runs created. Once the production team clears those, the two tests have no fixture
+and should be retired with them — recorded in the file's own header.
 
 ## Versions: `GET /status` answers for the API ONLY (updated 2026-09-17)
 

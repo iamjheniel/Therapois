@@ -19,34 +19,6 @@ test.describe('Super Admin - Arzt Management', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
-
-  test(
-    'SA Create Arzt',
-    { tag: ['@SuperAdmin', '@ArztManagement'] },
-    async ({ page }) => {
-      const arzt = new ArztManagementPage(page);
-      const data = makeArztData();
-
-      await arzt.openArztManagement();
-      await arzt.openAddArzt();
-
-      await arzt.fillArztForm({
-        salutation: 'Herr',
-        title: 'Dr.',
-        firstName: data.firstName,
-        lastName: data.lastName,
-        doctorId: data.doctorId,
-      });
-
-      await arzt.selectPractice('Orthopädie am Zoo');
-      await arzt.save();
-      await arzt.expectToast('Arzt erfolgreich erstellt');
-
-      await arzt.search(data.searchKey);
-      await expect(page.locator('#root')).toContainText(data.firstName);
-    }
-  );
-
   test(
     'SA Search Arzt',
     { tag: ['@SuperAdmin', '@ArztManagement'] },

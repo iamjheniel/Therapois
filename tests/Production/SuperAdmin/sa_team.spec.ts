@@ -33,45 +33,19 @@ async function openEditForRow(page: Page, rowText: string | RegExp) {
   });
 }
 
+/**
+ * **These tests act on `automation_*@gmail.com` users that PAST runs left in production.**
+ *
+ * The account-creation test was removed on 2026-10-02 — it created a real login on the production
+ * system (with the password `12345678`) and never deleted it, so every run added one. The Edit and
+ * Inactivate tests below search for `automation` and act on whichever such user they find, so they
+ * still work; but they depend on that residue, and once the production team clears those accounts
+ * these two have no fixture and should be retired with them.
+ */
 test.describe('Super Admin Team', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
-
-  test('Super Admin Team Account Creation', { tag: ['@SuperAdmin', '@accountcreation'] }, async ({ page }) => {
-    // Generate unique values
-    const timestamp = Date.now();
-    const uniqueEmpId = `test${timestamp}`;
-    const uniqueEmail = `automation_${timestamp}@gmail.com`;
-
-    await openTeam(page);
-    await page.getByText('Nutzer hinzufügen').click();
-
-    // Select role
-    await page.locator('div').filter({ hasText: /^Rolle auswählen$/ }).first().click();
-    await page.getByTestId('Therapist').click();
-
-    // Employee ID
-    await page.getByRole('textbox', { name: 'e.g. EMP12345' }).fill(uniqueEmpId);
-
-    // Name fields
-    await page.getByRole('textbox', { name: 'e.g. James' }).fill('Automation');
-    await page.getByRole('textbox', { name: 'e.g. Bond' }).fill('Test');
-
-    // Email (unique)
-    await page.getByRole('textbox', { name: 'e.g. user@example.com' }).fill(uniqueEmail);
-
-    // Password
-    await page.getByRole('textbox', { name: 'Passwort eingeben' }).fill('12345678');
-    await page.getByRole('textbox', { name: 'Passwort erneut eingeben' }).fill('12345678');
-
-    // Submit
-    await page.getByRole('button', { name: 'Hinzufügen' }).click();
-
-    // Assertion
-    await expect(page.getByTestId('surface')).toContainText('User created successfully');
-  });
-
   test('Super Admin Edit User', { tag: ['@SuperAdmin', '@edituser'] }, async ({ page }) => {
     await openTeam(page);
     await searchUsers(page, 'automation');

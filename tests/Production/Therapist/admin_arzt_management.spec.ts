@@ -28,33 +28,6 @@ test.describe('Admin Dashboard', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('https://staging.therapios.de/dashboard', { waitUntil: 'domcontentloaded' }); // already logged in due to storageState
   });
-
-  test(
-    'Create Arzt @ArztManagement',
-    { tag: ['@Admin', '@ArztManagement'] },
-    async ({ page }) => {
-      const arzt = new ArztManagementPage(page);
-      const data = makeArztData();
-
-      await arzt.openArztManagement();
-      await arzt.openAddArzt();
-
-      await arzt.fillArztForm({
-        salutation: 'Herr',
-        title: 'QA',
-        firstName: data.firstName,
-        lastName: data.lastName,
-        doctorId: data.doctorId,
-      });
-
-      await arzt.selectPractice('Orthopädie am Zoo');
-      await arzt.save();
-      // The app no longer renders a success toast — the search below is the real post-condition.
-      await arzt.search(data.searchKey);
-      await expect(page.locator('#root')).toContainText(data.firstName);
-    }
-  );
-
   test(
     'Search Arzt',
     { tag: ['@Admin', '@ArztManagement'] },
