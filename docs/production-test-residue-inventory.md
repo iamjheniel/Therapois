@@ -1,7 +1,9 @@
 # Inventory — records left in PRODUCTION by the test suite
 
 Read-only audit, 2026-10-02, against `https://api.app.therapios.de` (production, API `3.14.0`).
-**Nothing was deleted or modified.** The specs that created these were removed on the same day; see
+**One write has since been made** — announcement 21 was deactivated on 2026-10-02 at the user's
+instruction; see section 1. Everything else here was and remains read-only. The specs that created
+these were removed on the same day; see
 the "Production specs must not CREATE records" section of `CLAUDE.md`.
 
 Identifiers come from the removed specs themselves (recovered from git history), so each pattern is
@@ -11,7 +13,7 @@ exact rather than guessed.
 
 | # | Record type | Count | Still referenced by anything? | Live user impact |
 |---|---|---|---|---|
-| 1 | **Announcement** | **1** | — | **YES — visible to every user since 2026-07-03** |
+| 1 | **Announcement** | **1** | — | ~~visible to every user since 2026-07-03~~ **DEACTIVATED 2026-10-02** |
 | 2 | User accounts | 9 | 0 VOs, 0 activities each | a real login each, password `12345678` |
 | 3 | Doctors (Arzt) | 7 | 0 VOs each | pollutes the doctor picker |
 | 4 | Heilmittel | 10 | prescribed on 0 VOs | pollutes the treatment catalogue |
@@ -19,7 +21,25 @@ exact rather than guessed.
 | 6 | Documented treatments | **4** on 2 VOs | counted in `activityCount` | both VOs are **QA** patients |
 | 7 | Notes on VOs | **26** on 21 VOs | — | clutter in the VO change log |
 
-## 1. Announcement — the one with live user impact
+## 1. Announcement — DEACTIVATED 2026-10-02
+
+> **Action taken.** `PATCH /announcements/21 {"active": false}` → 200, at the user's explicit
+> instruction. This is the only write this audit has made to production.
+>
+> | | before | after |
+> |---|---|---|
+> | id 21 `active` | `true` | **`false`** |
+> | id 21 `deleted` | `false` | `false` — deactivated, NOT deleted |
+> | id 21 `message` | — | unchanged |
+> | **id 20** (the genuine GKV notice) | `active: true`, updated 2026-06-24T10:27:23 | **untouched**, same timestamp |
+>
+> Identity was re-asserted immediately before the write (the script aborts unless id 21's message
+> still reads `test automation …`), and the production Admin Board no longer shows the text.
+> That screen check is corroborating rather than conclusive — the genuine notice did not paint in
+> the same read either, so the banner region may simply not have rendered; the API state above is
+> the authoritative evidence. **Reversible**: set `active` back to `true`.
+
+
 
 ```
 id 21 · "test automation 1783055776722" · type general_announcement
@@ -199,7 +219,7 @@ plainly identifiable by its own text, so a targeted cleanup is unambiguous.
 
 ## Suggested order of work
 
-1. **Deactivate announcement 21** — the only item users can see, and a one-field change.
+1. ~~**Deactivate announcement 21**~~ — **DONE 2026-10-02** (see section 1).
 2. **Disable the 9 `automation_*` accounts** — working logins with a published password. They carry
    no data, so this is clean; retire `sa_team.spec.ts`'s two remaining tests at the same time,
    because they depend on these accounts existing.
