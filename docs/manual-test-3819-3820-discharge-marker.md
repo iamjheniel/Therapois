@@ -77,7 +77,12 @@ Staging holds **14 facilities of 268** that order their own follow-ups (13 `prax
 | Discharge VO, the ticket's own | `9594-1`, practice **1610 Mauritius Therapieklinik** (its only VO) |
 | Practice with BOTH kinds (AC2 control) | **755 JhenQA Medical Center** — 31 discharge, 154 normal |
 | Deceased patient for the Verstorben comparison | VO `934201-99`, patient 8124 NikkiQA DingdingTest |
-| Guarded facility | `QA Test ER` (`praxis_vo`) |
+| Guarded facility — do NOT test #3820 here | `QA Test ER` (`praxis_vo`) |
+| **#3820 AC3 candidates** (Aktiv, empty Folge-VO status, NOT self-ordering, not already Entlassmanagement, pinned by no spec) | `99692-1`, `99692-2`, `99689-3`, `99697-1` — all at *Fürsorge im Alter Seniorenresidenz*, ordering status **Vom Admin** |
+| #3820 VOs that will CORRECTLY show no Bestellen | `99699-1`, `99700-1`, `99701-1`, `99703-1`, `99709-1` (all at QA Test ER) |
+
+Measured 2026-10-02: of the 1,200 newest VOs, **604** satisfy the AC3 shape; 304 were rejected for
+sitting at a self-ordering facility, 235 for already carrying a Folge-VO status.
 
 **Reaching the CRM fixture:** practice 1610 is **not** on "Heute bestellen" — #3885 took discharge
 VOs off that tab — so search it from the **"Alle"** tab.
