@@ -35,6 +35,8 @@ test.describe('Admin Dashboard', () => {
   );
 
   test('Update Arzt last name only', { tag: ['@Admin', '@ArztManagement'] }, async ({ page }) => {
+    // DISABLED: updates a real doctor record.
+    test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it updates a real doctor record.');
     const arzt = new ArztManagementPage(page);
 
     await arzt.openArztManagement();

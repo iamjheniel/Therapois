@@ -98,6 +98,8 @@ test.describe('Therapist Upload Documents', () => {
     });
 
   test('Therapist Copayment View and Add Note', { tag: ['@Therapist', '@AddNoteTherapistCopayment'] }, async ({ page }) => {
+    // DISABLED: adds a note to a real patient document.
+    test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it adds a note to a real patient document.');
     const app = new AppPage(page);
     await app.navTo(/Dokument/);
     await page.getByRole('button', { name: 'View' }).nth(1).click({force:true});

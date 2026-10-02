@@ -9,6 +9,8 @@ test.describe('Super Admin TBoard', () => {
     'Super Admin TBoard Document Treatment',
     { tag: ['@SuperAdmin', '@SADoku'] },
     async ({ page }) => {
+      // DISABLED: DOCUMENTS A TREATMENT on a real patient VO.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS A TREATMENT on a real patient VO.');
       // Navigate to T Board (scroll the nav button into view and click via DOM)
       const navBtn = page.getByRole('button', { name: ' T Board' }).last();
       await navBtn.waitFor({ state: 'attached', timeout: 10_000 });

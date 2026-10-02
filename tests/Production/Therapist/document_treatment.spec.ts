@@ -11,6 +11,8 @@ test.describe('Document Treatment', () => {
 
 
   test('Create treatment then open Doku and delete treatment activity', {tag: ['@Therapist','@singleregular']}, async ({ page }) => {
+    // DISABLED: creates and deletes a treatment activity on a real patient.
+    test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it creates and deletes a treatment activity on a real patient.');
   const treatmentNote = 'Regular treatment test automation';
 
   // Resolve a real patient from live data (falls back to a broad search if the historically
@@ -82,6 +84,8 @@ test.describe('Document Treatment', () => {
 });
 
     test('Document single patient BV treatment', { tag: ['@Therapist','@bvtreatment'] }, async ({ page }) => {
+      // DISABLED: DOCUMENTS A TREATMENT on a real patient.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS A TREATMENT on a real patient.');
     // Resolve a real patient from live data (falls back to a broad search if the historically
     // used BV patient has churned out). Leaves the list filtered to that patient.
     const list = new TherapistListPage(page);
@@ -117,6 +121,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document single patient doppel beh treatment', { tag: ['@Therapist','@doppelbeh'] }, async ({ page }) => {
+      // DISABLED: DOCUMENTS A TREATMENT on a real patient.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS A TREATMENT on a real patient.');
     const list = new TherapistListPage(page);
     const patientName = await list.resolvePatientName(['JhenTest QA']);
     test.skip(!patientName, 'No patient available in this therapist\'s list');
@@ -134,6 +140,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document multiple patients regular treatment', { tag: ['@Therapist','@multipleregular'] }, async ({ page }) => {
+      // DISABLED: DOCUMENTS TREATMENTS on real patients.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS TREATMENTS on real patients.');
     // Multi-patient treatment needs ≥3 selectable rows. Use a broad search to populate the
     // list (not resolvePatientName, which filters down to a single patient), then skip if
     // fewer than 3 patients are available.
@@ -179,6 +187,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document reject treatment', { tag: ['@Therapist','@rejecttreatment'] }, async ({ page }) => {
+      // DISABLED: DOCUMENTS A TREATMENT on a real patient.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS A TREATMENT on a real patient.');
     const list = new TherapistListPage(page);
     const patientName = await list.resolvePatientName(['JhenTest QA']);
     test.skip(!patientName, 'No patient available in this therapist\'s list');
@@ -196,6 +206,8 @@ test.describe('Document Treatment', () => {
   });
 
     test('Document planned treatment', { tag: ['@Therapist','@plannedtreatment'] }, async ({ page }) => {
+      // DISABLED: DOCUMENTS A TREATMENT on a real patient.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS A TREATMENT on a real patient.');
     const list = new TherapistListPage(page);
     const patientName = await list.resolvePatientName(['JhenTest QA']);
     test.skip(!patientName, 'No patient available in this therapist\'s list');
@@ -217,6 +229,8 @@ test.describe('Document Treatment', () => {
   });
 
   test('Document activity', { tag: ['@Therapist','@activity'] }, async ({ page }) => {
+    // DISABLED: DOCUMENTS AN ACTIVITY on a real patient.
+    test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS AN ACTIVITY on a real patient.');
   const list = new TherapistListPage(page);
   const patientName = await list.resolvePatientName(['JhenTest QA']);
   test.skip(!patientName, 'No patient available in this therapist\'s list');

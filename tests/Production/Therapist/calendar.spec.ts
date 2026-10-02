@@ -33,6 +33,8 @@ test.describe('Calendar', () => {
   // Test 2: Edit calendar entry (flexible version, no brittle selectors)
   // ----------------------------
   test('Calendar edit document treatment', { tag : ['@Therapist', '@editcalendar'] }, async ({ page }) => {
+    // DISABLED: edits a documented treatment on a real patient.
+    test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it edits a documented treatment on a real patient.');
 
     // Go to calendar
     await page.getByText('Kalender', { exact: true }).click();

@@ -16,6 +16,8 @@ test.describe('Super Admin CRM Initial Orders', () => {
     'CRM Initial Orders Add Notes and Generate PDF',
     { tag: ['@SuperAdmin', '@CRMInitialOrder'] },
     async ({ page }) => {
+      // DISABLED: adds a note to a real practice order.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it adds a note to a real practice order.');
       const crmBase = new CRMBasePage(page);
       const crmList = new CRMListPage(page);
       const initialOrders = new CRMInitialOrdersPage(page);
@@ -34,6 +36,8 @@ test.describe('Super Admin CRM Initial Orders', () => {
     'CRM Initial Orders Change Status',
     { tag: ['@SuperAdmin', '@CRMInitialOrder'] },
     async ({ page }) => {
+      // DISABLED: changes a real VO ordering status.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it changes a real VO ordering status.');
       const crmBase = new CRMBasePage(page);
       const crmList = new CRMListPage(page);
       const initialOrders = new CRMInitialOrdersPage(page);

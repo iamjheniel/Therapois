@@ -47,6 +47,8 @@ test.describe('Super Admin Team', () => {
     await page.goto('https://app.therapios.de/dashboard', { waitUntil: 'domcontentloaded' });
   });
   test('Super Admin Edit User', { tag: ['@SuperAdmin', '@edituser'] }, async ({ page }) => {
+    // DISABLED: edits a real user account.
+    test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it edits a real user account.');
     await openTeam(page);
     await searchUsers(page, 'automation');
 
@@ -62,6 +64,8 @@ test.describe('Super Admin Team', () => {
   });
 
   test('Super Admin Inactivate + Activate User', { tag: ['@SuperAdmin', '@inactivateuser'] }, async ({ page }) => {
+    // DISABLED: deactivates and reactivates a real user account.
+    test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it deactivates and reactivates a real user account.');
     await openTeam(page);
     await searchUsers(page, 'automation');
 

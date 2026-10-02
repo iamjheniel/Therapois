@@ -526,6 +526,30 @@ executes. If those fixmes are ever cleared, the creation runs again on productio
 visible; it never clicks it. A keyword grep for `hinzufügen` flags it, which is why the sweep has
 to read the surrounding lines rather than trust the match.
 
+**Every test that UPDATES production is disabled too (2026-10-02).** 24 tests across 14 files now
+carry `test.skip(true, 'Production is read-only …')` as their first statement, with a comment
+saying what each one wrote. The code is kept, not deleted, so re-enabling is a one-line revert.
+What they were doing on the live system:
+
+| Write | Tests |
+|---|---|
+| **Documenting treatments on real patients** | `admin_tboard`, `sa_tboard`, and 7 in `Therapist/document_treatment` (incl. one that creates then deletes an activity) |
+| Editing a documented treatment | `Therapist/calendar` — *Calendar edit document treatment* |
+| Updating a doctor record | the three `*arzt_management` specs — *Update Arzt last name* |
+| Editing / deactivating a user account | `sa_team` — *Edit User*, *Inactivate + Activate User* |
+| Adding notes and changing VO ordering status | the four `*crm_follow-up-orders` / `*crm_initial-order-change-status` specs (2 each) |
+| Adding a note to a patient document | `Therapist/document` — *Copayment View and Add Note* |
+
+**Three tests look like writers to a keyword grep and are not** — leave them enabled:
+`admin_checkcolumns` and `sa_checkcolumns` match only on `toContainText('Letzte Notiz')`, and
+`Therapist/check_doku`'s *Check Doku feature* matches on a `dokuModal` VARIABLE name while only
+opening the panel and asserting its text. A sweep has to read the surrounding lines.
+
+**When generating the skip lines, escape the reason text.** The first attempt wrote
+`a real patient's VO` into a single-quoted JS string and broke both Admin and SuperAdmin
+projects — `--list` reported `0 tests in 0 files`, which is exactly what that gate is for (`tsc`
+is not installed, so `--list` is the only real syntax check).
+
 **`sa_team.spec.ts`'s two survivors depend on residue.** They search `automation` and act on the
 accounts earlier runs created. Once the production team clears those, the two tests have no fixture
 and should be retired with them — recorded in the file's own header.

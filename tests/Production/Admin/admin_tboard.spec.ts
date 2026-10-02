@@ -8,6 +8,8 @@ test.describe('Admin TBoard', () => {
   });
 
     test('Admin TBoard Document Treatment', { tag: ['@Admin', '@AdminDoku'] }, async ({ page }) => {
+      // DISABLED: DOCUMENTS A TREATMENT on a real patient VO.
+      test.skip(true, 'Production is read-only (2026-10-02): this test writes to the live system: it DOCUMENTS A TREATMENT on a real patient VO.');
     const app = new AppPage(page);
     await app.navTo(/T Board/);
     await page.waitForTimeout(1500);
