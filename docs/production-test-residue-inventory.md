@@ -17,7 +17,7 @@ exact rather than guessed.
 | 4 | Heilmittel | 10 | prescribed on 0 VOs | pollutes the treatment catalogue |
 | 5 | ICD codes | 25 | **not determinable from the API** | pollutes ICD search |
 | 6 | Documented treatments | see below | — | clinical data on real patients |
-| 7 | Notes on VOs | see below | — | visible in the VO change log |
+| 7 | Notes on VOs | **26** on 21 VOs | — | clutter in the VO change log |
 
 ## 1. Announcement — the one with live user impact
 
@@ -118,12 +118,45 @@ clinical documentation on a real patient's VO, it feeds revenue and billing, and
 exposes a `Delete`. Deleting one changes what that VO reports as treated. This needs the billing
 team's decision, not a QA judgement call.
 
-## 7. Notes added to VOs — scan in progress
+## 7. Notes added to VOs — COMPLETE: 26 notes on 21 VOs
 
-The four CRM order specs each called `addNote('test automation')` as a bulk action, which writes a
-`prescription_log` of type `note` against every selected VO. Production holds **1,052,429**
-prescription logs, of which **16,417** are `type=note`; that subset is being scanned for the exact
-value. This section will be completed with the count and the distinct VOs affected.
+The four CRM order specs each called `addNote('test automation')` as a bulk action, writing a
+`prescription_log` of type `note` against every selected VO. All **16,417** `type=note` logs were
+scanned (production holds 1,052,429 logs in total, so the `type` filter is what makes this
+affordable).
+
+**26 notes, every one reading exactly `test automation`, across 21 distinct VOs**, all in 2026:
+
+| Date | Notes |
+|---|---|
+| 2026-03-13 | 2 |
+| 2026-03-19 | 2 |
+| 2026-03-31 | 1 |
+| 2026-04-02 | 2 |
+| 2026-06-16 | 8 |
+| 2026-06-17 | 3 |
+| 2026-06-18 | 4 |
+| 2026-07-03 | 4 |
+
+The bursts match CRM test runs — a bulk action notes every selected VO at once, which is why single
+days carry 8 and 4.
+
+VO numbers only, no patient data:
+
+```
+1426-39   Abgerechnet  1      3500-6    Archiviert   1      6449-3    Archiviert   1
+1775-27   Archiviert   1      3557-5    Archiviert   1      6818-6    Abgerechnet  1
+2000-28   Archiviert   1      5251-7    Archiviert   1      8173-2    Archiviert   1
+261-38    Archiviert   1      5421-11   Archiviert   1      8647-1    Archiviert   1
+2678-16   Archiviert   3      5496-7    Archiviert   1      8649-1    Archiviert   1
+2928-24   Archiviert   1      5760-11   Abgerechnet  2      8650-1    Archiviert   1
+3119-16   Abgelaufen   2      5972-2    Archiviert   1      8651-1    Archiviert   2
+```
+
+**17 of the 21 are Archiviert and 3 are Abgerechnet** — i.e. closed, already-billed VOs — so the
+notes are cosmetic clutter in the change log rather than anything that affects billing. They are
+the lowest-risk category in this inventory. A note is also the one kind of residue here that is
+plainly identifiable by its own text, so a targeted cleanup is unambiguous.
 
 ## Method and caveats
 
