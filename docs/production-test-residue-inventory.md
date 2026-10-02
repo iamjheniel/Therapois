@@ -16,7 +16,7 @@ exact rather than guessed.
 | 3 | Doctors (Arzt) | 7 | 0 VOs each | pollutes the doctor picker |
 | 4 | Heilmittel | 10 | prescribed on 0 VOs | pollutes the treatment catalogue |
 | 5 | ICD codes | 25 | **not determinable from the API** | pollutes ICD search |
-| 6 | Documented treatments | see below | — | clinical data on real patients |
+| 6 | Documented treatments | **4** on 2 VOs | counted in `activityCount` | both VOs are **QA** patients |
 | 7 | Notes on VOs | **26** on 21 VOs | — | clutter in the VO change log |
 
 ## 1. Announcement — the one with live user impact
@@ -91,32 +91,60 @@ ICD filter at all — `icdCode`, `icd`, `icd.code`, `icdCodes.code`, `secondaryI
 with database access should check before deleting. The legitimate code `QA.10` matches a `code=QA`
 search and must NOT be touched.
 
-## 6. Documented treatments — scan in progress
+## 6. Documented treatments — COMPLETE: 4 activities, both VOs are QA patients
 
-The T-Board and `document_treatment` tests documented treatments on **real patients**, writing one
-of three note strings:
+The T-Board and `document_treatment` tests documented treatments on real VOs, writing one of three
+note strings:
 
-| Note | Written by |
-|---|---|
-| `test admin` | `Admin/admin_tboard.spec.ts` |
-| `test superadmin` | `SuperAdmin/sa_tboard.spec.ts` |
-| `automation test` | `Therapist/document_treatment.spec.ts` (7 tests) |
+| Note | Written by | Found |
+|---|---|---|
+| `test admin` | `Admin/admin_tboard.spec.ts` | **4** |
+| `test superadmin` | `SuperAdmin/sa_tboard.spec.ts` | 0 |
+| `automation test` | `Therapist/document_treatment.spec.ts` (7 tests) | 0 |
+
+```
+activity 249429   2026-06-16   test admin   VO 872855-222
+activity 250817   2026-06-17   test admin   VO 872855-222
+activity 252164   2026-06-18   test admin   VO 872855-222
+activity 265165   2026-07-03   test admin   VO 882901-1
+```
+
+**Both VOs belong to QA test patients, not to real patients** — which is the single most important
+line in this inventory, because it means no clinical record of a real person was touched. All four
+sit on therapist **Sandra Zeibig (user 6)**, the T-Board picker's first entry.
+
+### How this was scanned, and what the scan does and does not cover
 
 **`/activities` registers no `notes` filter** — `notes=…` is accepted and returns the unfiltered
-318,430, byte-identical to a bogus key — so these cannot be selected server-side and the window has
-to be walked and filtered client-side.
+318,470, byte-identical to a bogus key — so these cannot be selected server-side.
 
-Established so far: the QA therapist account (user **198**, `jhenqa@therapios.de`) has **228
-activities and NOT ONE** carries any of the three notes. So the writes did not land on that
-account — most likely on whichever therapist the T-Board picker selected. A walk of the 2026 window
-is running; this section will be completed with the count, the dates and the **VO numbers only**.
+A full walk of the 2026 window was abandoned: production paged so slowly it had not completed 5,000
+rows in 25 minutes. Two cheaper routes replaced it, and together they are conclusive for the
+accounts the tests actually use:
 
-**No patient names are recorded in this inventory**, here or anywhere else in it.
+1. **By day.** `date[after]` + `date[strictly_before]` DO narrow (one day = 771 rows against
+   318,470). The eight days the suite demonstrably ran — taken from the CRM note timestamps in
+   section 7 — were each walked in full: 8,233 activities, 4 hits.
+2. **By therapist, end to end.** `therapist=` is registered. Sandra Zeibig's **entire 3,199
+   activities** and the QA therapist's (user 198) **entire 228** were scanned: the same 4 hits, and
+   **zero** for user 198.
 
-Whoever does the cleanup should treat this category differently from the rest: an Activity is
-clinical documentation on a real patient's VO, it feeds revenue and billing, and `/activities`
-exposes a `Delete`. Deleting one changes what that VO reports as treated. This needs the billing
-team's decision, not a QA judgement call.
+So for the two accounts these tests drive, the answer is complete. What it does not rule out is a
+run on some other day against a therapist the T-Board picker happened to land on; a definitive
+answer for the whole table needs one SQL query:
+
+```sql
+SELECT id, date, notes, prescription_id, therapist_id FROM activity
+WHERE TRIM(LOWER(notes)) IN ('test admin','test superadmin','automation test');
+```
+
+### Why this category is still the billing team's call, not QA's
+
+An Activity is clinical documentation on a VO. It feeds `activityCount`, the revenue calculation
+and the billing pipeline, and both affected VOs report `activityCount` 10 and 6 — i.e. these four
+are *counted*. `/activities` does expose a `Delete`, so removing them is possible, but it changes
+what those VOs report as treated. Even on QA patients that is a billing decision rather than a
+cleanup chore.
 
 ## 7. Notes added to VOs — COMPLETE: 26 notes on 21 VOs
 
@@ -177,4 +205,9 @@ plainly identifiable by its own text, so a targeted cleanup is unambiguous.
    because they depend on these accounts existing.
 3. **Delete the 7 doctors and 10 Heilmittel** — confirmed referenced by 0 VOs.
 4. **Check the 25 ICD codes against the database first** (section 5), then delete.
-5. **Leave the activities and VO notes to the billing team** (sections 6–7) — real patient records.
+5. **The 26 VO notes** (section 7) are plainly identifiable by their own text and sit almost
+   entirely on closed, already-billed VOs — safe to clear, lowest risk in the list.
+6. **The 4 activities** (section 6) last, with the billing team: both VOs are QA patients, so no
+   real clinical record is involved, but the four are counted in `activityCount` and feed revenue.
+   Run the SQL in section 6 first to confirm there are no others on days or therapists the
+   client-side scan could not reach.
