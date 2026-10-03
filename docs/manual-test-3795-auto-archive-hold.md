@@ -80,3 +80,70 @@ not:
 | last activity | first of next month | 2027-06-01 |
 
 All five worklist rows match the new rule and none matches the old one.
+
+## Sample VOs (measured on staging, 2026-10-03)
+
+### Usable today with no setup
+
+| VO | Why |
+|---|---|
+| **9120-1** | The only VO past 90 days. GKV, 1 signed session (16 Jun 2026 → deadline 31 Mar 2027), no submission, no invoice, expired 2026-07-02 (93 d). **Exactly the VO the Testing Guidance asks you to pick.** It must stay Abgelaufen. |
+
+### AC3's truth table is already seeded — 99909-1 … 99917-1
+
+Someone built this block on 2026-10-02. It maps onto the ticket's table almost row for row:
+
+| AC3 row | Case | Fixture | State |
+|---|---|---|---|
+| 1 | GKV, last signed 10 Jun 2026, unbilled | **99911-1** | deadline 2027-03-31, no batch → stays |
+| 2 | …in a billing submission not yet sent | **99914-1** | `billingBatchCount = 1` → stays |
+| 3 | …submission set to Vollständig und Gesendet | **99917-1** | already **Abgerechnet**, invoice `R126-134:sent` → criterion 4 |
+| 4 | no signed session | *(not seeded)* | any VO with `activityCount = 0`, e.g. **5161-6**, **6082-6**, **8073-2** |
+| 5 | GKV, last signed 10 Nov 2025 | **99909-1** | deadline 2026-08-31, **passed** → archived |
+| 6 | GKV, last signed 15 Dec 2025 | **99910-1** | deadline 2026-09-30, **passed on 1 Oct** → archived |
+| 7 | PKV, invoice Nicht gesendet | **99915-1** | `R126-132:not_sent` → stays |
+| 8 | PKV, only a cancelled invoice | **99916-1** | `R126-133:cancelled` → stays |
+| 9 | PKV, last signed 10 Nov 2025 | **99913-1** | deadline passed, no deadline for PKV → stays |
+| 10 | BG, last signed 10 Nov 2025 | **99912-1** | deadline passed, no deadline for BG → stays |
+| 11 | expired 52 days ago | *(not seeded)* | back-date an expiry |
+
+**THE CATCH, and it decides whether the run proves anything: every one of them expired on
+2026-10-02, i.e. one day ago, not the 101 days AC3 specifies.** The 90-day gate therefore holds
+*all nine* for the trivial reason, and a run against them as they stand returns "held" for rows 5
+and 6 as well — which looks like a pass and is not one. Back-date `expiredAt` past 90 days first;
+the Testing Guidance allows exactly that ("or set its expiry date back").
+
+### Natural splits coming up — watch, no setup needed
+
+These cross 90 days on their own and must go opposite ways:
+
+| VO | Crosses 90 d | Signed sessions | Deadline | Must |
+|---|---|---|---|---|
+| **5161-6**, **6082-6**, **8073-2** | 2026-10-04 | **0** | — | be **archived** |
+| **6425-1** | 2026-10-04 | 9 | 2027-04-30 open | be **held** |
+| **5461-4** | 2026-10-07 | 17 | 2027-03-31 open | be **held** |
+| **4354-1** | 2026-10-21 | 4 | 2026-04-30 **passed** | be **archived** |
+
+**4354-1 is the one worth diarising** — it is the only real (non-seeded) VO that will be archived
+*because its deadline passed* rather than for want of a session.
+
+### AC5 — the Duplikat board
+
+All five worklist rows serve a month-END deadline, which is the change:
+
+| VO | Last signed | Deadline served | Old rule would say |
+|---|---|---|---|
+| 4207-2 | 2026-01-06 | 2026-10-31 | 2026-11-01 |
+| 99828-1 | 2026-01-21 | 2026-10-31 | 2026-11-01 |
+| 99826-1 | 2026-02-18 | 2026-11-30 | 2026-12-01 |
+| **4053-7** | **2026-07-17** (last activity 2026-08-06) | **2027-04-30** | 2027-05-01 / 2027-05-31 |
+| 99680-1 | 2026-08-25 | 2027-05-31 | 2027-06-01 |
+
+**4053-7 is the one to use** — its last activity is a month later than its last signed session, so
+it separates the anchor change and the month-end change at once.
+
+### Gap
+
+There is **no GKV VO with a signed session and a passed deadline sitting near 90 days**, so AC3
+rows 5 and 6 cannot be exercised naturally before 2026-10-21 (4354-1). Until then they need the
+seeded fixtures with a back-dated expiry.
