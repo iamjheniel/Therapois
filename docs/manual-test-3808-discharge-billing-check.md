@@ -97,3 +97,34 @@ Observed: the verdict row is **updated in place** (same id 592896 throughout), n
 
 Nothing else needs doing by hand. The PM's own walkthrough (9489-1 → Re-check → Pass) is the same
 three steps on a different VO.
+
+## The ticket's "Expected effect" VOs are mostly NOT on staging
+
+That table is a **production** estimate from a 23 Sep copy. Checked on staging 2026-10-05:
+
+| VO | On staging? |
+|---|---|
+| 9489-1 | **Yes** — Abgelaufen, GKV, marked, fails, note lists 17.07 + 20.07 |
+| 8920-1 | Yes, but **Archiviert with zero carried-out sessions**, so the check passes — it cannot show the "3 of 5 outside" the ticket predicts |
+| 10316-1, 10518-1, 5487-5, 5487-6 | **No** |
+| 10262-1 (already billed) | **No** |
+
+So **9489-1 is the only real-data VO usable on staging**, and its note is shorter than the
+ticket's example (see the finding above). Everything else comes from the PM's 1000xx block.
+
+## Quick reference — what each VO proves
+
+Open on the billing validation page, press **Erneut prüfen**, and read the **Zeit** group.
+
+**Fails (check is in the Failed block with a note):**
+`100019-1` · `100021-1` · `100023-1` · `100026-1` · `100032-1` · `100037-1` · `9489-1`
+
+**Passes:**
+`100017-1` · `100018-1` · `100022-1` · `100024-1` · `100025-1` · `100027-1` · `100028-1` · `100039-1`
+
+**Check does not run at all (no row in the group):**
+`100029-1` (Privat Basis) · `100030-1` (PKV) · `100031-1` (BG) · `100038-1` (no insurance type)
+
+**For the acknowledge steps (AC5):** use `100019-1` — it fails, so there is something to Pass.
+It is also the VO the automated test drives and restores, so expect it to read `failed` with its
+note whenever you pick it up.
