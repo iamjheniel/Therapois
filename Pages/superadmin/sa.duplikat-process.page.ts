@@ -70,6 +70,8 @@ export const DUPLIKAT = {
   ABGERECHNET: 'Abgerechnet',
   ORIGINAL_LIEGT_VOR: 'Original liegt vor',
   NICHT_MOEGLICH: 'Nicht möglich',
+  /** #3722: the terminal status a past-deadline VO reaches automatically. */
+  VERLOREN: 'Verloren',
 } as const;
 
 export type DuplikatStatus = (typeof DUPLIKAT)[keyof typeof DUPLIKAT];
@@ -86,6 +88,18 @@ export const SELECTABLE_STATUSES: DuplikatStatus[] = [
   DUPLIKAT.NICHT_MOEGLICH,
 ];
 
+/**
+ * #3722: the statuses set ONLY by a job, never by hand.
+ *
+ * Abgerechnet was the first; Verloren joins it, and AC3 asks for exactly that parity. Both refuse
+ * a hand-set with `"<status>" is set automatically …`, which is what distinguishes them from the
+ * `Unknown Duplikat status` a nonsense value gets.
+ */
+export const AUTOMATIC_ONLY_STATUSES: DuplikatStatus[] = [DUPLIKAT.ABGERECHNET, DUPLIKAT.VERLOREN];
+
+/** #3722: the Therapeuten-Orga tile keys for the two Duplikat populations. */
+export const DUPLIKAT_TILES = { OPEN: 'duplikatOffen', LOST: 'duplikatVerloren' } as const;
+
 /** #3503 AC8's colour table, as `STATUS_STYLE` ships it (read back with `getComputedStyle`). */
 export const STATUS_BACKGROUND: Record<DuplikatStatus, string> = {
   Anfordern: 'rgb(254, 226, 226)',
@@ -94,6 +108,8 @@ export const STATUS_BACKGROUND: Record<DuplikatStatus, string> = {
   Abgerechnet: 'rgb(229, 231, 235)',
   'Original liegt vor': 'rgb(243, 244, 246)',
   'Nicht möglich': 'rgb(243, 244, 246)',
+  // #3722 ships no new colour entry; the tile is what surfaces Verloren, not a row pill.
+  Verloren: 'rgb(243, 244, 246)',
 };
 
 /** #3507 AC3 — the countdown badge turns red at 60 days or fewer. */
