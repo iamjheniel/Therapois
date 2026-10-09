@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { ReminderBrandingPage, BANNER, type DocumentRead } from '../../../Pages/superadmin/sa.reminder-branding.page';
 
 /**

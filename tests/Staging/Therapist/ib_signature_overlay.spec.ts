@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { IbWizardPage } from '../../../Pages/therapist/therapist.ib-wizard.page';
 import { DataGate } from '../../fixtures/data-gate';
 

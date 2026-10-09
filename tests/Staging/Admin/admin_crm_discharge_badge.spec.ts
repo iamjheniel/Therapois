@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures/crm-serial';
-import { request as pwRequest, type APIRequestContext } from '@playwright/test';
+import { request as pwRequest, type APIRequestContext } from '../../fixtures/session';
 import { DischargeVoMarkerPage as D } from '../../../Pages/superadmin/sa.discharge-vo-marker.page';
 import { mintUiSession, STAGING_CREDENTIALS } from '../../../Pages/util/api-token';
 

@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from '../../fixtures/session';
 
 // Robustly navigate to the Team page (sidebar nav can be below the fold).
 async function openTeam(page: Page) {

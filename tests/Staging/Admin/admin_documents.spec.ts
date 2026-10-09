@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 
 const DOCUMENT_URL = 'https://staging.therapios.de/document';
 

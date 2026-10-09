@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { ProdMondaySyncPage, type Facility, type ReportRow, type SyncReport } from '../../../Pages/superadmin/sa.prod-monday-sync.page';
 
 /**

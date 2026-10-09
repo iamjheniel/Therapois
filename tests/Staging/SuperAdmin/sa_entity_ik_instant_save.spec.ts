@@ -1,4 +1,4 @@
-import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
+import { test, expect, type Page, type APIRequestContext } from '../../fixtures/session';
 import { EntityIkSavePage as P } from '../../../Pages/superadmin/sa.entity-ik-save.page';
 
 /**

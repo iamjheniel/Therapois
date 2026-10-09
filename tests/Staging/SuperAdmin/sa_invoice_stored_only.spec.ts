@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { InvoicePdfsPage, PdfDownload } from '../../../Pages/superadmin/sa.invoice-pdfs.page';
 
 /**

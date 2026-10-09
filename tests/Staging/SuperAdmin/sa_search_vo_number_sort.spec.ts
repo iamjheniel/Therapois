@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { SearchVoSortPage as P } from '../../../Pages/admin/admin.search-vo-sort.page';
 
 /**

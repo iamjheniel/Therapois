@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { STAGING_CREDENTIALS } from '../../../Pages/util/api-token';
 import {
   AC2_FIXTURES,

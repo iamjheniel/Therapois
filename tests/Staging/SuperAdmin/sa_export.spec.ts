@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 
 /**
  * SuperAdmin "Daten" → "Export" feature: the VO-Export page (/prescriptionExport).

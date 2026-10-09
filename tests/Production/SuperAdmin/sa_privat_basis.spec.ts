@@ -1,4 +1,4 @@
-import { test, expect, request as pwRequest, type APIRequestContext } from '@playwright/test';
+import { test, expect, request as pwRequest, type APIRequestContext } from '../../fixtures/session';
 import { STAGING_CREDENTIALS } from '../../../Pages/util/api-token';
 
 /**

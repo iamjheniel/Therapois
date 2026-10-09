@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { VoFormPage } from '../../../Pages/vo/vo.form.page';
 
 // End-to-end "Create VO" (VO erstellen) happy path for an Admin — written to be

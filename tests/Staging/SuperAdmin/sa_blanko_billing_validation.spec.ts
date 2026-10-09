@@ -1,4 +1,4 @@
-import { test, expect, request as pwRequest, type APIRequestContext } from '@playwright/test';
+import { test, expect, request as pwRequest, type APIRequestContext } from '../../fixtures/session';
 import { BlankoBillingValidationPage as B, type Treatment } from '../../../Pages/superadmin/sa.blanko-billing-validation.page';
 
 /**

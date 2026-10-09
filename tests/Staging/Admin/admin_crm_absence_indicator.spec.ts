@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures/crm-serial';
-import { request as pwRequest, type APIRequestContext } from '@playwright/test';
+import { request as pwRequest, type APIRequestContext } from '../../fixtures/session';
 import { AbsenceIndicatorPage as A, type Indicator } from '../../../Pages/crm/crm.absence-indicator.page';
 import { STAGING_CREDENTIALS } from '../../../Pages/util/api-token';
 

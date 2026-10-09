@@ -17,7 +17,7 @@ export default defineConfig({
 
   // ✅ Use concise + HTML reporter combo
   reporter: process.env.CI
-    ? [['dot'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
+    ? [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
     : 'html',
 
   use: {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { SAVE_FOR_FIXING, SAVE_VALIDATE, VoValidationPage } from '../../../Pages/admin/admin.vo-validation.page';
 
 /**

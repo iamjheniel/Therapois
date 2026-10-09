@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { TherapistBoardV2Page } from '../../../Pages/therapist/therapist.board-v2.page';
 
 /**

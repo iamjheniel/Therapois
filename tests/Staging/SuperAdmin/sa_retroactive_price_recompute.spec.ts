@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { TreatmentPricesPage, DocumentedTreatment } from '../../../Pages/superadmin/sa.treatment-prices.page';
 import { waitForAuthState } from '../../../Pages/util/settle';
 

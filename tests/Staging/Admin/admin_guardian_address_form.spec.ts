@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { PatientAddressesPage } from '../../../Pages/admin/admin.patient-addresses.page';
 import { waitForAuthState } from '../../../Pages/util/settle';
 

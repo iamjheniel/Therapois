@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { VoFormPage } from '../../../Pages/vo/vo.form.page';
 
 // Epic: VO Direct Practice Assignment — therapios/monorepo#2670

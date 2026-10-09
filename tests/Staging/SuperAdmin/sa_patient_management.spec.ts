@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { PatientManagementPage } from '../../../Pages/superadmin/sa.patient-management.page';
 
 test.describe('Super Admin - Patient Management', () => {

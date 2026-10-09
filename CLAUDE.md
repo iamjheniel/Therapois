@@ -556,6 +556,20 @@ Understanding these German terms is essential when reading selectors, test steps
 | PKV | Private health insurance |
 | GKV | Statutory health insurance |
 
+## Specs import `test` from `tests/fixtures/session.ts` (2026-10-09)
+
+Every spec imports `test`/`expect` from `tests/fixtures/session` (CRM specs via `crm-serial`, which
+extends it). The project's saved refresh token is single-use, so before this every test after the
+first ~30 s of a run landed on the login form and burned its 90 s timeout plus a retry — which is
+what pushed all three staging CI jobs past 60 minutes. The fixture overrides `context` to seed a
+valid token (reload-safe), CHAINING it through the worker: at teardown it reads the app's rotated
+token back and hands it to the next test, so `POST /auth` (5/min per username+IP, #3462) is only
+called when a test failed or ended signed out. API-only tests never create a context and cost
+nothing. New specs must import from it too, or they reintroduce the login-form timeouts.
+
+CI shards the jobs (staging SuperAdmin 6, Admin 2, Therapist 2; prod SuperAdmin 2) with a 50-minute
+cap each, and uses the `list` reporter so a hang shows which test it was.
+
 ## Conventions
 
 - **Auth**: Sessions are pre-generated via `auth.setup.ts` and stored in `.auth/`. Re-run `setup` when sessions expire (token expiry, password change).

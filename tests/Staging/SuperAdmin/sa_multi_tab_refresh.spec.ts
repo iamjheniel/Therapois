@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '../../fixtures/session';
 import { STAGING_CREDENTIALS, seedRefreshToken } from '../../../Pages/util/api-token';
 
 /**

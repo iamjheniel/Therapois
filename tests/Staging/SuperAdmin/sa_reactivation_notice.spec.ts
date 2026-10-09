@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { ReactivationNoticePage, GERMAN_FRAGMENTS, NOTICE_KEYS } from '../../../Pages/superadmin/sa.reactivation-notice.page';
 
 /**

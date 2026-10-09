@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { CODE_SHAPE, RefusalReasonsPage } from '../../../Pages/superadmin/sa.refusal-reasons.page';
 
 /**

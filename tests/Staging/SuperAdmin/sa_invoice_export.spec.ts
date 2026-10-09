@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { COL, EXPORT_COLUMNS, InvoiceExportPage } from '../../../Pages/superadmin/sa.invoice-export.page';
 import { STAGING_CREDENTIALS } from '../../../Pages/util/api-token';
 

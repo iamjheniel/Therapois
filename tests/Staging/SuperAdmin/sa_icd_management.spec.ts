@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { IcdManagementPage } from '../../../Pages/superadmin/sa.icd-management.page';
 
 function makeIcdData() {

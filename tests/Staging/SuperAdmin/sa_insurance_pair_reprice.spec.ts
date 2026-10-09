@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import {
   InsurancePairRepricePage,
   EXPECTED_BY_DATE,

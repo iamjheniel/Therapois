@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { AdminTBoardPage } from '../../../Pages/admin/admin.tboard.page';
 
 test.describe('Super Admin TBoard', () => {

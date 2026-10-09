@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import {
   HOME_VISIT_CHECK_ID,
   HOME_VISIT_FAILURE_MESSAGE,

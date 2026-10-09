@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { PkvBillingPage } from '../../../Pages/admin/admin.pkv-billing.page';
 
 /**

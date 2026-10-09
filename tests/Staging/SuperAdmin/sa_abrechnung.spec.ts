@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { AbrechnungPage } from '../../../Pages/superadmin/sa.abrechnung.page';
 
 // Ref: https://github.com/therapios/monorepo/issues/1371

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { ArztManagementPage } from '../../../Pages/admin/admin.arzt-management.page';
 
 function makeArztData() {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 
 /**
  * Production mirror of the SuperAdmin "Daten" → "Export" (VO-Export) coverage. Replaces the removed

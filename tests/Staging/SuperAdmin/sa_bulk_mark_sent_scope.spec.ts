@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { BulkMarkSentScopePage, MAX_BULK_IDS } from '../../../Pages/superadmin/sa.bulk-mark-sent-scope.page';
 
 /**

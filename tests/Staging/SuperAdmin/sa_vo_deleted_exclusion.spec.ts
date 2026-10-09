@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { VoDeletionPage, FIXTURES, GERMAN, I18N_KEYS } from '../../../Pages/superadmin/sa.vo-deletion.page';
 
 /**

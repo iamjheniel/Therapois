@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { WorkingHoursAbrechnungPage as W, type WhRow } from '../../../Pages/superadmin/sa.working-hours-abrechnung.page';
 
 /**

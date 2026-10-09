@@ -1,4 +1,4 @@
-import { test, expect, request as pwRequest, type APIRequestContext } from '@playwright/test';
+import { test, expect, request as pwRequest, type APIRequestContext } from '../../fixtures/session';
 import { BillingArchivedTabsPage as B, type ListKind } from '../../../Pages/superadmin/sa.billing-archived-tabs.page';
 
 /**

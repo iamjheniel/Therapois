@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { GkvInsurerRequiredPage } from '../../../Pages/superadmin/sa.gkv-insurer-required.page';
 
 /**

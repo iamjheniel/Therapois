@@ -1,4 +1,4 @@
-import { test as base, expect, type TestInfo } from '@playwright/test';
+import { test as base, expect, type TestInfo } from './session';
 import { mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

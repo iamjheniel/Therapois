@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import {
   ProdForecastDeceasedPage, type Vo, type TerminationLog,
   WINDOW, TO_ORDER_DAYS, BLOCKED_ORDERING, CANCELLABLE, PROTECTED,

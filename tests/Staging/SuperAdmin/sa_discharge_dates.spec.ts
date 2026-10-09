@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/session';
 import { DischargeDatesPage, type Vo } from '../../../Pages/superadmin/sa.discharge-dates.page';
 
 /**

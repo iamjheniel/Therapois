@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext } from '@playwright/test';
+import { test, expect, type APIRequestContext } from '../../fixtures/session';
 import { mintUiSession, STAGING_CREDENTIALS } from '../../../Pages/util/api-token';
 
 /**

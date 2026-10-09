@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from '../../fixtures/session';
 import { boardSearchBox } from '../../../Pages/base/app.page';
 import { TherapistListPage } from '../../../Pages/therapist/therapist.list.page';
 

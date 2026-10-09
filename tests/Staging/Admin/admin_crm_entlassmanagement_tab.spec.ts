@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures/crm-serial';
-import { request as pwRequest, type APIRequestContext } from '@playwright/test';
+import { request as pwRequest, type APIRequestContext } from '../../fixtures/session';
 import { CrmEntlassmanagementPage as C, type Vo } from '../../../Pages/crm/crm.entlassmanagement.page';
 
 /**
