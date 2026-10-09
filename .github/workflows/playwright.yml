@@ -70,7 +70,12 @@ jobs:
         run: node scripts/check-staging-health.mjs
       - name: 🚀 Run Admin tests (Staging)
         if: steps.health.outputs.up == 'true'
-        run: npx playwright test --project=AdminJhen --shard=${{ matrix.shard }}/2
+        env:
+          AUTH_ONLY: AdminJhen
+        # Stagger the shards so their logins do not all hit the /auth throttle (#3462) at once.
+        run: |
+          sleep $(( (${{ matrix.shard }} - 1) * 20 ))
+          npx playwright test --project=AdminJhen --shard=${{ matrix.shard }}/2
       - name: ⏭️ Staging backend down — tests skipped
         if: steps.health.outputs.up != 'true'
         run: echo "::notice::Staging backend is down (API 5xx). Admin staging tests were skipped to keep CI green. Re-run once staging recovers."
@@ -116,7 +121,12 @@ jobs:
         run: node scripts/check-staging-health.mjs
       - name: 🚀 Run SuperAdmin tests (Staging)
         if: steps.health.outputs.up == 'true'
-        run: npx playwright test --project=SAJhen --shard=${{ matrix.shard }}/6
+        env:
+          AUTH_ONLY: SuperAdmin
+        # Stagger the shards so their logins do not all hit the /auth throttle (#3462) at once.
+        run: |
+          sleep $(( (${{ matrix.shard }} - 1) * 20 ))
+          npx playwright test --project=SAJhen --shard=${{ matrix.shard }}/6
       - name: ⏭️ Staging backend down — tests skipped
         if: steps.health.outputs.up != 'true'
         run: echo "::notice::Staging backend is down (API 5xx). SuperAdmin staging tests were skipped to keep CI green. Re-run once staging recovers."
@@ -162,7 +172,12 @@ jobs:
         run: node scripts/check-staging-health.mjs
       - name: 🚀 Run Therapist tests (Staging)
         if: steps.health.outputs.up == 'true'
-        run: npx playwright test --project=SandraZeibig --shard=${{ matrix.shard }}/2
+        env:
+          AUTH_ONLY: SandraZeibig
+        # Stagger the shards so their logins do not all hit the /auth throttle (#3462) at once.
+        run: |
+          sleep $(( (${{ matrix.shard }} - 1) * 20 ))
+          npx playwright test --project=SandraZeibig --shard=${{ matrix.shard }}/2
       - name: ⏭️ Staging backend down — tests skipped
         if: steps.health.outputs.up != 'true'
         run: echo "::notice::Staging backend is down (API 5xx). Therapist staging tests were skipped to keep CI green. Re-run once staging recovers."
@@ -207,7 +222,12 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
       - name: 🚀 Run Admin tests (Production)
-        run: npx playwright test --project=AdminJhen-Prod --shard=${{ matrix.shard }}/1
+        env:
+          AUTH_ONLY: AdminJhen-Prod
+        # Stagger the shards so their logins do not all hit the /auth throttle (#3462) at once.
+        run: |
+          sleep $(( (${{ matrix.shard }} - 1) * 20 ))
+          npx playwright test --project=AdminJhen-Prod --shard=${{ matrix.shard }}/1
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
@@ -246,7 +266,12 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
       - name: 🚀 Run SuperAdmin tests (Production)
-        run: npx playwright test --project=SAJhen-Prod --shard=${{ matrix.shard }}/2
+        env:
+          AUTH_ONLY: SuperAdmin-Prod
+        # Stagger the shards so their logins do not all hit the /auth throttle (#3462) at once.
+        run: |
+          sleep $(( (${{ matrix.shard }} - 1) * 20 ))
+          npx playwright test --project=SAJhen-Prod --shard=${{ matrix.shard }}/2
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()
@@ -285,7 +310,12 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
       - name: 🚀 Run Therapist tests (Production)
-        run: npx playwright test --project=JhenQA-Prod --shard=${{ matrix.shard }}/1
+        env:
+          AUTH_ONLY: JhenQA-Prod
+        # Stagger the shards so their logins do not all hit the /auth throttle (#3462) at once.
+        run: |
+          sleep $(( (${{ matrix.shard }} - 1) * 20 ))
+          npx playwright test --project=JhenQA-Prod --shard=${{ matrix.shard }}/1
       - name: 📤 Upload report
         uses: actions/upload-artifact@v4
         if: always()

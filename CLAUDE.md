@@ -570,6 +570,12 @@ nothing. New specs must import from it too, or they reintroduce the login-form t
 CI shards the jobs (staging SuperAdmin 6, Admin 2, Therapist 2; prod SuperAdmin 2) with a 50-minute
 cap each, and uses the `list` reporter so a hang shows which test it was.
 
+Setup (`tests/fixtures/auth-setup.ts`) logs in through `POST /auth` with a Retry-After backoff, only
+for the accounts named in `AUTH_ONLY` (CI sets it per job), and never fails: a refused login writes
+an empty state and the session fixture logs in per test. The first sharded run failed because ~10
+shards logged all three accounts in through the UI at once, the throttle refused them, and a failed
+setup cancels the whole shard. The shards are also staggered 20 s apart.
+
 ## Conventions
 
 - **Auth**: Sessions are pre-generated via `auth.setup.ts` and stored in `.auth/`. Re-run `setup` when sessions expire (token expiry, password change).
