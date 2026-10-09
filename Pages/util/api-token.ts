@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, BrowserContext } from '@playwright/test';
 
 /**
  * The API bearer token, for the page objects that drive the REST API directly.
@@ -112,8 +112,51 @@ export async function mintUiSession(
     throw new Error(`POST ${api}/auth as ${credentials.email} -> ${res.status()} ${(await res.text()).slice(0, 200)}`);
   }
   const body = await res.json();
-  await page.addInitScript((refresh: string) => {
-    localStorage.setItem('auth-refresh-token', JSON.stringify(refresh));
-  }, body.refresh_token);
+  await seedRefreshToken(page, body.refresh_token);
   return body.token;
+}
+
+/**
+ * Installs a refresh token where the web app will read it on boot.
+ *
+ * Since #3910 (`5da96139d5`, 2026-10-07) the app keeps the web refresh token in **IndexedDB**
+ * (`therapios-auth` › store `tokens` › key `refresh`, a plain string) and reads it FIRST, falling
+ * back to `localStorage['auth-refresh-token']` only when IndexedDB holds nothing
+ * (`packages/auth/tokenStorage.ts::getRefreshToken`). The project's saved storageState now carries
+ * setup's IndexedDB token (saved with `indexedDB: true`), which is single-use and spent after the
+ * first test — so a token seeded into localStorage ALONE loses to it and the page lands on the login
+ * form. Both stores are written here.
+ *
+ * IndexedDB serves requests on one origin in order, and a readonly transaction waits for an earlier
+ * readwrite one on the same store, so the app's first read sees this put.
+ *
+ * `once: true` seeds a given token only on the first navigation (#3761's reload-safe seed) and leaves
+ * the app's own rotated successor alone afterwards; the default re-seeds on every navigation, which
+ * is the long-standing `mintUiSession` behaviour (a second `goto` then replays the spent token).
+ */
+export async function seedRefreshToken(
+  target: Page | BrowserContext,
+  refreshToken: string,
+  opts: { once?: boolean } = {},
+): Promise<void> {
+  await target.addInitScript(({ token, once }: { token: string; once: boolean }) => {
+    try {
+      if (once && localStorage.getItem('__qaSeededRefresh') === token) return;
+      localStorage.setItem('auth-refresh-token', JSON.stringify(token));
+      if (once) localStorage.setItem('__qaSeededRefresh', token);
+      const req = indexedDB.open('therapios-auth');
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains('tokens')) req.result.createObjectStore('tokens');
+      };
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('tokens')) { db.close(); return; }
+        const tx = db.transaction('tokens', 'readwrite');
+        tx.objectStore('tokens').put(token, 'refresh');
+        tx.oncomplete = () => db.close();
+      };
+    } catch {
+      /* a context that refuses storage cannot be signed in this way either */
+    }
+  }, { token: refreshToken, once: opts.once ?? false });
 }

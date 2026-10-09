@@ -242,15 +242,102 @@ test.describe('#3884 + #3885 the Entlassmanagement tab and the ordering surfaces
       expect(text, 'and the Reference\'s own "Ausstellungsdatum" is not what is painted')
         .not.toContain('Ausstellungsdatum');
 
-      // AC7 — oldest issue date on top, checked against the payload's own order.
-      const served = await apiPage.tabVos();
-      const dates = served.map((v) => String(v.date ?? '').slice(0, 10));
-      console.log(`  issue dates in served order: ${JSON.stringify(dates)}`);
-      expect(dates, 'the tab serves oldest first').toEqual([...dates].sort());
-      // Every listed VO is on screen, so the painted list is the served one.
-      for (const v of served) {
-        expect(text, `VO ${v.prescriptionId} is painted`).toContain(String(v.prescriptionId));
+      // AC7 — oldest issue date on top, read off the PAINTED order. An earlier version compared
+      // `tabVos()`, which sends no `order` key and so comes back in id order — on 2026-10-06 ids
+      // 100132+ (issued 02.10) sit before 100017 (01.09) and that read "fails" on a correct tab.
+      const tabReqs = ui.matching('/v2/prescriptions', C.TAB_FILTER);
+      console.log(`  the tab's own list requests: ${JSON.stringify(tabReqs.slice(-2))}`);
+      const served = await apiPage.tabVos(100);
+      const dateOf = new Map(served.map((v) => [String(v.prescriptionId), String(v.date ?? '').slice(0, 10)]));
+      const painted: string[] = [];
+      for (const l of lines) {
+        const m = /\[?(\d{3,7}-\d{1,3})\]?/.exec(l);
+        if (m && dateOf.has(m[1]) && !painted.includes(m[1])) painted.push(m[1]);
       }
+      const dates = painted.map((n) => dateOf.get(n)!);
+      console.log(`  painted VOs ${painted.length}, issue dates in painted order: ${JSON.stringify(dates)}`);
+      expect(painted.length, 'the tab painted rows').toBeGreaterThan(3);
+      expect(dates, 'the tab paints oldest issue date first').toEqual([...dates].sort());
+    },
+  );
+
+  test(
+    '#3884 AC6 "Gültig bis": every row shows the valid-until date its own VO form shows (PR #3951)',
+    { tag: ['@Admin', '@CRMEntlassmanagement', '@ReadOnly'] },
+    async ({ page }) => {
+      // The PM's 5 Oct run FAILED this row: the tab filled the cell from the 12-day discharge
+      // window alone, which #3830 AC4 gives to GKV and Privat Basis only, so a BG VO (100031-1)
+      // and one with no insurance type (100038-1) painted "—" while their forms showed a date.
+      // PR #3951 (merged 2026-10-05 10:04Z) uses getValidityDate() instead. The earlier AC6 test
+      // only checked that the header exists, which is how the defect passed it — so this one
+      // compares VALUES: the tab's own v2 rows against each VO's item-level validityDate.
+      const day = (s: any) => (s ? String(s).slice(0, 10) : null);
+      const de = (iso: string) => iso.split('-').reverse().join('.');
+      const raw = await apiPage.get<any>(
+        '/v2/prescriptions?page=1&itemsPerPage=100&dischargeOrdering=true&includePostponed=true');
+      const rows: Vo[] = Array.isArray(raw) ? raw : (raw.member ?? raw['hydra:member'] ?? []);
+      expect(rows.length, 'the tab lists VOs').toBeGreaterThan(0);
+      const q = rows.map((r) => `prescriptionId[]=${encodeURIComponent(r.prescriptionId)}`).join('&');
+      const v1 = await apiPage.get<any>(`/prescriptions?itemsPerPage=200&${q}`);
+      const form = new Map<string, Vo>((v1.member ?? v1['hydra:member']).map((p: Vo) => [p.prescriptionId, p]));
+
+      const byType: Record<string, { n: number; dated: number }> = {};
+      const mismatches: string[] = [];
+      for (const r of rows) {
+        const p = form.get(r.prescriptionId);
+        const type = p?.insuranceType ?? 'none';
+        byType[type] ??= { n: 0, dated: 0 };
+        byType[type].n++;
+        if (day(r.validityDate)) byType[type].dated++;
+        if (day(r.validityDate) !== day(p?.validityDate)) {
+          mismatches.push(`${r.prescriptionId} (${type}) tab ${day(r.validityDate)} form ${day(p?.validityDate)}`);
+        }
+      }
+      console.log(`  per insurance type (rows / dated): ${JSON.stringify(byType)}`);
+      expect(mismatches, 'the tab and the VO form agree on every row').toEqual([]);
+      // Anti-vacuity: the fix is about the types OUTSIDE the discharge window, so at least one
+      // must be present and dated, or this test cannot tell the old rule from the new one.
+      const outside = ['accident', 'none'].filter((t) => (byType[t]?.dated ?? 0) > 0);
+      expect(outside.length, 'a BG or no-insurance-type row carries a date (the pre-fix "—" case)')
+        .toBeGreaterThan(0);
+      // PKV is the one case AC6 wants blank.
+      for (const r of rows.filter((x) => form.get(x.prescriptionId)?.insuranceType === 'private')) {
+        expect(day(r.validityDate), `PKV ${r.prescriptionId} stays empty`).toBeNull();
+      }
+
+      // On screen: the dated non-window rows paint their date beside their VO number.
+      const ui = new C(api, page);
+      await ui.open();
+      await ui.openTab('Entlassmanagement');
+      // The table is laid out COLUMN-major in the DOM (the VO-number column is its own frozen
+      // stack), so text following the VO number is the next column's header, not the row's cells.
+      // Match by geometry: the leaf vertically overlapping the VO-number leaf, under "Gültig bis".
+      const rowCells = (vo: string) => page.evaluate((vo) => {
+        const leaves = [...document.querySelectorAll('#root *')].filter(
+          (e) => e.children.length === 0 && (e.textContent ?? '').trim());
+        const box = (e: Element) => e.getBoundingClientRect();
+        const anchor = leaves.find((e) => (e.textContent ?? '').trim() === `[${vo}]`);
+        const header = leaves.find((e) => (e.textContent ?? '').trim() === 'Gültig bis');
+        if (!anchor || !header) return null;
+        const a = box(anchor); const h = box(header);
+        // The row is ~100px tall and the anchor sits near its top; take the row band around it.
+        const top = a.top - 20; const bottom = a.top + 80;
+        const inRow = leaves.filter((e) => { const b = box(e); return b.height > 0 && b.top < bottom && b.bottom > top; });
+        const valid = inRow.find((e) => { const b = box(e); return b.left < h.right + 40 && b.right > h.left - 40; });
+        return { cells: inRow.map((e) => (e.textContent ?? '').trim()), validUntil: valid ? (valid.textContent ?? '').trim() : null };
+      }, vo);
+      let checked = 0;
+      for (const r of rows) {
+        const p = form.get(r.prescriptionId);
+        if (!['accident', undefined, null].includes(p?.insuranceType) || !day(r.validityDate)) continue;
+        const got = await rowCells(r.prescriptionId);
+        if (!got) { console.log(`  ${r.prescriptionId} is not on the painted page (10 rows a page)`); continue; }
+        console.log(`  ${r.prescriptionId} (${p?.insuranceType ?? 'none'}): ${JSON.stringify(got.cells)}`);
+        expect(got.validUntil, `${r.prescriptionId} paints Gültig bis ${de(day(r.validityDate)!)}`)
+          .toBe(de(day(r.validityDate)!));
+        checked++;
+      }
+      expect(checked, 'at least one BG / no-type row was read off the screen').toBeGreaterThan(0);
     },
   );
 

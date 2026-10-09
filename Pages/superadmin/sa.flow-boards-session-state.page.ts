@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { API_BASE, STAGING_CREDENTIALS, type Credentials } from '../util/api-token';
+import { API_BASE, STAGING_CREDENTIALS, type Credentials, seedRefreshToken } from '../util/api-token';
 import { FlowBoardsPage } from './sa.flow-boards.page';
 
 /**
@@ -114,16 +114,8 @@ export class FlowBoardsSessionStatePage {
     });
     if (!res.ok()) throw new Error(`POST /auth -> ${res.status()}`);
     const refresh = (await res.json()).refresh_token as string;
-    await this.page.addInitScript((token: string) => {
-      try {
-        if (localStorage.getItem('__qaSeededRefresh') !== token) {
-          localStorage.setItem('auth-refresh-token', JSON.stringify(token));
-          localStorage.setItem('__qaSeededRefresh', token);
-        }
-      } catch {
-        /* a context that refuses storage cannot be signed in this way either */
-      }
-    }, refresh);
+    // IndexedDB + localStorage, once per token (see seedRefreshToken: since #3910 the app reads IndexedDB first).
+    await seedRefreshToken(this.page, refresh, { once: true });
   }
 
   /** Writes sessionStorage entries before the first navigation — the AC4 / corrupt-value seed. */
