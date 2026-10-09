@@ -111,6 +111,17 @@ export class AppPage {
     const startedAt = this.page.url();
     let everClicked = false;
 
+    // Wait for the nav bar itself before looking for an entry. Under CI load the app can still be
+    // booting (refreshing its session) when a test calls this, and the three quick attempts below
+    // then all run before any nav exists — reported as "no sidebar entry matched".
+    await this.page
+      .locator('div[tabindex="0"], button, [role="button"]')
+      .filter({ hasText: /^[\s-]*(Admin Board|T Board|Dashboard|Upload Dashboard)[\s▾]*$/ })
+      .filter({ visible: true })
+      .first()
+      .waitFor({ state: 'visible', timeout: 45_000 })
+      .catch(() => {});
+
     // The rail paints its labels before React Native Web attaches the Pressable handlers, so an
     // early click lands on live text but does nothing. Retry until the SPA actually routes.
     for (let attempt = 0; attempt < 3; attempt++) {
