@@ -29,10 +29,9 @@ setup.use({ storageState: undefined });
 // Loop through accounts
 for (const user of accounts) {
   setup(`Create ${user.name} auth if missing`, async ({ page, context }) => {
-    if (fs.existsSync(user.authFile)) {
-      console.log(`✅ Auth state for ${user.name} already exists — skipping login.`);
-      return;
-    }
+    // Always log in fresh. The saved refresh token is SINGLE-USE (#3460) — the first test of a run
+    // spends it — so a file left over from an earlier run is always stale; skipping when it
+    // existed is what made local runs fail at the login form while CI (no file) did not.
 
     console.log(`Logging in as ${user.name}...`);
 
@@ -49,7 +48,10 @@ for (const user of accounts) {
     await page.waitForURL(url => new URL(url).pathname !== '/', { timeout: 30_000 });
 
     // save session
-    await context.storageState({ path: user.authFile });
+    // `indexedDB: true` — since #3910 (5da96139d5, 2026-10-07) the web app keeps the refresh token
+    // in IndexedDB (`therapios-auth`), not localStorage. Without this the saved file carries no
+    // token and every test that loads it lands on the login form.
+    await context.storageState({ path: user.authFile, indexedDB: true });
 
     console.log(`✅ Auth state saved for ${user.name} → ${user.authFile}`);
   });

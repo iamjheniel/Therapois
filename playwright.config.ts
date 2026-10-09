@@ -47,18 +47,26 @@ export default defineConfig({
     },
 
     // 👇 Role-based authenticated users (Staging)
+    //
+    // Each depends on `setup`, which writes its `.auth/*.json`. Those files are gitignored (they
+    // hold live tokens — 935ef9a), so a fresh CI checkout has none: without the dependency every
+    // test failed at context creation with "ENOENT … .auth/<role>.json". `auth.setup.ts` skips an
+    // account whose file already exists, so this costs nothing locally.
     {
       name: 'SandraZeibig',
+      dependencies: ['setup'],
       testMatch: /tests\/Staging\/Therapist\/.*\.spec\.ts$/,
       use: { storageState: path.join(__dirname, '.auth/SandraZeibig.json') },
     },
     {
       name: 'AdminJhen',
+      dependencies: ['setup'],
       testMatch: /tests\/Staging\/Admin\/.*\.spec\.ts$/,
       use: { storageState: path.join(__dirname, '.auth/AdminJhen.json') },
     },
     {
       name: 'SAJhen',
+      dependencies: ['setup'],
       testMatch: /tests\/Staging\/SuperAdmin\/.*\.spec\.ts$/,
       use: { storageState: path.join(__dirname, '.auth/SuperAdmin.json') },
     },
@@ -73,6 +81,7 @@ export default defineConfig({
     // 👇 Role-based authenticated users (Production)
     {
       name: 'JhenQA-Prod',
+      dependencies: ['setup-prod'],
       testMatch: '**/Production/Therapist/**/*.spec.ts',
       use: {
         storageState: path.join(__dirname, '.auth/JhenQA-Prod.json'),
@@ -81,6 +90,7 @@ export default defineConfig({
     },
     {
       name: 'AdminJhen-Prod',
+      dependencies: ['setup-prod'],
       testMatch: '**/Production/Admin/**/*.spec.ts',
       use: {
         storageState: path.join(__dirname, '.auth/AdminJhen-Prod.json'),
@@ -89,6 +99,7 @@ export default defineConfig({
     },
     {
       name: 'SAJhen-Prod',
+      dependencies: ['setup-prod'],
       testMatch: '**/Production/SuperAdmin/**/*.spec.ts',
       use: {
         storageState: path.join(__dirname, '.auth/SuperAdmin-Prod.json'),
